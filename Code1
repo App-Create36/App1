@@ -21,6 +21,12 @@
       <div class="welcome-message">Cognizant</div>
     </div>
     <div class="login-options">
+
+
+
+
+
+
       <a href="#" (click)="showLoginForm('admin')">Admin</a>
       <a href="#" (click)="showLoginForm('user')">User</a>
     </div>
