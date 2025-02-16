@@ -1,3 +1,140 @@
+<div class="row">
+    <div class="col-12">
+       <table class="table table-borderd">
+            <thead>
+                <tr>
+                    <th>Id</th>
+                    <th>employeeName</th>
+                    <th>employeeGender</th>
+                    <th>dateOfJoining</th>
+                    <th>role</th>
+                    <th>phoneNumber</th>
+                    <th>email</th>
+                    <th>status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for(item of List; track $index){
+                    <tr>
+                         <td>{{$index+1}}</td>
+                         <td>{{item.employeeName}}</td>
+                         <td>{{item.employeeGender}}</td>
+                         <td>{{item.dateOfJoining}}</td>
+                         <td>{{item.role}}</td>
+                         <td>{{item.phoneNumber}}</td>
+                         <td>{{item.email}}</td>
+                         <td>{{item.status}}</td>
+                    </tr>
+                }
+            </tbody>
+       </table>
+    </div>
+</div>
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+
+import { UserListComponent } from './user-list.component';
+
+describe('UserListComponent', () => {
+  let component: UserListComponent;
+  let fixture: ComponentFixture<UserListComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      declarations: [UserListComponent]
+    })
+    .compileComponents();
+
+    fixture = TestBed.createComponent(UserListComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it('should create', () => {
+    expect(component).toBeTruthy();
+  });
+});
+import { Component, inject, OnInit } from '@angular/core';
+import { UserService } from '../../service/user.service';
+
+@Component({
+  selector: 'app-user-list',
+  standalone: false,
+  templateUrl: './user-list.component.html',
+  styleUrl: './user-list.component.css'
+})
+export class UserListComponent implements OnInit{
+     
+    userService=inject(UserService);
+    List:any[]=[];
+    ngOnInit(): void {
+      this.loadClient()
+    }
+    loadClient(){
+     this.userService.getClient().subscribe((res:any)=>{
+      this.List=res.data;
+     })
+    }
+}
+import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class UserService {
+
+  constructor(private http:HttpClient) { }
+
+  onLogin(obj:any){
+    return this.http.post("http://localhost:9096/auth/login",obj)
+  }
+  getClient(){
+    return this.http.get("http://localhost:9081/clients/all")
+  }
+}
+import { TestBed } from '@angular/core/testing';
+
+import { UserService } from './user.service';
+
+describe('UserService', () => {
+  let service: UserService;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({});
+    service = TestBed.inject(UserService);
+  });
+
+  it('should be created', () => {
+    expect(service).toBeTruthy();
+  });
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 login() {
   debugger;
   this.userService.onLogin(this.loginObj).subscribe(
