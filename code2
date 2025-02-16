@@ -1,8 +1,16 @@
-X [ERROR] TS-996008: Component LoginComponent is standalone, and cannot be declared in an NgModule. Did you mean to import it instead? [plugin angular-compiler]
-
-    src/app/app.module.ts:14:4:
-      14 │     LoginComponent,
-
+  login(){
+    debugger;
+    this.userService.onLogin(this.loginObj).subscribe((res:any)=>{
+      debugger;
+      if(res.result){
+         localStorage.setItem('userApp',JSON.stringify(res.data));
+          this.router.navigateByUrl("user-list");
+      }
+      else{
+        alert(res.message)
+      }
+    })
+   }
 
 
 
