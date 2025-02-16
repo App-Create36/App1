@@ -1,3 +1,28 @@
+login() {
+  debugger;
+  this.userService.onLogin(this.loginObj).subscribe(
+    (res: any) => {
+      debugger;
+      if (res) { // ✅ If response is not null, consider login successful
+        localStorage.setItem('userApp', JSON.stringify(res));
+        this.router.navigateByUrl("user-list"); // ✅ Redirect to user-list
+      } else {
+        alert("Invalid credentials. Please try again."); // ✅ Show error message
+      }
+    },
+    (error) => {
+      debugger;
+      alert("Login failed. Please check your credentials or try again later.");
+      console.error("Login Error:", error);
+    }
+  );
+}
+
+
+
+
+
+
 <p>login works!</p>
 <!DOCTYPE html>
 <html lang="en">
