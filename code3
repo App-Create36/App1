@@ -1,0 +1,128 @@
+import { Component, inject, OnInit } from '@angular/core';
+import { UserService } from '../../service/user.service';
+
+@Component({
+  selector: 'app-user-list',
+  standalone: false,
+  templateUrl: './user-list.component.html',
+  styleUrls: ['./user-list.component.css']
+})
+export class UserListComponent implements OnInit {
+
+    userService = inject(UserService);
+    List: any[] = [];
+
+    ngOnInit(): void {
+        this.loadClients();
+    }
+
+    loadClients() {
+        this.userService.getClients().subscribe({
+            next: (res: any) => {
+                if (Array.isArray(res)) {
+                    this.List = res; // Directly assign response if it's an array
+                } else if (res?.data) {
+                    this.List = res.data; // If the response is wrapped in an object
+                } else {
+                    console.error('Unexpected response format:', res);
+                }
+            },
+            error: (err) => {
+                console.error('Error fetching clients:', err);
+            }
+        });
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="row">
+    <div class="col-12">
+       <table class="table table-bordered" *ngIf="List.length > 0; else noData">
+            <thead>
+                <tr>
+                    <th>Id</th>
+                    <th>Employee Name</th>
+                    <th>Gender</th>
+                    <th>Date of Joining</th>
+                    <th>Role</th>
+                    <th>Phone Number</th>
+                    <th>Email</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let item of List; let i = index">
+                     <td>{{ i + 1 }}</td>
+                     <td>{{ item.employeeName }}</td>
+                     <td>{{ item.employeeGender }}</td>
+                     <td>{{ item.dateOfJoining }}</td>
+                     <td>{{ item.role }}</td>
+                     <td>{{ item.phoneNumber }}</td>
+                     <td>{{ item.email }}</td>
+                     <td>{{ item.status }}</td>
+                </tr>
+            </tbody>
+       </table>
+       <ng-template #noData>
+            <p class="text-center text-danger">No data available</p>
+       </ng-template>
+    </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class UserService {
+
+  private loginUrl = "http://localhost:9096/auth/login";
+  private clientsUrl = "http://localhost:9081/clients/all";
+
+  constructor(private http: HttpClient) { }
+
+  onLogin(obj: any): Observable<any> {
+    return this.http.post(this.loginUrl, obj);
+  }
+
+  getClients(): Observable<any> {
+    return this.http.get(this.clientsUrl);
+  }
+}
