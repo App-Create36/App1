@@ -1,4 +1,34 @@
-  login(){
+<p>login works!</p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Form</title>
+    <link rel="stylesheet" href="login.component.css">
+</head>
+<body>
+    <div class="form-container">
+        <h2>LOGIN</h2>
+        <form class="login-form">
+            <input type="text" name="email" [(ngModel)]="loginObj.email" placeholder="email" required>
+            <input type="password" name="password" [(ngModel)]="loginObj.password" placeholder="Password" required>
+            <input type="submit" (click)="login()" value="Login">
+             <!-- <button (click)="login()"  class="button login_submit">
+                <span>Log in now</span>
+             </button> -->
+        </form>
+        <div class="signup-link">
+            <p>Don't have an account? <a href="login.component.html">Sign Up</a></p>
+        </div>
+    </div>
+</body>
+</html>
+
+
+
+
+login(){
     debugger;
     this.userService.onLogin(this.loginObj).subscribe((res:any)=>{
       debugger;
@@ -11,7 +41,37 @@
       }
     })
    }
-
+HttpErrorResponse
+error
+: 
+ProgressEvent {isTrusted: true, lengthComputable: false, loaded: 0, total: 0, type: 'error', …}
+headers
+: 
+_HttpHeaders {headers: Map(0), normalizedNames: Map(0), lazyInit: undefined, lazyUpdate: null}
+message
+: 
+"Http failure response for http://localhost:9096/auth/login: 0 Unknown Error"
+name
+: 
+"HttpErrorResponse"
+ok
+: 
+false
+status
+: 
+0
+statusText
+: 
+"Unknown Error"
+type
+: 
+undefined
+url
+: 
+"http://localhost:9096/auth/login"
+[[Prototype]]
+: 
+HttpResponseBase
 
 
 <p>login works!</p>
@@ -39,10 +99,270 @@
 </html>
 
 
+import { Component, inject } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { UserService } from '../../service/user.service';
+import {Router} from '@angular/router';
+@Component({
+  selector: 'app-login',
+  standalone: true,
+  imports: [FormsModule],
+  templateUrl: './login.component.html',
+  styleUrl: './login.component.css'
+})
+export class LoginComponent {
+   loginObj:any={
+    "email":"",
+    "password":""
+   }
+   userService=inject(UserService)
+   router=inject(Router)
+
+   login(){
+    debugger;
+    this.userService.onLogin(this.loginObj).subscribe((res:any)=>{
+      debugger;
+      if(res.result){
+         localStorage.setItem('userApp',JSON.stringify(res.data));
+          this.router.navigateByUrl("user-list");
+      }
+      else{
+        alert(res.message)
+      }
+    })
+   }
+}
 
 
 
+body {
+    font-family: 'Roboto', sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    background-color: #2c3e50;
+}
 
+.form-container {
+    background-color: #34495e;
+    border-radius: 8px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+    max-width: 400px;
+    width: 100%;
+    padding: 20px;
+    box-sizing: border-box;
+    text-align: center;
+    animation: slideIn 0.8s ease-in-out, borderLight 2s infinite alternate;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes borderLight {
+    from {
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+    }
+    to {
+        box-shadow: 0 0 20px rgba(122, 206, 167, 0.856);
+    }
+}
+
+.form-container h2 {
+    color: #ecf0f1;
+    margin-bottom: 20px;
+}
+
+.login-form input, .signup-form input {
+    width: 100%;
+    padding: 12px;
+    margin: 8px 0;
+    box-sizing: border-box;
+    border: none;
+    border-radius: 4px;
+    outline: none;
+}
+
+.login-form input[type="submit"] {
+    background-color: #2ecc71;
+    color: #fff;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.login-form input[type="submit"]:hover {
+    background-color: #27ae60;
+}
+
+.login-form input[type="text"],
+.login-form input[type="password"] {
+    background-color: #ecf0f1;
+    color: #333;
+}
+
+.login-form input[type="text"]:focus,
+.login-form input[type="password"]:focus {
+    background-color: #d5dbdb;
+}
+
+
+/* COMMON CSS */
+
+.signup-link a,
+.login-link a {
+    color: #9294ee;
+    text-decoration: none;
+    font-weight: bold;
+    transition: color 0.3s ease;
+}
+
+.signup-link a:hover,
+.login-link a:hover {
+    color: #2980b9;
+}
+
+.signup-link p,
+.login-link p {
+    color: #7f8c8d;
+    margin-top: 12px;
+    font-size: 16px;
+}
+
+
+/* SIGNUP PAGE CSS */
+
+.signup-form input[type="submit"] {
+    background-color: #e74c3c;
+    color: #fff;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.signup-form input[type="submit"]:hover {
+    background-color: #c0392b;
+}
+
+.signup-form input[type="text"],
+.signup-form input[type="password"] {
+    background-color: #cbd1d3;
+    color: #333;
+}
+
+.signup-form input[type="text"]:focus,
+.signup-form input[type="password"]:focus {
+    background-color: #9eb1b1;
+}
+
+
+
+import { NgModule } from '@angular/core';
+import { RouterModule, Routes } from '@angular/router';
+import { LoginComponent } from './pages/login/login.component';
+import { LayoutComponent } from './pages/layout/layout.component';
+import { UserListComponent } from './pages/user-list/user-list.component';
+import { CreateClientComponent } from './pages/create-client/create-client.component';
+
+export const routes: Routes = [
+  {
+    path:'',
+    redirectTo:'login',
+    pathMatch:'full'
+  },
+  {
+    path:'login',
+    component:LoginComponent
+  },
+  {
+    path:'',
+    component:LayoutComponent,
+    children:[
+      {
+        path:'user-list',
+        component:UserListComponent
+      },
+      {
+        path:'createUser',
+        component:CreateClientComponent
+      }
+    ]
+  }
+];
+
+@NgModule({
+  imports: [RouterModule.forRoot(routes)],
+  exports: [RouterModule]
+})
+export class AppRoutingModule { }
+import { NgModule } from '@angular/core';
+import { BrowserModule } from '@angular/platform-browser';
+
+import { AppRoutingModule } from './app-routing.module';
+import { AppComponent } from './app.component';
+import { LoginComponent } from './pages/login/login.component';
+import { LayoutComponent } from './pages/layout/layout.component';
+import { UserListComponent } from './pages/user-list/user-list.component';
+import { CreateClientComponent } from './pages/create-client/create-client.component';
+import { provideHttpClient} from '@angular/common/http';
+@NgModule({
+  declarations: [
+    AppComponent,
+   
+    LayoutComponent,
+    UserListComponent,
+    CreateClientComponent
+  ],
+  imports: [
+    BrowserModule,
+    LoginComponent,
+    AppRoutingModule,
+    
+  ],
+  providers: [
+    provideHttpClient()
+  ],
+  bootstrap: [AppComponent]
+})
+export class AppModule { }
+import { TestBed } from '@angular/core/testing';
+
+import { UserService } from './user.service';
+
+describe('UserService', () => {
+  let service: UserService;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({});
+    service = TestBed.inject(UserService);
+  });
+
+  it('should be created', () => {
+    expect(service).toBeTruthy();
+  });
+});
+import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class UserService {
+
+  constructor(private http:HttpClient) { }
+
+  onLogin(obj:any){
+    return this.http.post("http://localhost:9096/auth/login",obj)
+  }
+}
 
 
 
