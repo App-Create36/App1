@@ -1,3 +1,11 @@
+X [ERROR] TS-996008: Component LoginComponent is standalone, and cannot be declared in an NgModule. Did you mean to import it instead? [plugin angular-compiler]
+
+    src/app/app.module.ts:14:4:
+      14 │     LoginComponent,
+
+
+
+
 <p>login works!</p>
 <!DOCTYPE html>
 <html lang="en">
