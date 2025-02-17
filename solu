@@ -1,0 +1,48 @@
+import { Component, inject } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { UserService } from '../../service/user.service';
+import { Router } from '@angular/router';
+import { HttpHeaders } from '@angular/common/http';
+
+@Component({
+  selector: 'app-login',
+  standalone: true,
+  imports: [FormsModule],
+  templateUrl: './login.component.html',
+  styleUrl: './login.component.css'
+})
+export class LoginComponent {
+  loginObj: any = {
+    username: '',
+    password: ''
+  };
+
+  userService = inject(UserService);
+  router = inject(Router);
+
+  login() {
+    if (!this.loginObj.username || !this.loginObj.password) {
+      alert('Username and Password are required!');
+      return;
+    }
+
+    this.userService.onLogin(this.loginObj).subscribe(
+      (res: any) => {
+        if (res && res.token) {
+          localStorage.setItem('userApp', JSON.stringify(res));
+          this.router.navigateByUrl('/user-list');
+        } else {
+          alert('Invalid credentials. Please try again.');
+        }
+      },
+      (error) => {
+        console.error('Login Error:', error);
+        if (error.status === 403) {
+          alert('Access Denied! Invalid credentials.');
+        } else {
+          alert('Login failed. Please check your credentials or try again later.');
+        }
+      }
+    );
+  }
+}
