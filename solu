@@ -1,3 +1,198 @@
+
+create-client.component.html
+<form #clientForm="ngForm" (ngSubmit)="onSubmit()" class="client-form">
+  <div class="form-row">
+    <div class="form-group">
+      <label for="employeeName">Employee Name</label>
+      <input type="text" id="employeeName" name="employeeName" class="form-control" [(ngModel)]="clientObj.employeeName" 
+        required #employeeName="ngModel">
+      <span class="error" *ngIf="employeeName.invalid && employeeName.touched">Employee Name is required</span>
+    </div>
+
+    <div class="form-group">
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" class="form-control" [(ngModel)]="clientObj.email" 
+        required email #email="ngModel">
+      <span class="error" *ngIf="email.invalid && email.touched">Enter a valid email</span>
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label for="phone">Phone Number</label>
+      <input type="tel" id="phone" name="phone" class="form-control" [(ngModel)]="clientObj.phoneNumber" 
+        required pattern="^\d{10}$" #phone="ngModel">
+      <span class="error" *ngIf="phone.invalid && phone.touched">Enter a valid 10-digit phone number</span>
+    </div>
+
+    <div class="form-group">
+      <label for="department">Department</label>
+      <select id="department" name="department" class="form-control" [(ngModel)]="clientObj.department" required #department="ngModel">
+        <option value="" disabled selected>Select Department</option>
+        <option value="Business">Business</option>
+        <option value="Development">Development</option>
+      </select>
+      <span class="error" *ngIf="department.invalid && department.touched">Department is required</span>
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label for="role">Role</label>
+      <select id="role" name="role" class="form-control" [(ngModel)]="clientObj.role" required #role="ngModel">
+        <option value="" disabled selected>Select Role</option>
+        <option value="Trainer">Trainer</option>
+        <option value="Developer">Developer</option>
+      </select>
+      <span class="error" *ngIf="role.invalid && role.touched">Role is required</span>
+    </div>
+
+    <div class="form-group">
+      <label for="startDate">Start Date</label>
+      <input type="date" id="startDate" name="startDate" class="form-control" [(ngModel)]="clientObj.dateOfJoining" required #startDate="ngModel">
+      <span class="error" *ngIf="startDate.invalid && startDate.touched">Start date is required</span>
+    </div>
+  </div>
+
+  <div class="form-buttons">
+    <button type="button" (click)="goBack()" class="back-button">Back</button>
+    <button type="submit" [disabled]="clientForm.invalid" class="submit-button">Create Client ID</button>
+  </div>
+</form>
+create-client.component.ts
+import { Component } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+
+@Component({
+  selector: 'app-create-client',
+  templateUrl: './create-client.component.html',
+  styleUrls: ['./create-client.component.css']
+})
+export class CreateClientComponent {
+  clientObj = {
+    employeeName: '',
+    email: '',
+    phoneNumber: '',
+    department: '',
+    role: '',
+    dateOfJoining: ''
+  };
+
+  constructor(private http: HttpClient) {}
+
+  onSubmit() {
+    this.http.post('http://localhost:9081/clients/register', this.clientObj).subscribe(response => {
+      alert('Client ID Created Successfully!');
+    }, error => {
+      alert('Error creating client ID');
+    });
+  }
+
+  goBack() {
+    window.history.back();
+  }
+}
+
+
+
+
+create-client.component.css
+
+.client-form {
+  max-width: 600px;
+  margin: auto;
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.form-row {
+  display: flex;
+  justify-content: space-between;
+}
+
+.form-group {
+  width: 48%;
+  margin-bottom: 15px;
+}
+
+label {
+  font-weight: bold;
+}
+
+input, select {
+  width: 100%;
+  padding: 8px;
+  margin-top: 5px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+button {
+  width: 100%;
+  padding: 10px;
+  background-color: #003366;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #002244;
+}
+
+.error {
+  color: red;
+  font-size: 12px;
+}
+
+
+app.module.ts
+import { NgModule } from '@angular/core';
+import { BrowserModule } from '@angular/platform-browser';
+import { FormsModule } from '@angular/forms';
+import { HttpClientModule } from '@angular/common/http';
+
+import { AppComponent } from './app.component';
+import { CreateClientComponent } from './create-client/create-client.component';
+
+@NgModule({
+  declarations: [
+    AppComponent,
+    CreateClientComponent
+  ],
+  imports: [
+    BrowserModule,
+    FormsModule,
+    HttpClientModule
+  ],
+  providers: [],
+  bootstrap: [AppComponent]
+})
+export class AppModule { }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
