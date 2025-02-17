@@ -1,3 +1,15 @@
+Angular is running in development mode.
+login.component.ts:24 Before Trim - Username: 
+login.component.ts:25 Before Trim - Password: admin
+login.component.ts:32 After Trim - Username: 
+login.component.ts:33 After Trim - Password: admin
+
+
+
+
+
+
+
 
 
 login() {
