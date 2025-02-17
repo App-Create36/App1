@@ -1,3 +1,18 @@
+backend:
+ http://localhost:9096/api/auth/login
+input:
+{
+    "username":"admin@example.com",
+    "password":"admin"
+}
+output:
+{
+    "token": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbkBleGFtcGxlLmNvbSIsImlhdCI6MTczOTgwODgwOSwiZXhwIjoxNzM5ODk1MjA5fQ.WyVxyPdde-NdPhH_HZ7uVl85HG0QgFiikPsFYC4lelx6POHZtKsCDrvcwRMax88LMskMP2vYbTIoruShaTEH8A",
+    "clientId": "AID-1111",
+    "role": "ROLE_ADMIN"
+}
+
+
 login.component.html
 <p>login works!</p>
 <!DOCTYPE html>
