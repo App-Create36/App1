@@ -1,3 +1,174 @@
+app.module.ts
+import { NgModule } from '@angular/core';
+import { BrowserModule } from '@angular/platform-browser';
+import { FormsModule } from '@angular/forms';
+import { HttpClientModule } from '@angular/common/http';
+import { RouterModule, Routes } from '@angular/router';
+
+import { AppComponent } from './app.component';
+import { CreateClientComponent } from './components/create-client/create-client.component';
+
+const routes: Routes = [
+  { path: 'create-client', component: CreateClientComponent },
+  { path: '', redirectTo: '/create-client', pathMatch: 'full' }
+];
+
+@NgModule({
+  declarations: [AppComponent, CreateClientComponent],
+  imports: [
+    BrowserModule,
+    FormsModule,
+    HttpClientModule,
+    RouterModule.forRoot(routes)
+  ],
+  providers: [],
+  bootstrap: [AppComponent]
+})
+export class AppModule { }
+
+
+
+create-client.component.ts
+import { Component } from '@angular/core';
+import { ClientService } from '../../services/client.service';
+import { Router } from '@angular/router';
+
+@Component({
+  selector: 'app-create-client',
+  templateUrl: './create-client.component.html',
+  styleUrls: ['./create-client.component.css']
+})
+export class CreateClientComponent {
+  clientObj: any = {
+    employeeName: '',
+    employeeGender: 'Female',
+    dateOfJoining: '',
+    role: '',
+    phoneNumber: '',
+    email: '',
+    status: 'ACTIVE'
+  };
+
+  constructor(private clientService: ClientService, private router: Router) {}
+
+  createClient() {
+    if (!this.clientObj.employeeName || !this.clientObj.email) {
+      alert('Name and Email are required!');
+      return;
+    }
+
+    this.clientService.registerClient(this.clientObj).subscribe(
+      (response) => {
+        alert('Client registered successfully!');
+        this.router.navigateByUrl('/create-client');
+      },
+      (error) => {
+        console.error('Error:', error);
+        alert('Failed to register client. Please try again.');
+      }
+    );
+  }
+}
+
+
+
+
+create-client.component.html
+<h2>Create Client</h2>
+<form (ngSubmit)="createClient()">
+  <label>Name:</label>
+  <input type="text" [(ngModel)]="clientObj.employeeName" name="employeeName" required />
+
+  <label>Gender:</label>
+  <select [(ngModel)]="clientObj.employeeGender" name="employeeGender">
+    <option value="Male">Male</option>
+    <option value="Female">Female</option>
+  </select>
+
+  <label>Date of Joining:</label>
+  <input type="date" [(ngModel)]="clientObj.dateOfJoining" name="dateOfJoining" required />
+
+  <label>Role:</label>
+  <input type="text" [(ngModel)]="clientObj.role" name="role" required />
+
+  <label>Phone Number:</label>
+  <input type="text" [(ngModel)]="clientObj.phoneNumber" name="phoneNumber" required />
+
+  <label>Email:</label>
+  <input type="email" [(ngModel)]="clientObj.email" name="email" required />
+
+  <label>Status:</label>
+  <input type="text" [(ngModel)]="clientObj.status" name="status" readonly />
+
+  <button type="submit">Register</button>
+</form>
+ create-client.component.css
+form {
+  display: flex;
+  flex-direction: column;
+  max-width: 400px;
+  margin: auto;
+}
+
+label {
+  margin-top: 10px;
+}
+
+input, select {
+  padding: 8px;
+  margin-top: 5px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+button {
+  margin-top: 15px;
+  padding: 10px;
+  background-color: blue;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: darkblue;
+}
+client.service.ts
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class ClientService {
+  private apiUrl = 'http://localhost:9081/clients/register';
+
+  constructor(private http: HttpClient) {}
+
+  registerClient(clientData: any): Observable<any> {
+    return this.http.post(this.apiUrl, clientData);
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 Post: http://localhost:9081/clients/register
 {
     "employeeName": "Aruna",
