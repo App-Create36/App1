@@ -1,3 +1,83 @@
+
+import { Component, inject } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { UserService } from '../../service/user.service';
+import { Router } from '@angular/router';
+
+@Component({
+  selector: 'app-login',
+  standalone: true,
+  imports: [FormsModule],
+  templateUrl: './login.component.html',
+  styleUrl: './login.component.css'
+})
+export class LoginComponent {
+  loginObj: any = {
+    username: '',
+    password: ''
+  };
+
+  userService = inject(UserService);
+  router = inject(Router);
+
+  login() {
+    // Trim whitespace from username and password
+    this.loginObj.username = this.loginObj.username.trim();
+    this.loginObj.password = this.loginObj.password.trim();
+
+    console.log('Login Attempt:', this.loginObj); // Debugging purpose
+
+    if (!this.loginObj.username || !this.loginObj.password) {
+      alert('Username and Password are required!');
+      return;
+    }
+
+    this.userService.onLogin(this.loginObj).subscribe(
+      (res: any) => {
+        if (res && res.token) {
+          localStorage.setItem('userApp', JSON.stringify(res));
+          this.router.navigateByUrl('/user-list');
+        } else {
+          alert('Invalid credentials. Please try again.');
+        }
+      },
+      (error) => {
+        console.error('Login Error:', error);
+        if (error.status === 403) {
+          alert('Access Denied! Invalid credentials.');
+        } else {
+          alert('Login failed. Please check your credentials or try again later.');
+        }
+      }
+    );
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { UserService } from '../../service/user.service';
