@@ -1,3 +1,77 @@
+http://localhost:9082/vdis/allocate
+
+
+{
+    "clientId": "CID-0002",  
+    "projectName": "Project A",
+    "vdiType": "Type A",
+    "softwareStack": "{\"software\": [\"Example Software\"]}",
+    "allocationDate": "2023-04-01T10:00:00",
+    "status": "ACTIVE"
+}
+
+
+vdi.component.ts
+import { Component } from '@angular/core';
+
+@Component({
+  selector: 'app-vdi',
+  standalone: false,
+  templateUrl: './vdi.component.html',
+  styleUrl: './vdi.component.css'
+})
+export class VdiComponent {
+
+}
+vdi.component.spec.ts
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+
+import { VdiComponent } from './vdi.component';
+
+describe('VdiComponent', () => {
+  let component: VdiComponent;
+  let fixture: ComponentFixture<VdiComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      declarations: [VdiComponent]
+    })
+    .compileComponents();
+
+    fixture = TestBed.createComponent(VdiComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it('should create', () => {
+    expect(component).toBeTruthy();
+  });
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 create-client.component.html
 <form #clientForm="ngForm" (ngSubmit)="onSubmit()" class="client-form">
