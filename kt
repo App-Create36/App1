@@ -1,4 +1,8 @@
+X [ERROR] TS-996008: Component KtSessionComponent is standalone, and cannot be declared in an NgModule. Did you mean to import it instead? [plugin angular-compiler]    
 
+    src/app/app.module.ts:65:4:
+      65 │     KtSessionComponent
+         ╵     ~~~~~~~~~~~~~~~~~~
 
 <div class="container">
   <h2>KT Session Management</h2>
