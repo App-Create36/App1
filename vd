@@ -1,0 +1,190 @@
+vdi-allocation.component.html
+<div class="container">
+  <h2>VDI Allocation Management</h2>
+  <nav class="navbar">
+    <button class="btn btn-primary" (click)="allocateVdi()">Allocate VDI</button>
+    <button class="btn btn-secondary" (click)="getVdiById()">Get VDI Allocation by ID</button>
+    <button class="btn btn-success" (click)="getAllVdiAllocations()">Get All VDI Allocations</button>
+  </nav>
+
+  <!-- Form to Post VDI Allocation -->
+  <form #vdiForm="ngForm" (ngSubmit)="submitVdiAllocation()" class="form-container">
+    <div class="form-group">
+      <label>Client ID:</label>
+      <input type="text" [(ngModel)]="vdi.clientId" name="clientId" class="form-control" required />
+    </div>
+    <div class="form-group">
+      <label>Project Name:</label>
+      <input type="text" [(ngModel)]="vdi.projectName" name="projectName" class="form-control" required />
+    </div>
+    <div class="form-group">
+      <label>VDI Type:</label>
+      <input type="text" [(ngModel)]="vdi.vdiType" name="vdiType" class="form-control" required />
+    </div>
+    <div class="form-group">
+      <label>Software Stack:</label>
+      <input type="text" [(ngModel)]="vdi.softwareStack" name="softwareStack" class="form-control" required />
+    </div>
+    <div class="form-group">
+      <label>Allocation Date:</label>
+      <input type="datetime-local" [(ngModel)]="vdi.allocationDate" name="allocationDate" class="form-control" required />
+    </div>
+    <div class="form-group">
+      <label>Status:</label>
+      <input type="text" [(ngModel)]="vdi.status" name="status" class="form-control" required />
+    </div>
+    <button type="submit" class="btn btn-primary">Submit</button>
+  </form>
+
+  <!-- Table to Display VDI Allocations -->
+  <table class="table table-striped mt-3" *ngIf="vdiDetails">
+    <thead>
+      <tr>
+        <th>Allocation ID</th>
+        <th>Client ID</th>
+        <th>Project Name</th>
+        <th>VDI Type</th>
+        <th>Software Stack</th>
+        <th>Allocation Date</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let vdi of vdiDetails">
+        <td>{{vdi.allocationId}}</td>
+        <td>{{vdi.clientId}}</td>
+        <td>{{vdi.projectName}}</td>
+        <td>{{vdi.vdiType}}</td>
+        <td>{{vdi.softwareStack}}</td>
+        <td>{{vdi.allocationDate}}</td>
+        <td>{{vdi.status}}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+vdi-allocation.component.css
+    .container {
+  max-width: 800px;
+  margin: auto;
+  padding: 20px;
+}
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.form-container {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  font-weight: bold;
+}
+
+.table {
+  margin-top: 20px;
+}
+vdi-allocation.component.ts
+  import { Component } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+
+@Component({
+  selector: 'app-vdi-allocation',
+  standalone: true,
+  templateUrl: './vdi-allocation.component.html',
+  styleUrls: ['./vdi-allocation.component.css'],
+  imports: [FormsModule, CommonModule]
+})
+export class VdiAllocationComponent {
+  vdi: any = {};
+  vdiDetails: any;
+  private apiUrl = 'http://localhost:9082/vdis';
+
+  constructor(private http: HttpClient) {}
+
+  // POST: Allocate a new VDI
+  submitVdiAllocation() {
+    this.http.post(`${this.apiUrl}/allocate`, this.vdi).subscribe(
+      response => {
+        alert('VDI allocated successfully');
+        this.vdiDetails = response;
+      },
+      error => {
+        alert('Error allocating VDI');
+        console.error(error);
+      }
+    );
+  }
+
+  // GET: Fetch VDI Allocation by ID
+  getVdiById() {
+    const allocationId = prompt('Enter VDI Allocation ID:');
+    if (allocationId) {
+      this.http.get(`${this.apiUrl}/${allocationId}`).subscribe(
+        response => {
+          this.vdiDetails = [response]; // Convert to array for table display
+        },
+        error => {
+          alert('VDI allocation not found');
+          console.error(error);
+        }
+      );
+    }
+  }
+
+  // GET: Fetch All VDI Allocations
+  getAllVdiAllocations() {
+    this.http.get(`${this.apiUrl}/all`).subscribe(
+      response => {
+        this.vdiDetails = response;
+      },
+      error => {
+        alert('Error fetching VDI allocations');
+        console.error(error);
+      }
+    );
+  }
+}
+layout.component.html
+      <nav>
+  <ul>
+    <li><a routerLink="/vdi-allocation">VDI Session</a></li>
+  </ul>
+</nav>
+
+<router-outlet></router-outlet>
+
+ app-routing.module.ts
+   import { NgModule } from '@angular/core';
+import { RouterModule, Routes } from '@angular/router';
+import { VdiAllocationComponent } from './vdi-allocation/vdi-allocation.component';
+
+const routes: Routes = [
+  { path: 'vdi-allocation', component: VdiAllocationComponent },
+  { path: '', redirectTo: '/vdi-allocation', pathMatch: 'full' }
+];
+
+@NgModule({
+  imports: [RouterModule.forRoot(routes)],
+  exports: [RouterModule]
+})
+export class AppRoutingModule {}
+
+
+
+
+
+
+
+  t http://localhost:9082
