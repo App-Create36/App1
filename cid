@@ -1,0 +1,119 @@
+<!-- vdi-allocation.component.html -->
+<div class="container">
+  <h2>VDI Allocation Management</h2>
+  <nav>
+    <button (click)="allocateVdi()">Allocate VDI</button>
+    <button (click)="getVdiById()">Get VDI Allocation by ID</button>
+    <button (click)="getAllVdiAllocations()">Get All VDI Allocations</button>
+    <button (click)="getClientById()">Get Client By ID</button>
+    <button (click)="getAllClients()">Get All Clients</button>
+  </nav>
+
+  <!-- Form to Post VDI Allocation -->
+  <form #vdiForm="ngForm" (ngSubmit)="submitVdiAllocation()">
+    <div class="form-group">
+      <label>Client ID:</label>
+      <input type="text" [(ngModel)]="vdi.clientId" name="clientId" required />
+    </div>
+    <div class="form-group">
+      <label>Project Name:</label>
+      <input type="text" [(ngModel)]="vdi.projectName" name="projectName" required />
+    </div>
+    <div class="form-group">
+      <label>VDI Type:</label>
+      <input type="text" [(ngModel)]="vdi.vdiType" name="vdiType" required />
+    </div>
+    <div class="form-group">
+      <label>Software Stack:</label>
+      <input type="text" [(ngModel)]="vdi.softwareStack" name="softwareStack" required />
+    </div>
+    <div class="form-group">
+      <label>Allocation Date:</label>
+      <input type="datetime-local" [(ngModel)]="vdi.allocationDate" name="allocationDate" required />
+    </div>
+    <div class="form-group">
+      <label>Status:</label>
+      <input type="text" [(ngModel)]="vdi.status" name="status" required />
+    </div>
+    <button type="submit">Submit</button>
+  </form>
+
+  <!-- Table to Display VDI Allocation Details -->
+  <table class="table" *ngIf="vdiDetails">
+    <thead>
+      <tr>
+        <th>Allocation ID</th>
+        <th>Client ID</th>
+        <th>Project Name</th>
+        <th>VDI Type</th>
+        <th>Software Stack</th>
+        <th>Allocation Date</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>{{vdiDetails.allocationId}}</td>
+        <td>{{vdiDetails.clientId}}</td>
+        <td>{{vdiDetails.projectName}}</td>
+        <td>{{vdiDetails.vdiType}}</td>
+        <td>{{vdiDetails.softwareStack}}</td>
+        <td>{{vdiDetails.allocationDate}}</td>
+        <td>{{vdiDetails.status}}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Table to Display Client Details -->
+  <table class="table" *ngIf="clientDetails">
+    <thead>
+      <tr>
+        <th>Client ID</th>
+        <th>Client Name</th>
+        <th>Email</th>
+        <th>Phone</th>
+        <th>Company</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>{{clientDetails.clientId}}</td>
+        <td>{{clientDetails.clientName}}</td>
+        <td>{{clientDetails.email}}</td>
+        <td>{{clientDetails.phone}}</td>
+        <td>{{clientDetails.company}}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Add Bootstrap CSS for Styling -->
+<style>
+  .container {
+    max-width: 800px;
+    margin: auto;
+    padding: 20px;
+  }
+  .form-group {
+    margin-bottom: 15px;
+  }
+  .table {
+    margin-top: 20px;
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .table th, .table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+  }
+  .table th {
+    background-color: #f2f2f2;
+  }
+  nav {
+    margin-bottom: 20px;
+  }
+  nav button {
+    margin-right: 10px;
+    padding: 10px;
+  }
+</style>
