@@ -1,3 +1,32 @@
+[
+    {
+        "clientId": "CID-0002",
+        "employeeName": "Aruna",
+        "email": "arunapatil1601@cognizant.com",
+        "phoneNumber": "9901360177",
+        "role": "Developer",
+        "dateOfJoining": "2025-02-01",
+        "status": "ACTIVE"
+    }
+]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 {
     "sessionId": 1,
     "sessionName": "Java Basics Training",
