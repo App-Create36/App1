@@ -1,3 +1,102 @@
+import { Component } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+@Component({
+  selector: 'app-kt-session',
+  standalone:true,
+  templateUrl: './kt-session.component.html',
+  styleUrls: ['./kt-session.component.css'],
+  imports:[FormsModule,CommonModule]
+})
+export class KtSessionComponent {
+  ktSession: any = {};
+
+  ktSessionDetails: any ;
+  private apiUrl = 'http://localhost:9083/api/kt-sessions';
+
+  constructor(private http: HttpClient) {}
+
+  // POST: Create a new KT Session
+  submitKtSession() {
+    this.http.post(this.apiUrl, this.ktSession).subscribe(response => {
+      alert('KT session scheduled');
+      this.ktSessionDetails = response;
+    }, error => {
+      alert('Error scheduling KT session');
+      console.error(error);
+    });
+  }
+
+  // GET: Fetch KT Session by ID
+  getKtSessionById() {
+    const sessionId = prompt('Enter Session ID:');
+    if (sessionId) {
+      this.http.get(`${this.apiUrl}/${sessionId}`).subscribe(response => {
+        this.ktSessionDetails = response;
+      }, error => {
+        alert('Session not found');
+        console.error(error);
+      });
+    }
+  }
+
+  // GET: Fetch KT Sessions by Client ID
+  getKtSessionByClientId() {
+    const clientId = prompt('Enter Client ID:');
+    if (clientId) {
+      this.http.get(`${this.apiUrl}/client/${clientId}`).subscribe(response => {
+        this.ktSessionDetails = response;
+      }, error => {
+        alert('Client sessions not found');
+        console.error(error);
+      });
+    }
+  }
+
+  // GET: Fetch Clients by Session ID
+  getClientsBySessionId() {
+    const sessionId = prompt('Enter Session ID:');
+    if (sessionId) {
+      this.http.get(`${this.apiUrl}/session/clients/${sessionId}`).subscribe(response => {
+        this.ktSessionDetails = response;
+      }, error => {
+        alert('No clients found for this session');
+        console.error(error);
+      });
+    }
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
