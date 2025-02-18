@@ -1,3 +1,17 @@
+2.>---Get Client by ID
+Endpoint: GET http://localhost:9081/clients/CID-0001
+
+3.>----Get All Clients
+Endpoint: GET http://localhost:9081/clients/all
+
+
+
+
+
+
+
+
+
 <div class="row">
     <div class="col-12">
         <!-- Loading State -->
