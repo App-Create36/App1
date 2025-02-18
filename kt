@@ -1,3 +1,102 @@
+// import { NgModule } from '@angular/core';
+// import { BrowserModule } from '@angular/platform-browser';
+
+// import { AppRoutingModule } from './app-routing.module';
+// import { AppComponent } from './app.component';
+// import { LoginComponent } from './pages/login/login.component';
+// import { LayoutComponent } from './pages/layout/layout.component';
+// import { UserListComponent } from './pages/user-list/user-list.component';
+// import { CreateClientComponent } from './pages/create-client/create-client.component';
+// import { HttpClient, provideHttpClient} from '@angular/common/http';
+// @NgModule({
+//   declarations: [
+//     AppComponent,
+   
+   
+//     UserListComponent,
+//     CreateClientComponent
+//   ],
+//   imports: [
+//     BrowserModule,
+//     LoginComponent,
+//     AppRoutingModule,
+    
+//   ],
+//   providers: [
+//     provideHttpClient()
+//   ],
+//   bootstrap: [AppComponent]
+// })
+// export class AppModule { }
+
+
+
+
+import { NgModule } from '@angular/core';
+import { BrowserModule } from '@angular/platform-browser';
+import { FormsModule } from '@angular/forms';
+//import { HttpClientModule } from '@angular/common/http';
+import { RouterModule, Routes } from '@angular/router';
+import { AppRoutingModule } from './app-routing.module';
+import { AppComponent } from './app.component';
+import { LoginComponent } from './pages/login/login.component';
+import { LayoutComponent } from './pages/layout/layout.component';
+import { UserListComponent } from './pages/user-list/user-list.component';
+import { CreateClientComponent } from './pages/create-client/create-client.component';
+import { HttpClient, provideHttpClient} from '@angular/common/http';
+import { VdiComponent } from './pages/vdi/vdi.component';
+import { KtSessionComponent } from './pages/kt-session/kt-session.component';
+
+
+
+const routes: Routes = [
+  { path: 'create-client', component: CreateClientComponent },
+  { path: '', redirectTo: '/create-client', pathMatch: 'full' }
+];
+
+@NgModule({
+  declarations: [
+    AppComponent,
+   
+   
+    UserListComponent,
+    CreateClientComponent,
+     
+    KtSessionComponent
+    
+  ],
+  imports: [
+    BrowserModule,
+    LoginComponent,
+    AppRoutingModule,
+    FormsModule,
+   
+    VdiComponent,
+    
+    RouterModule.forRoot(routes)
+    
+  ],
+  providers: [
+    provideHttpClient()
+  ],
+  bootstrap: [AppComponent]
+})
+export class AppModule { }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 X [ERROR] TS-996008: Component KtSessionComponent is standalone, and cannot be declared in an NgModule. Did you mean to import it instead? [plugin angular-compiler]    
 
     src/app/app.module.ts:65:4:
