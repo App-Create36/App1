@@ -1,4 +1,44 @@
-It looks like your Angular `HttpClient` requests are not working correctly. Let's debug this step by step:
+3.> VDI-SERVICE:
+---------------------------
+1.>Allocate VDI:-
+
+http://localhost:9082/vdis/allocate post
+{
+    "clientId": "CID-0004",  // Assume this client ID does not exist
+    "projectName": "Project A",
+    "vdiType": "Type A",
+    "softwareStack": "{\"software\": [\"Example Software\"]}",
+    "allocationDate": "2023-04-01T10:00:00",
+    "status": "ACTIVE"
+}
+2.> GET ALL VDI Allocations
+http://localhost:9082/vdis/all get
+3.> GET VDI By allocation ID
+http://localhost:9082/vdis/1 - get - allocation id
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ---
 
