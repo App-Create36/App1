@@ -1,0 +1,210 @@
+<form #vdiForm="ngForm" (ngSubmit)="onSubmit()" class="vdi-form">
+  <div class="form-group">
+    <label for="clientId">Client ID</label>
+    <input type="text" id="clientId" name="clientId" class="form-control" [(ngModel)]="vdiObj.clientId"
+      required #clientId="ngModel">
+    <span class="error" *ngIf="clientId.invalid && clientId.touched">Client ID is required</span>
+  </div>
+
+  <div class="form-group">
+    <label for="projectName">Project Name</label>
+    <input type="text" id="projectName" name="projectName" class="form-control" [(ngModel)]="vdiObj.projectName"
+      required #projectName="ngModel">
+    <span class="error" *ngIf="projectName.invalid && projectName.touched">Project Name is required</span>
+  </div>
+
+  <div class="form-group">
+    <label for="vdiType">VDI Type</label>
+    <select id="vdiType" name="vdiType" class="form-control" [(ngModel)]="vdiObj.vdiType" required #vdiType="ngModel">
+      <option value="" disabled selected>Select VDI Type</option>
+      <option value="Type A">Type A</option>
+      <option value="Type B">Type B</option>
+    </select>
+    <span class="error" *ngIf="vdiType.invalid && vdiType.touched">VDI Type is required</span>
+  </div>
+
+  <div class="form-group">
+    <label for="softwareStack">Software Stack</label>
+    <input type="text" id="softwareStack" name="softwareStack" class="form-control" [(ngModel)]="softwareInput"
+      required #softwareStack="ngModel">
+    <span class="error" *ngIf="softwareStack.invalid && softwareStack.touched">Software Stack is required</span>
+  </div>
+
+  <div class="form-group">
+    <label for="allocationDate">Allocation Date</label>
+    <input type="datetime-local" id="allocationDate" name="allocationDate" class="form-control"
+      [(ngModel)]="vdiObj.allocationDate" required #allocationDate="ngModel">
+    <span class="error" *ngIf="allocationDate.invalid && allocationDate.touched">Allocation Date is required</span>
+  </div>
+
+  <div class="form-group">
+    <label for="status">Status</label>
+    <select id="status" name="status" class="form-control" [(ngModel)]="vdiObj.status" required #status="ngModel">
+      <option value="" disabled selected>Select Status</option>
+      <option value="ACTIVE">ACTIVE</option>
+      <option value="INACTIVE">INACTIVE</option>
+    </select>
+    <span class="error" *ngIf="status.invalid && status.touched">Status is required</span>
+  </div>
+
+  <div class="form-buttons">
+    <button type="submit" [disabled]="vdiForm.invalid" class="submit-button">Allocate VDI</button>
+  </div>
+</form>
+
+<div *ngIf="responseMessage" class="response-message">{{ responseMessage }}</div>
+
+
+
+
+
+
+
+
+
+
+
+
+import { Component } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+
+@Component({
+  selector: 'app-vdi',
+  templateUrl: './vdi.component.html',
+  styleUrls: ['./vdi.component.css']
+})
+export class VdiComponent {
+  vdiObj = {
+    clientId: '',
+    projectName: '',
+    vdiType: '',
+    softwareStack: '',
+    allocationDate: '',
+    status: ''
+  };
+
+  softwareInput = ''; 
+  responseMessage = '';
+
+  constructor(private http: HttpClient) {}
+
+  onSubmit() {
+    this.vdiObj.softwareStack = JSON.stringify({ software: [this.softwareInput] });
+
+    this.http.post('http://localhost:9082/vdis/allocate', this.vdiObj).subscribe(
+      response => {
+        this.responseMessage = 'VDI allocated successfully!';
+      },
+      error => {
+        this.responseMessage = 'Error allocating VDI!';
+      }
+    );
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+.vdi-form {
+  max-width: 600px;
+  margin: auto;
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+label {
+  font-weight: bold;
+  display: block;
+  margin-bottom: 5px;
+}
+
+input, select {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+button {
+  width: 100%;
+  padding: 10px;
+  background-color: #003366;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #002244;
+}
+
+.error {
+  color: red;
+  font-size: 12px;
+}
+
+.response-message {
+  text-align: center;
+  font-weight: bold;
+  margin-top: 15px;
+}
+
+
+
+
+
+
+
+
+
+
+
+import { NgModule } from '@angular/core';
+import { BrowserModule } from '@angular/platform-browser';
+import { FormsModule } from '@angular/forms';
+import { HttpClientModule } from '@angular/common/http';
+
+import { AppComponent } from './app.component';
+import { VdiComponent } from './vdi/vdi.component';
+
+@NgModule({
+  declarations: [
+    AppComponent,
+    VdiComponent
+  ],
+  imports: [
+    BrowserModule,
+    FormsModule,
+    HttpClientModule
+  ],
+  providers: [],
+  bootstrap: [AppComponent]
+})
+export class AppModule { }
+
+
+
+
+
+
+
+
+
+
+
