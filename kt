@@ -1,3 +1,93 @@
+
+Can't bind to 'ngModel' since it isn't a known property of 'input'.ngtsc(-998002)
+kt-session.component.ts(5, 70): Error occurs in the template of component KtSessionComponent.
+
+<p>kt-session works!</p>
+<div class="container">
+    <h2>KT Session Management</h2>
+    <nav class="navbar">
+      <button class="btn btn-primary" (click)="postKtSession()">Create KT Session</button>
+      <button class="btn btn-secondary" (click)="getKtSessionById()">Get KT Session by ID</button>
+      <button class="btn btn-info" (click)="getKtSessionByClientId()">Get KT Sessions by Client ID</button>
+      <button class="btn btn-success" (click)="getClientsBySessionId()">Get Clients by Session ID</button>
+    </nav>
+  
+    <!-- Form to Post KT Session -->
+    <form #ktForm="ngForm" (ngSubmit)="submitKtSession()" class="kt-form">
+      <div class="form-group">
+        <label>Session Name:</label>
+        <input type="text" [(ngModel)]="ktSession.sessionName" name="sessionName" class="form-control" required />
+      </div>
+      <div class="form-group">
+        <label>Session Date:</label>
+        <input type="date" [(ngModel)]="ktSession.sessionDate" name="sessionDate" class="form-control" required />
+      </div>
+      <div class="form-group">
+        <label>Session Time:</label>
+        <input type="time" [(ngModel)]="ktSession.sessionTime" name="sessionTime" class="form-control" required />
+      </div>
+      <div class="form-group">
+        <label>Mentor Name:</label>
+        <input type="text" [(ngModel)]="ktSession.mentorName" name="mentorName" class="form-control" required />
+      </div>
+      <div class="form-group">
+        <label>Organizer ID:</label>
+        <input type="text" [(ngModel)]="ktSession.organizerId" name="organizerId" class="form-control" required />
+      </div>
+      <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+  
+    <!-- Table to Display KT Session Details -->
+    <table class="table table-striped" *ngIf="ktSessionDetails">
+      <thead>
+        <tr>
+          <th>Session ID</th>
+          <th>Session Name</th>
+          <th>Date</th>
+          <th>Time</th>
+          <th>Mentor</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>{{ktSessionDetails.sessionId}}</td>
+          <td>{{ktSessionDetails.sessionName}}</td>
+          <td>{{ktSessionDetails.sessionDate}}</td>
+          <td>{{ktSessionDetails.sessionTime}}</td>
+          <td>{{ktSessionDetails.mentorName}}</td>
+          <td>{{ktSessionDetails.status}}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+
+
+
+
+
+
+
+
+
+
+
+
 // import { NgModule } from '@angular/core';
 // import { BrowserModule } from '@angular/platform-browser';
 
