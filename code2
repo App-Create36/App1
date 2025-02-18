@@ -1,3 +1,169 @@
+It looks like your Angular `HttpClient` requests are not working correctly. Let's debug this step by step:
+
+---
+
+### 1. **Check Console for Errors**
+- Open **Developer Tools** (F12) in your browser.
+- Go to the **Console** tab and check for any errors.
+- Also, check the **Network** tab to see if requests are being sent to the backend.
+
+---
+
+### 2. **Verify CORS Issues**
+If your backend (Spring Boot) is running on `http://localhost:9083` and Angular is running on `http://localhost:4200`, the browser might block requests due to **CORS (Cross-Origin Resource Sharing)**.
+
+#### **Solution (Enable CORS in Spring Boot)**
+Add this in your Spring Boot application's `WebConfig`:
+
+```java
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+@Configuration
+public class WebConfig {
+
+    @Bean
+    public WebMvcConfigurer corsConfigurer() {
+        return new WebMvcConfigurer() {
+            @Override
+            public void addCorsMappings(CorsRegistry registry) {
+                registry.addMapping("/api/**")
+                        .allowedOrigins("http://localhost:4200")
+                        .allowedMethods("GET", "POST", "PUT", "DELETE")
+                        .allowCredentials(true);
+            }
+        };
+    }
+}
+```
+
+---
+
+### 3. **Ensure HttpClientModule is Imported**
+In `app.module.ts` or if using **standalone components**, ensure `HttpClientModule` is included:
+
+```typescript
+import { HttpClientModule } from '@angular/common/http';
+
+@NgModule({
+  imports: [
+    HttpClientModule
+  ]
+})
+export class AppModule { }
+```
+
+If using **standalone components**, modify `KtSessionComponent`:
+
+```typescript
+import { HttpClientModule } from '@angular/common/http';
+
+@Component({
+  selector: 'app-kt-session',
+  standalone: true,
+  templateUrl: './kt-session.component.html',
+  styleUrls: ['./kt-session.component.css'],
+  imports: [FormsModule, CommonModule, HttpClientModule]
+})
+export class KtSessionComponent {
+```
+
+---
+
+### 4. **Check if Backend API is Running**
+- Open **Postman** or **cURL** and try making a direct request to:
+  ```
+  GET http://localhost:9083/api/kt-sessions
+  ```
+- If the request fails, the backend might not be running or the endpoint is incorrect.
+
+---
+
+### 5. **Fix Subscribe Method**
+Your `subscribe` method might not be catching errors properly. Try this:
+
+```typescript
+submitKtSession() {
+  this.http.post(this.apiUrl, this.ktSession).subscribe({
+    next: response => {
+      alert('KT session scheduled');
+      this.ktSessionDetails = response;
+    },
+    error: error => {
+      alert('Error scheduling KT session: ' + error.message);
+      console.error(error);
+    }
+  });
+}
+```
+
+---
+
+### 6. **Debug the API Calls**
+Modify `getKtSessionById()` to check if the response is correct:
+
+```typescript
+getKtSessionById() {
+  const sessionId = prompt('Enter Session ID:');
+  if (sessionId) {
+    this.http.get(`${this.apiUrl}/${sessionId}`).subscribe({
+      next: response => {
+        console.log('Session data:', response);
+        this.ktSessionDetails = response;
+      },
+      error: error => {
+        alert('Session not found: ' + error.message);
+        console.error(error);
+      }
+    });
+  }
+}
+```
+
+---
+
+### **Final Checks**
+1. **Confirm Backend is Running:** `http://localhost:9083/api/kt-sessions`
+2. **Check CORS Issues (Add CORS Config)**
+3. **Verify `HttpClientModule` is imported**
+4. **Use `subscribe({ next, error })` format**
+5. **Use Console Logs to Debug**
+
+Try these fixes and let me know what errors you still get. 🚀
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 <div class="row">
     <div class="col-12">
        <table class="table table-borderd">
