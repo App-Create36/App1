@@ -1,4 +1,356 @@
 
+
+
+
+X [ERROR] NG8002: Can't bind to 'ngModel' since it isn't a known property of 'input'. [plugin angular-compiler]
+
+    src/app/pages/kt-session/kt-session.component.html:15:27:
+      15 │ ...t type="text" [(ngModel)]="ktSession.sessionName" name="session...    
+         ╵                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  Error occurs in the template of component KtSessionComponent.
+
+    src/app/pages/kt-session/kt-session.component.ts:7:15:
+      7 │   templateUrl: './kt-session.component.html',
+        ╵                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+X [ERROR] NG8002: Can't bind to 'ngModel' since it isn't a known property of 'input'. [plugin angular-compiler]
+
+    src/app/pages/kt-session/kt-session.component.html:19:27:
+      19 │ ...t type="date" [(ngModel)]="ktSession.sessionDate" name="session...    
+         ╵                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  Error occurs in the template of component KtSessionComponent.
+
+    src/app/pages/kt-session/kt-session.component.ts:7:15:
+      7 │   templateUrl: './kt-session.component.html',
+        ╵                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+X [ERROR] NG8002: Can't bind to 'ngModel' since it isn't a known property of 'input'. [plugin angular-compiler]
+
+    src/app/pages/kt-session/kt-session.component.html:23:27:
+      23 │ ...t type="time" [(ngModel)]="ktSession.sessionTime" name="session...    
+         ╵                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  Error occurs in the template of component KtSessionComponent.
+
+    src/app/pages/kt-session/kt-session.component.ts:7:15:
+      7 │   templateUrl: './kt-session.component.html',
+        ╵                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+X [ERROR] NG8002: Can't bind to 'ngModel' since it isn't a known property of 'input'. [plugin angular-compiler]
+
+    src/app/pages/kt-session/kt-session.component.html:27:27:
+      27 │ ...ut type="text" [(ngModel)]="ktSession.mentorName" name="mentorN...    
+         ╵                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  Error occurs in the template of component KtSessionComponent.
+
+    src/app/pages/kt-session/kt-session.component.ts:7:15:
+      7 │   templateUrl: './kt-session.component.html',
+        ╵                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+X [ERROR] NG8002: Can't bind to 'ngModel' since it isn't a known property of 'input'. [plugin angular-compiler]
+
+    src/app/pages/kt-session/kt-session.component.html:31:27:
+      31 │ ...t type="text" [(ngModel)]="ktSession.organizerId" name="organiz...    
+         ╵                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  Error occurs in the template of component KtSessionComponent.
+
+    src/app/pages/kt-session/kt-session.component.ts:7:15:
+      7 │   templateUrl: './kt-session.component.html',
+        ╵                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+Application bundle generation failed. [0.236 seconds]
+
+▲ [WARNING] NG8103: The `*ngIf` directive was used in the template, but neither the `NgIf` directive nor the `CommonModule` was imported. Use Angular's built-in control flow @if or make sure that either the `NgIf` directive or the `CommonModule` is included in the `@Component.imports` array of this component. [plugin angular-compiler]
+
+    src/app/pages/kt-session/kt-session.component.html:37:40:
+      37 │     <table class="table table-striped" *ngIf="ktSessionDetails">
+         ╵                                         ~~~~
+
+  Error occurs in the template of component KtSessionComponent.
+
+    src/app/pages/kt-session/kt-session.component.ts:7:15:
+      7 │   templateUrl: './kt-session.component.html',
+        ╵                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+X [ERROR] NG8003: No directive found with exportAs 'ngForm'. [plugin angular-compiler]
+
+    src/app/pages/kt-session/kt-session.component.html:12:19:
+      12 │     <form #ktForm="ngForm" (ngSubmit)="submitKtSession()" class="k...    
+         ╵                    ~~~~~~
+
+  Error occurs in the template of component KtSessionComponent.
+
+    src/app/pages/kt-session/kt-session.component.ts:7:15:
+      7 │   templateUrl: './kt-session.component.html',
+        ╵                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+X [ERROR] NG8002: Can't bind to 'ngModel' since it isn't a known property of 'input'. [plugin angular-compiler]
+
+    src/app/pages/kt-session/kt-session.component.html:15:27:
+      15 │ ...t type="text" [(ngModel)]="ktSession.sessionName" name="session...    
+         ╵                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  Error occurs in the template of component KtSessionComponent.
+
+    src/app/pages/kt-session/kt-session.component.ts:7:15:
+      7 │   templateUrl: './kt-session.component.html',
+        ╵                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+X [ERROR] NG8002: Can't bind to 'ngModel' since it isn't a known property of 'input'. [plugin angular-compiler]
+
+    src/app/pages/kt-session/kt-session.component.html:19:27:
+      19 │ ...t type="date" [(ngModel)]="ktSession.sessionDate" name="session...    
+         ╵                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  Error occurs in the template of component KtSessionComponent.
+
+    src/app/pages/kt-session/kt-session.component.ts:7:15:
+      7 │   templateUrl: './kt-session.component.html',
+        ╵                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+X [ERROR] NG8002: Can't bind to 'ngModel' since it isn't a known property of 'input'. [plugin angular-compiler]
+
+    src/app/pages/kt-session/kt-session.component.html:23:27:
+      23 │ ...t type="time" [(ngModel)]="ktSession.sessionTime" name="session...    
+         ╵                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  Error occurs in the template of component KtSessionComponent.
+
+    src/app/pages/kt-session/kt-session.component.ts:7:15:
+      7 │   templateUrl: './kt-session.component.html',
+        ╵                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+X [ERROR] NG8002: Can't bind to 'ngModel' since it isn't a known property of 'input'. [plugin angular-compiler]
+
+    src/app/pages/kt-session/kt-session.component.html:27:27:
+      27 │ ...ut type="text" [(ngModel)]="ktSession.mentorName" name="mentorN...    
+         ╵                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  Error occurs in the template of component KtSessionComponent.
+
+    src/app/pages/kt-session/kt-session.component.ts:7:15:
+      7 │   templateUrl: './kt-session.component.html',
+        ╵                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+X [ERROR] NG8002: Can't bind to 'ngModel' since it isn't a known property of 'input'. [plugin angular-compiler]
+
+    src/app/pages/kt-session/kt-session.component.html:31:27:
+      31 │ ...t type="text" [(ngModel)]="ktSession.organizerId" name="organiz...    
+         ╵                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  Error occurs in the template of component KtSessionComponent.
+
+    src/app/pages/kt-session/kt-session.component.ts:7:15:
+      7 │   templateUrl: './kt-session.component.html',
+        ╵                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+Application bundle generation failed. [0.448 seconds]
+
+▲ [WARNING] NG8103: The `*ngIf` directive was used in the template, but neither the `NgIf` directive nor the `CommonModule` was imported. Use Angular's built-in control flow @if or make sure that either the `NgIf` directive or the `CommonModule` is included in the `@Component.imports` array of this component. [plugin angular-compiler]
+
+    src/app/pages/kt-session/kt-session.component.html:37:40:
+      37 │     <table class="table table-striped" *ngIf="ktSessionDetails">
+         ╵                                         ~~~~
+
+  Error occurs in the template of component KtSessionComponent.
+
+    src/app/pages/kt-session/kt-session.component.ts:7:15:
+      7 │   templateUrl: './kt-session.component.html',
+        ╵                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+X [ERROR] NG8003: No directive found with exportAs 'ngForm'. [plugin angular-compiler]
+
+    src/app/pages/kt-session/kt-session.component.html:12:19:
+      12 │     <form #ktForm="ngForm" (ngSubmit)="submitKtSession()" class="k...    
+         ╵                    ~~~~~~
+
+  Error occurs in the template of component KtSessionComponent.
+
+    src/app/pages/kt-session/kt-session.component.ts:7:15:
+      7 │   templateUrl: './kt-session.component.html',
+        ╵                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+X [ERROR] NG8002: Can't bind to 'ngModel' since it isn't a known property of 'input'. [plugin angular-compiler]
+
+    src/app/pages/kt-session/kt-session.component.html:15:27:
+      15 │ ...t type="text" [(ngModel)]="ktSession.sessionName" name="session...    
+         ╵                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  Error occurs in the template of component KtSessionComponent.
+
+    src/app/pages/kt-session/kt-session.component.ts:7:15:
+      7 │   templateUrl: './kt-session.component.html',
+        ╵                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+X [ERROR] NG8002: Can't bind to 'ngModel' since it isn't a known property of 'input'. [plugin angular-compiler]
+
+    src/app/pages/kt-session/kt-session.component.html:19:27:
+      19 │ ...t type="date" [(ngModel)]="ktSession.sessionDate" name="session...    
+         ╵                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  Error occurs in the template of component KtSessionComponent.
+
+    src/app/pages/kt-session/kt-session.component.ts:7:15:
+      7 │   templateUrl: './kt-session.component.html',
+        ╵                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+X [ERROR] NG8002: Can't bind to 'ngModel' since it isn't a known property of 'input'. [plugin angular-compiler]
+
+    src/app/pages/kt-session/kt-session.component.html:23:27:
+      23 │ ...t type="time" [(ngModel)]="ktSession.sessionTime" name="session...    
+         ╵                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  Error occurs in the template of component KtSessionComponent.
+
+    src/app/pages/kt-session/kt-session.component.ts:7:15:
+      7 │   templateUrl: './kt-session.component.html',
+        ╵                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+X [ERROR] NG8002: Can't bind to 'ngModel' since it isn't a known property of 'input'. [plugin angular-compiler]
+
+    src/app/pages/kt-session/kt-session.component.html:27:27:
+      27 │ ...ut type="text" [(ngModel)]="ktSession.mentorName" name="mentorN...    
+         ╵                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  Error occurs in the template of component KtSessionComponent.
+
+    src/app/pages/kt-session/kt-session.component.ts:7:15:
+      7 │   templateUrl: './kt-session.component.html',
+        ╵                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+X [ERROR] NG8002: Can't bind to 'ngModel' since it isn't a known property of 'input'. [plugin angular-compiler]
+
+    src/app/pages/kt-session/kt-session.component.html:31:27:
+      31 │ ...t type="text" [(ngModel)]="ktSession.organizerId" name="organiz...    
+         ╵                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  Error occurs in the template of component KtSessionComponent.
+
+. [plugin angular-compiler]
+
+    src/app/pages/kt-session/kt-session.component.html:31:27:
+      31 │ ...t type="text" [(ngModel)]="ktSession.organizerId" name="organiz...    
+         ╵                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  Error occurs in the template of component KtSessionComponent.
+
+    src/app/pages/kt-session/kt-session.component.html:31:27:
+      31 │ ...t type="text" [(ngModel)]="ktSession.organizerId" name="organiz...    
+         ╵                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  Error occurs in the template of component KtSessionComponent.
+
+
+  Error occurs in the template of component KtSessionComponent.
+
+    src/app/pages/kt-session/kt-session.component.ts:7:15:
+      7 │   templateUrl: './kt-session.component.html',
+        ╵                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+Initial chunk files | Names         |  Raw size
+polyfills.js        | polyfills     |  90.20 kB | 
+main.js             | main          |  79.40 kB | 
+styles.css          | styles        |  95 bytes | 
+
+                    | Initial total | 169.70 kB
+
+Application bundle generation complete. [0.366 seconds]
+
+▲ [WARNING] NG8103: The `*ngIf` directive was used in the template, but neither the `NgIf` directive nor the `CommonModule` was imported. Use Angular's built-in control flow @if or make sure that either the `NgIf` directive or the `CommonModule` is included in the `@Component.imports` array of this component. [plugin angular-compiler]
+
+    src/app/pages/kt-session/kt-session.component.html:37:40:
+      37 │     <table class="table table-striped" *ngIf="ktSessionDetails">
+         ╵                                         ~~~~
+
+  Error occurs in the template of component KtSessionComponent.
+
+    src/app/pages/kt-session/kt-session.component.ts:8:15:
+      8 │   templateUrl: './kt-session.component.html',
+        ╵                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+Page reload sent to client(s).
+Initial chunk files | Names         |  Raw size
+polyfills.js        | polyfills     |  90.20 kB | 
+main.js             | main          |  79.40 kB | 
+styles.css          | styles        |  95 bytes | 
+
+                    | Initial total | 169.70 kB
+
+Application bundle generation complete. [0.350 seconds]
+
+▲ [WARNING] NG8103: The `*ngIf` directive was used in the template, but neither the `NgIf` directive nor the `CommonModule` was imported. Use Angular's built-in control flow @if or make sure that either the `NgIf` directive or the `CommonModule` is included in the `@Component.imports` array of this component. [plugin angular-compiler]
+
+    src/app/pages/kt-session/kt-session.component.html:37:40:
+      37 │     <table class="table table-striped" *ngIf="ktSessionDetails">
+         ╵                                         ~~~~
+
+  Error occurs in the template of component KtSessionComponent.
+
+    src/app/pages/kt-session/kt-session.component.ts:8:15:
+      8 │   templateUrl: './kt-session.component.html',
+        ╵                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+Component update sent to client(s).
+
+No output file changes.
+
+Application bundle generation complete. [0.353 seconds]
+
+▲ [WARNING] NG8103: The `*ngIf` directive was used in the template, but neither the `NgIf` directive nor the `CommonModule` was imported. Use Angular's built-in control flow @if or make sure that either the `NgIf` directive or the `CommonModule` is included in the `@Component.imports` array of this component. [plugin angular-compiler]
+
+    src/app/pages/kt-session/kt-session.component.html:37:40:
+      37 │     <table class="table table-striped" *ngIf="ktSessionDetails">
+         ╵                                         ~~~~
+
+  Error occurs in the template of component KtSessionComponent.
+
+    src/app/pages/kt-session/kt-session.component.ts:8:15:
+      8 │   templateUrl: './kt-session.component.html',
+        ╵                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 Can't bind to 'ngModel' since it isn't a known property of 'input'.ngtsc(-998002)
 kt-session.component.ts(5, 70): Error occurs in the template of component KtSessionComponent.
 
