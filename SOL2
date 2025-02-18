@@ -1,3 +1,62 @@
+
+import { NgModule } from '@angular/core';
+import { RouterModule, Routes } from '@angular/router';
+import { LoginComponent } from './pages/login/login.component';
+import { LayoutComponent } from './pages/layout/layout.component';
+import { UserListComponent } from './pages/user-list/user-list.component';
+import { CreateClientComponent } from './pages/create-client/create-client.component';
+
+export const routes: Routes = [
+  {
+    path:'',
+    redirectTo:'login',
+    pathMatch:'full'
+  },
+  {
+    path:'login',
+    component:LoginComponent
+  },
+  {
+    path:'',
+    component:LayoutComponent,
+    children:[
+      {
+        path:'user-list',
+        component:UserListComponent
+      },
+      {
+        path:'createUser',
+        component:CreateClientComponent
+      }
+    ]
+  }
+];
+
+@NgModule({
+  imports: [RouterModule.forRoot(routes)],
+  exports: [RouterModule]
+})
+export class AppRoutingModule { }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 <p>vdi works!</p>
 <head>
     <title>Bootstrap Example</title>
