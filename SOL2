@@ -1,3 +1,20 @@
+
+X [ERROR] TS-996008: Component VdiComponent is standalone, and cannot be declared in an NgModule. Did you mean to import it instead? [plugin angular-compiler]
+
+    src/app/app.module.ts:63:4:
+      63 │     VdiComponent
+
+
+
+
+
+
+
+
+
+
+
+
 <form #vdiForm="ngForm" (ngSubmit)="onSubmit()" class="vdi-form">
   <div class="form-group">
     <label for="clientId">Client ID</label>
