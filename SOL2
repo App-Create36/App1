@@ -1,8 +1,29 @@
 
-X [ERROR] TS-996008: Component VdiComponent is standalone, and cannot be declared in an NgModule. Did you mean to import it instead? [plugin angular-compiler]
 
-    src/app/app.module.ts:63:4:
-      63 │     VdiComponent
+  Error occurs in the template of component VdiComphe `NgIf` directive or the `CommonModule` is included in the `@Component.imports` array of this component. [plugin angular-compiler]
+
+    src/app/pages/vdi/vdi.component.html:80:8:     
+      80 │   <div *ngIf="responseMessage" class="response-message">{{ respons...
+         ╵         ~~~~
+
+  Error occurs in the template of component VdiComp
+
+    src/app/pages/vdi/vdi.component.html:80:8:     
+      80 │   <div *ngIf="responseMessage" class="response-message">{{ respons...
+         ╵         ~~~~
+
+  Error occurs in the template of component VdiCompsponse-message">{{ respons...
+         ╵         ~~~~
+
+  Error occurs in the template of component VdiComp
+
+  Error occurs in the template of component VdiComp  Error occurs in the template of component VdiComponent.
+
+    src/app/pages/vdi/vdi.component.ts:9:15:       
+    src/app/pages/vdi/vdi.component.ts:9:15:       
+      9 │   templateUrl: './vdi.component.html',   
+        ╵                ~~~~~~~~~~~~~~~~~~~~~~    
+
 
 
 
