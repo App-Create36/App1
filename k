@@ -1,3 +1,47 @@
+{
+    "sessionId": 1,
+    "sessionName": "Java Basics Training",
+    "sessionDate": "2025-03-20",
+    "sessionTime": "10:00:00",
+    "clientId": "CID-0003",
+    "mentorName": "John Doe",
+    "status": "SCHEDULED",
+    "progressPercentage": 0,
+    "participants": [
+        {
+            "sessionId": 1,
+            "clientId": "CID-0002",
+            "attendanceStatus": "PENDING"
+        }
+    ],
+    "feedback": [],
+    "error": null
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 1.>--- Create KT Session with Participants
 Request Type: POST URL: http://localhost:9083/api/kt-sessions Headers:
 
