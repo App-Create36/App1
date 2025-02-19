@@ -1,0 +1,471 @@
+
+   form {
+    display: flex;
+    flex-direction: column;
+    max-width: 400px;
+    margin: auto;
+  }
+  
+  label {
+    margin-top: 10px;
+  }
+  
+  input, button {
+    margin-top: 5px;
+  }
+  
+  button {
+    margin-top: 20px;
+  }
+
+
+
+
+
+<form #clientForm="ngForm" (ngSubmit)="onSubmit()" class="client-form">
+  <div class="form-row">
+    <div class="form-group">
+      <label for="employeeName">Employee Name</label>
+      <input type="text" id="employeeName" name="employeeName" class="form-control" [(ngModel)]="clientObj.employeeName" 
+        required #employeeName="ngModel">
+      <span class="error" *ngIf="employeeName.invalid && employeeName.touched">Employee Name is required</span>
+    </div>
+
+    <div class="form-group">
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" class="form-control" [(ngModel)]="clientObj.email" 
+        required email #email="ngModel">
+      <span class="error" *ngIf="email.invalid && email.touched">Enter a valid email</span>
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="form-group">
+      <label for="phone">Phone Number</label>
+      <input type="tel" id="phone" name="phone" class="form-control" [(ngModel)]="clientObj.phoneNumber" 
+        required pattern="^\d{10}$" #phone="ngModel">
+      <span class="error" *ngIf="phone.invalid && phone.touched">Enter a valid 10-digit phone number</span>
+    </div>
+
+  
+    <div class="form-group">
+      <label for="gender">Gender</label>
+      <select id="gender" name="employeeGender" class="form-control" [(ngModel)]="clientObj.employeeGender" required #gender="ngModel">
+        <option value="" disabled selected>Select Gender</option>
+        <option value="Male">Male</option>
+        <option value="Female">Female</option>
+      </select>
+      <span class="error" *ngIf="gender.invalid && gender.touched">Gender is required</span>
+    </div>
+  </div>
+    <div class="form-row">
+    <div class="form-group">
+      <label for="department">Department</label>
+      <select id="department" name="department" class="form-control" [(ngModel)]="clientObj.department" required #department="ngModel">
+        <option value="" disabled selected>Select Department</option>
+        <option value="Business">Business</option>
+        <option value="Development">Development</option>
+      </select>
+      <span class="error" *ngIf="department.invalid && department.touched">Department is required</span>
+    </div>
+ 
+
+  
+    <div class="form-group">
+      <label for="role">Role</label>
+      <select id="role" name="role" class="form-control" [(ngModel)]="clientObj.role" required #role="ngModel">
+        <option value="" disabled selected>Select Role</option>
+        <option value="Trainer">Trainer</option>
+        <option value="Developer">Developer</option>
+      </select>
+      <span class="error" *ngIf="role.invalid && role.touched">Role is required</span>
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label for="startDate">Start Date</label>
+      <input type="date" id="startDate" name="startDate" class="form-control" [(ngModel)]="clientObj.dateOfJoining" required #startDate="ngModel">
+      <span class="error" *ngIf="startDate.invalid && startDate.touched">Start date is required</span>
+    </div>
+ </div>
+ <div class="form-row">
+  <div class="form-buttons">
+    <button type="button" (click)="goBack()" class="back-button">Back</button>
+    <button type="submit" [disabled]="clientForm.invalid" class="submit-button">Create Client ID</button>
+  </div>
+</div>
+
+</form>
+
+
+
+
+
+
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+
+import { CreateClientComponent } from './create-client.component';
+
+describe('CreateClientComponent', () => {
+  let component: CreateClientComponent;
+  let fixture: ComponentFixture<CreateClientComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      declarations: [CreateClientComponent]
+    })
+    .compileComponents();
+
+    fixture = TestBed.createComponent(CreateClientComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it('should create', () => {
+    expect(component).toBeTruthy();
+  });
+});
+
+
+
+import { Component } from '@angular/core';
+//import { ClientService} from '../../services/client.service';
+import { UserService } from '../../service/user.service';
+import { Router } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
+@Component({
+  selector: 'app-create-client',
+  standalone: false,
+  templateUrl: './create-client.component.html',
+  styleUrl: './create-client.component.css'
+})
+export class CreateClientComponent {
+  clientObj: any = {
+    employeeName: '',
+    employeeGender: '',
+    dateOfJoining: '',
+    role: '',
+    phoneNumber: '',
+    email: '',
+    status: 'ACTIVE'
+  };
+//}
+
+// import { Component } from '@angular/core';
+// import { Employee } from './employee';
+// import { EmployeeService } from './employee.service';
+// import { Router } from '@angular/router';
+
+// @Component({
+//   selector: 'app-add-employee',
+//   standalone: false,
+//   templateUrl: './add-employee.component.html',
+//   styleUrl: './add-employee.component.css',
+// })
+// export class AddEmployeeComponent {
+  // constructor(
+  //   private userService: UserService, private router: Router) {}
+    constructor(private http: HttpClient) {}
+  onSubmit() {
+    this.http.post('http://localhost:8089/clients/register', this.clientObj).subscribe(response => {
+      alert('Client ID Created Successfully!');
+    }, error => {
+      alert('Error creating client ID');
+    });
+  }
+
+  goBack() {
+    window.history.back();
+  }
+}
+  
+
+
+
+
+
+
+
+
+
+import { TestBed } from '@angular/core/testing';
+
+import { UserService } from './user.service';
+
+describe('UserService', () => {
+  let service: UserService;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({});
+    service = TestBed.inject(UserService);
+  });
+
+  it('should be created', () => {
+    expect(service).toBeTruthy();
+  });
+});
+
+
+
+
+
+import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class UserService {
+
+  private loginUrl = "http://localhost:8089/api/auth/login";
+  private clientsUrl = "http://localhost:8089/clients/all";
+  private apiUrl = 'http://localhost:8089/clients/register';
+  constructor(private http: HttpClient) { }
+
+  onLogin(obj: any): Observable<any> {
+    return this.http.post(this.loginUrl, obj);
+  }
+
+  getClient(): Observable<any[]> {
+    return this.http.get<any[]>(this.clientsUrl);
+  }
+  registerClient(clientData: any): Observable<any> {
+    return this.http.post(this.apiUrl, clientData);
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+import { NgModule } from '@angular/core';
+import { RouterModule, Routes } from '@angular/router';
+import { LoginComponent } from './pages/login/login.component';
+import { LayoutComponent } from './pages/layout/layout.component';
+import { UserListComponent } from './pages/user-list/user-list.component';
+import { CreateClientComponent } from './pages/create-client/create-client.component';
+import { VdiComponent } from './pages/vdi/vdi.component';
+import { KtSessionComponent } from './pages/kt-session/kt-session.component';
+
+export const routes: Routes = [
+  
+  {
+    path:'',
+    redirectTo:'login',
+    pathMatch:'full'
+  },
+  {
+    path:'login',
+    component:LoginComponent
+  },
+  {
+    path:'',
+    component:LayoutComponent,
+    children:[
+      {
+        path:'user-list',
+        component:UserListComponent
+      },
+      {
+        path:'createUser',
+        component:CreateClientComponent
+      },
+      {
+        path:'vdi',
+        component:VdiComponent
+      },
+      {path:'kt-session',component:KtSessionComponent},
+  {path:'',redirectTo:'/kt-session',pathMatch:'full'},
+      
+    ]
+  }
+];
+
+@NgModule({
+  imports: [RouterModule.forRoot(routes)],
+  exports: [RouterModule]
+})
+export class AppRoutingModule { }
+
+
+
+
+
+
+
+  <router-outlet></router-outlet>
+
+
+
+import { TestBed } from '@angular/core/testing';
+import { RouterModule } from '@angular/router';
+import { AppComponent } from './app.component';
+
+describe('AppComponent', () => {
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [
+        RouterModule.forRoot([])
+      ],
+      declarations: [
+        AppComponent
+      ],
+    }).compileComponents();
+  });
+
+  it('should create the app', () => {
+    const fixture = TestBed.createComponent(AppComponent);
+    const app = fixture.componentInstance;
+    expect(app).toBeTruthy();
+  });
+
+  it(`should have as title 'resource-management'`, () => {
+    const fixture = TestBed.createComponent(AppComponent);
+    const app = fixture.componentInstance;
+    expect(app.title).toEqual('resource-management');
+  });
+
+  it('should render title', () => {
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('h1')?.textContent).toContain('Hello, resource-management');
+  });
+});
+
+
+
+
+
+
+import { Component } from '@angular/core';
+
+
+@Component({
+  selector: 'app-root',
+  standalone: false,
+  templateUrl: './app.component.html',
+  
+  styleUrl: './app.component.css'
+})
+export class AppComponent {
+  title = 'resource-management';
+}
+
+
+
+
+
+
+
+
+
+
+
+import { importProvidersFrom, NgModule } from '@angular/core';
+import { BrowserModule } from '@angular/platform-browser';
+import { FormsModule } from '@angular/forms';
+// import { HttpClientModule } from '@angular/common/http';
+import { RouterModule, Routes } from '@angular/router';
+import { AppRoutingModule } from './app-routing.module';
+import { AppComponent } from './app.component';
+import { LoginComponent } from './pages/login/login.component';
+import { LayoutComponent } from './pages/layout/layout.component';
+import { UserListComponent } from './pages/user-list/user-list.component';
+import { CreateClientComponent } from './pages/create-client/create-client.component';
+import { HttpClient, provideHttpClient} from '@angular/common/http';
+import { VdiComponent } from './pages/vdi/vdi.component';
+import { KtSessionComponent } from './pages/kt-session/kt-session.component';
+import { CommonModule } from '@angular/common';
+import { OffBoardingComponent } from './pages/off-boarding/off-boarding.component';
+
+
+
+const routes: Routes = [
+  { path: 'create-client', component: CreateClientComponent },
+  { path: '', redirectTo: '/create-client', pathMatch: 'full' }
+];
+
+@NgModule({
+  declarations: [
+    AppComponent,
+      
+    //KtSessionComponent,
+    UserListComponent,
+    CreateClientComponent,
+    OffBoardingComponent,
+     
+    
+  ],
+  imports: [
+    BrowserModule,
+    LoginComponent,
+    AppRoutingModule,
+    FormsModule,
+    CommonModule,
+    VdiComponent,
+    RouterModule.forRoot(routes)
+    
+  ],
+  providers: [
+    provideHttpClient()
+    
+  ],
+  bootstrap: [AppComponent]
+})
+export class AppModule { }
+
+
+
+
+
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>ResourceManagement</title>
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+</head>
+<body>
+  <app-root></app-root>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
+import { AppModule } from './app/app.module';
+
+platformBrowserDynamic().bootstrapModule(AppModule, {
+  ngZoneEventCoalescing: true,
+})
+  .catch(err => console.error(err));
+
+
+
+
+
+
+
+
+
