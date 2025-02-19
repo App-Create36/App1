@@ -1,4 +1,4 @@
-
+create-client.component.css
    form {
     display: flex;
     flex-direction: column;
@@ -21,7 +21,7 @@
 
 
 
-
+create-client.component.html
 <form #clientForm="ngForm" (ngSubmit)="onSubmit()" class="client-form">
   <div class="form-row">
     <div class="form-group">
@@ -101,7 +101,7 @@
 
 
 
-
+create-client.component.spec.ts
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { CreateClientComponent } from './create-client.component';
@@ -127,7 +127,7 @@ describe('CreateClientComponent', () => {
 });
 
 
-
+create-client.component.ts
 import { Component } from '@angular/core';
 //import { ClientService} from '../../services/client.service';
 import { UserService } from '../../service/user.service';
@@ -186,7 +186,7 @@ export class CreateClientComponent {
 
 
 
-
+user.service.spec.ts
 
 import { TestBed } from '@angular/core/testing';
 
@@ -208,7 +208,7 @@ describe('UserService', () => {
 
 
 
-
+user.service.ts
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
@@ -245,7 +245,7 @@ export class UserService {
 
 
 
-
+app-routing.modules.ts
 
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
@@ -301,11 +301,11 @@ export class AppRoutingModule { }
 
 
 
-
+app.component.html
   <router-outlet></router-outlet>
 
 
-
+app.component.spec.ts
 import { TestBed } from '@angular/core/testing';
 import { RouterModule } from '@angular/router';
 import { AppComponent } from './app.component';
@@ -346,7 +346,7 @@ describe('AppComponent', () => {
 
 
 
-
+app.component.ts
 import { Component } from '@angular/core';
 
 
@@ -370,7 +370,7 @@ export class AppComponent {
 
 
 
-
+app.module.ts
 import { importProvidersFrom, NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
@@ -428,7 +428,7 @@ export class AppModule { }
 
 
 
-
+index.html
 <!doctype html>
 <html lang="en">
 <head>
@@ -452,7 +452,7 @@ export class AppModule { }
 
 
 
-
+main.ts
 import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
 import { AppModule } from './app/app.module';
 
@@ -461,11 +461,998 @@ platformBrowserDynamic().bootstrapModule(AppModule, {
 })
   .catch(err => console.error(err));
 
+login.component.css
+body {
+    font-family: 'Roboto', sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    background-color: #2c3e50;
+}
+
+.form-container {
+    background-color: #34495e;
+    border-radius: 8px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+    max-width: 400px;
+    width: 100%;
+    padding: 20px;
+    box-sizing: border-box;
+    text-align: center;
+    animation: slideIn 0.8s ease-in-out, borderLight 2s infinite alternate;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes borderLight {
+    from {
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+    }
+    to {
+        box-shadow: 0 0 20px rgba(122, 206, 167, 0.856);
+    }
+}
+
+.form-container h2 {
+    color: #ecf0f1;
+    margin-bottom: 20px;
+}
+
+.login-form input, .signup-form input {
+    width: 100%;
+    padding: 12px;
+    margin: 8px 0;
+    box-sizing: border-box;
+    border: none;
+    border-radius: 4px;
+    outline: none;
+}
+
+.login-form input[type="submit"] {
+    background-color: #2ecc71;
+    color: #fff;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.login-form input[type="submit"]:hover {
+    background-color: #27ae60;
+}
+
+.login-form input[type="text"],
+.login-form input[type="password"] {
+    background-color: #ecf0f1;
+    color: #333;
+}
+
+.login-form input[type="text"]:focus,
+.login-form input[type="password"]:focus {
+    background-color: #d5dbdb;
+}
+
+
+/* COMMON CSS */
+
+.signup-link a,
+.login-link a {
+    color: #9294ee;
+    text-decoration: none;
+    font-weight: bold;
+    transition: color 0.3s ease;
+}
+
+.signup-link a:hover,
+.login-link a:hover {
+    color: #2980b9;
+}
+
+.signup-link p,
+.login-link p {
+    color: #7f8c8d;
+    margin-top: 12px;
+    font-size: 16px;
+}
+
+
+/* SIGNUP PAGE CSS */
+
+.signup-form input[type="submit"] {
+    background-color: #e74c3c;
+    color: #fff;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.signup-form input[type="submit"]:hover {
+    background-color: #c0392b;
+}
+
+.signup-form input[type="text"],
+.signup-form input[type="password"] {
+    background-color: #cbd1d3;
+    color: #333;
+}
+
+.signup-form input[type="text"]:focus,
+.signup-form input[type="password"]:focus {
+    background-color: #9eb1b1;
+}
+
+
+login.component.html
+<p>login works!</p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Form</title>
+    <link rel="stylesheet" href="login.component.css">
+</head>
+<body>
+    <div class="form-container">
+        <h2>LOGIN</h2>
+        <form class="login-form">
+            <input type="text" name="username" [(ngModel)]="loginObj.username" placeholder="email" required>
+            <input type="password" name="password" [(ngModel)]="loginObj.password" placeholder="Password" required>
+            <input type="submit" (click)="login()" value="Login">
+             <!-- <button (click)="login()"  class="button login_submit">
+                <span>Log in now</span>
+             </button> -->
+        </form>
+        <div class="signup-link">
+            <p>Don't have an account? <a href="login.component.html">Sign Up</a></p>
+        </div>
+    </div>
+</body>
+
+</html>
+login.component.spec.ts
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+
+import { LoginComponent } from './login.component';
+
+describe('LoginComponent', () => {
+  let component: LoginComponent;
+  let fixture: ComponentFixture<LoginComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      declarations: [LoginComponent]
+    })
+    .compileComponents();
+
+    fixture = TestBed.createComponent(LoginComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it('should create', () => {
+    expect(component).toBeTruthy();
+  });
+});
+
+
+
+login.component.ts
+
+import { Component, inject } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { UserService } from '../../service/user.service';
+import { Router } from '@angular/router';
+
+@Component({
+  selector: 'app-login',
+  standalone: true,
+  imports: [FormsModule],
+  templateUrl: './login.component.html',
+  styleUrl: './login.component.css'
+})
+export class LoginComponent {
+  loginObj: any = {
+    username: '',
+    password: ''
+  };
+
+  userService = inject(UserService);
+  router = inject(Router);
+
+  login() {
+    // Log original values for debugging
+    console.log('Before Trim - Username:', this.loginObj.username);
+    console.log('Before Trim - Password:', this.loginObj.password);
+  
+    // Trim spaces
+    this.loginObj.username = this.loginObj.username.trim();
+    this.loginObj.password = this.loginObj.password.trim();
+  
+    // Log trimmed values for debugging
+    console.log('After Trim - Username:', this.loginObj.username);
+    console.log('After Trim - Password:', this.loginObj.password);
+  
+    if (!this.loginObj.username || !this.loginObj.password) {
+      alert('Username and Password are required!');
+      return;
+    }
+  
+    this.userService.onLogin(this.loginObj).subscribe(
+      (res: any) => {
+        if (res && res.token) {
+          localStorage.setItem('userApp', JSON.stringify(res));
+          this.router.navigateByUrl('/user-list');
+        } else {
+          alert('Invalid credentials. Please try again.');
+        }
+      },
+      (error) => {
+        console.error('Login Error:', error);
+        if (error.status === 403) {
+          alert('Access Denied! Invalid credentials.');
+        } else {
+          alert('Login failed. Please check your credentials or try again later.');
+        }
+      }
+    );
+  }
+}
+ 
+layout.componet.html
+<head>
+    <title>Bootstrap Example</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+</head>
+<body style="height:1500px">
+
+<nav class="navbar navbar-inverse navbar-fixed-top">
+<div class="container-fluid">
+  <div class="navbar-header">
+    <a class="navbar-brand" href="#">WebSiteName</a>
+  </div>
+  <ul class="nav navbar-nav">
+    <li class="active"><a href="#">Home</a></li>
+    <li><a href="http://localhost:4200/create-client">Create Client Id</a></li>
+    <li><a href="http://localhost:4200/vdi">VDI Resources</a></li>
+    <li><a href="http://localhost:8089/api/kt-sessions">KT Session</a></li>
+    <li><a href="/kt-session">KT Session</a></li>
+      
+    
+  </ul>
+</div>
+</nav>
+
+  <router-outlet></router-outlet>
+
+layout.component.spec.ts
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+
+import { LayoutComponent } from './layout.component';
+
+describe('LayoutComponent', () => {
+  let component: LayoutComponent;
+  let fixture: ComponentFixture<LayoutComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      declarations: [LayoutComponent]
+    })
+    .compileComponents();
+
+    fixture = TestBed.createComponent(LayoutComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it('should create', () => {
+    expect(component).toBeTruthy();
+  });
+});
+
+layout.component.ts
+
+import { Component } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
+
+
+@Component({
+  selector: 'app-layout',
+  standalone: true,
+  imports:[RouterOutlet],
+
+  templateUrl: './layout.component.html',
+  styleUrl: './layout.component.css'
+})
+export class LayoutComponent {
+
+}
+
+
+ user-list.component.html
+
+   <div class="row">
+    <div class="col-12">
+        <h2>User List</h2>
+        <!-- Loading State -->
+        <div *ngIf="isLoading" class="text-center text-primary">
+            <p>Loading data, please wait...</p>
+        </div>
+
+        <!-- Error Message -->
+        <div *ngIf="errorMessage" class="text-center text-danger">
+            <p>{{ errorMessage }}</p>
+        </div>
+
+        <!-- Employee Table -->
+        <table class="table table-bordered" *ngIf="!isLoading && users.length > 0; else noData">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Employee Name</th>
+                    <th>Gender</th>
+                    <th>Date of Joining</th>
+                    <th>Role</th>
+                    <th>Phone Number</th>
+                    <th>Email</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let item of users; let i = index">
+                    <td>{{ i + 1 }}</td>
+                    <td>{{ item.employeeName }}</td>
+                    <td>{{ item.employeeGender }}</td>
+                    <td>{{ item.dateOfJoining  }}</td> <!-- Format date -->
+                    <td>{{ item.role }}</td>
+                    <td>{{ item.phoneNumber }}</td>
+                    <td>{{ item.email }}</td>
+                    <td>{{ item.status }}</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- No Data Message -->
+        <ng-template #noData>
+            <p class="text-center text-warning">No data available</p>
+        </ng-template>
+    </div>
+</div>
+
+
+
+user-list.component.spec.ts
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+
+import { UserListComponent } from './user-list.component';
+
+describe('UserListComponent', () => {
+  let component: UserListComponent;
+  let fixture: ComponentFixture<UserListComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      declarations: [UserListComponent]
+    })
+    .compileComponents();
+
+    fixture = TestBed.createComponent(UserListComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it('should create', () => {
+    expect(component).toBeTruthy();
+  });
+});
+
+
+user-list.component.ts
+// import { Component, inject, OnInit } from '@angular/core';
+// import { UserService } from '../../service/user.service';
+
+// @Component({
+//   selector: 'app-user-list',
+//   standalone: false,
+//   templateUrl: './user-list.component.html',
+//   styleUrl: './user-list.component.css'
+// })
+// export class UserListComponent implements OnInit{
+     
+//     userService=inject(UserService);
+//     List:any[]=[];
+//     ngOnInit(): void {
+//       console.log("UserListComponent Loaded!")
+//       this.loadClient()
+//     }
+//     loadClient(){
+//       this.userService.getClient().subscribe({
+//         next: (res: any) => {
+//             if (Array.isArray(res)) {
+//                 this.List = res; // Directly assign response if it's an array
+//             } else if (res?.data) {
+//                 this.List = res.data; // If the response is wrapped in an object
+//             } else {
+//                 console.error('Unexpected response format:', res);
+//             }
+//         },
+//         error: (err) => {
+//             console.error('Error fetching clients:', err);
+//         }
+//     });
+// }
+    
+// }
+import { Component, OnInit } from '@angular/core';
+import { UserService } from '../../service/user.service';
+
+@Component({
+  selector: 'app-user-list',
+  standalone:false,
+  templateUrl: './user-list.component.html',
+  styleUrls: ['./user-list.component.css']
+})
+export class UserListComponent implements OnInit {
+  users: any[] = [];  // Store fetched users
+  errorMessage: string = ''; // Store error messages
+  isLoading: boolean = true; // Show loading state
+
+  constructor(private userService: UserService) {}
+
+  ngOnInit(): void {
+    this.getUsers();
+  }
+
+  getUsers(): void {
+    this.userService.getClient().subscribe({
+      next: (response) => {
+        this.users = response; // Ensure this matches the backend response
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('Error fetching users:', error);
+        this.errorMessage = 'Unable to fetch user data. Please try again later.';
+        this.isLoading = false;
+      }
+    });
+  }
+}
+
+
+
+vdi.component.css
+.vdi-form {
+    max-width: 600px;
+    margin: auto;
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  .form-group {
+    margin-bottom: 15px;
+  }
+  
+  label {
+    font-weight: bold;
+    display: block;
+    margin-bottom: 5px;
+  }
+  
+  input, select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+  }
+  
+  button {
+    width: 100%;
+    padding: 10px;
+    background-color: #003366;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  button:hover {
+    background-color: #002244;
+  }
+  
+  .error {
+    color: red;
+    font-size: 12px;
+  }
+  
+  .response-message {
+    text-align: center;
+    font-weight: bold;
+    margin-top: 15px;
+  }
+  
+  
+  
+  
+  
+  
+  
+  
+  
+vdi.component.html
+<!-- <p>vdi works!</p>
+<head>
+    <title>Bootstrap Example</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+</head>
+<body style="height:1500px">
+
+<nav class="navbar navbar-inverse navbar-fixed-top">
+<div class="container-fluid">
+  <div class="navbar-header">
+    <a class="navbar-brand" href="#">WebSiteName</a>
+  </div>
+  <ul class="nav navbar-nav">
+    <li class="active"><a href="#">Home</a></li>
+    <li><a href="http://localhost:8089/vdis/allocate">VDI allocate</a></li>
+    <li><a href="http://localhost:8089/vdis/all" (click)="getVdiResources()" >Get VDI Resources</a></li>
+    <li><a href="http://localhost:8089/vdis/1">Get VDI Resources by id</a></li>
+    <li><a href="#">VDI Deallocate</a></li>
+
+  </ul>
+</div>
+</nav>
+
+
+
+<div class="container">
+    <h2>VDI Allocation Form</h2>
+
+
+
+
+<form #vdiForm="ngForm" (ngSubmit)="allocateVDI()" class="vdi-form">
+    <div class="form-group">
+      <label for="clientId">Client ID</label>
+      <input type="text" id="clientId" name="clientId" class="form-control" [(ngModel)]="vdiObj.clientId"
+        required #clientId="ngModel">
+      <span class="error" *ngIf="clientId.invalid && clientId.touched">Client ID is required</span>
+    </div>
+  
+    <div class="form-group">
+      <label for="projectName">Project Name</label>
+      <input type="text" id="projectName" name="projectName" class="form-control" [(ngModel)]="vdiObj.projectName"
+        required #projectName="ngModel">
+      <span class="error" *ngIf="projectName.invalid && projectName.touched">Project Name is required</span>
+    </div>
+  
+    <div class="form-group">
+      <label for="vdiType">VDI Type</label>
+      <select id="vdiType" name="vdiType" class="form-control" [(ngModel)]="vdiObj.vdiType" required #vdiType="ngModel">
+        <option value="" disabled selected>Select VDI Type</option>
+        <option value="Type A">Type A</option>
+        <option value="Type B">Type B</option>
+      </select>
+      <span class="error" *ngIf="vdiType.invalid && vdiType.touched">VDI Type is required</span>
+    </div>
+  
+    <div class="form-group">
+      <label for="softwareStack">Software Stack</label>
+      <input type="textarea" id="softwareStack" name="softwareStack" class="form-control" [(ngModel)]="vdiObj.softwareStack"
+        required #softwareStack="ngModel">
+      <span class="error" *ngIf="softwareStack.invalid && softwareStack.touched">Software Stack is required</span>
+    </div>
+  
+    <div class="form-group">
+      <label for="allocationDate">Allocation Date</label>
+      <input type="datetime-local" id="allocationDate" name="allocationDate" class="form-control"
+        [(ngModel)]="vdiObj.allocationDate" required #allocationDate="ngModel">
+      <span class="error" *ngIf="allocationDate.invalid && allocationDate.touched">Allocation Date is required</span>
+    </div>
+  
+    <div class="form-group">
+      <label for="status">Status</label>
+      <select id="status" name="status" class="form-control" [(ngModel)]="vdiObj.status" required #status="ngModel">
+        <option value="" disabled selected>Select Status</option>
+        <option value="ACTIVE">ACTIVE</option>
+        <option value="INACTIVE">INACTIVE</option>
+      </select>
+      <span class="error" *ngIf="status.invalid && status.touched">Status is required</span>
+    </div>
+  
+    <div class= "form-buttons">
+      <button type="submit" [disabled]="vdiForm.invalid" class="submit-button">Allocate VDI</button>
+    </div>
+  </form>
+  <div *ngIf="responseMessage" class="response-message">{{ responseMessage }}</div>
+
+
+
+  <h2>VDI Resources</h2>
+  <table class="table table-bordered"*ngIf="vdiList.length > 0">
+    <thead>
+      <tr>
+        <th>Allocation ID</th>
+        <th>Client ID</th>
+        <th>Project Name</th>
+        <th>VDI Type</th>
+        <th>Software Stack</th>
+        <th>Allocation Date</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let vdi of vdiList">
+        <td>{{ vdi.allocationId }}</td>
+        <td>{{ vdi.clientId }}</td>
+        <td>{{ vdi.projectName }}</td>
+        <td>{{ vdi.vdiType }}</td>
+        <td>{{ vdi.softwareStack }}</td>
+        <td>{{ vdi.allocationDate | date:'short' }}</td>
+        <td>{{ vdi.status }}</td>
+      </tr>
+    </tbody>
+  </table>
+  <div  *ngIf="vdiList.length === 0">No VDI resources available.</div>
+</div> -->
+
+<head>
+  <title>Bootstrap Example</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+</head>
+<body style="height:1500px">
+
+<nav class="navbar navbar-inverse navbar-fixed-top">
+<div class="container-fluid">
+  <div class="navbar-header">
+    <a class="navbar-brand" href="#">WebSiteName</a>
+  </div>
+  <ul class="nav navbar-nav">
+    <li class="active"><a href="#">Home</a></li>
+    <li><a href="http://localhost:8089/vdis/allocate">VDI allocate</a></li>
+    <li><a href="http://localhost:8089/vdis/all" (click)="getVdiResources()">Get VDI Resources</a></li>
+    <li><a href="http://localhost:8089/vdis/1">Get VDI Resources by id</a></li>
+    <li><a href="#">VDI Deallocate</a></li>
+  </ul>
+</div>
+</nav>
+
+<div class="container">
+<h2>VDI Allocation Form</h2>
+<form #vdiForm="ngForm" (ngSubmit)="allocateVDI()" class="vdi-form">
+  <div class="form-group">
+    <label for="clientId">Client ID</label>
+    <input type="text" id="clientId" name="clientId" class="form-control" [(ngModel)]="vdiObj.clientId"
+      required #clientId="ngModel">
+    <span class="error" *ngIf="clientId.invalid && clientId.touched">Client ID is required</span>
+  </div>
+
+  <div class="form-group">
+    <label for="projectName">Project Name</label>
+    <input type="text" id="projectName" name="projectName" class="form-control" [(ngModel)]="vdiObj.projectName"
+      required #projectName="ngModel">
+    <span class="error" *ngIf="projectName.invalid && projectName.touched">Project Name is required</span>
+  </div>
+
+  <div class="form-group">
+    <label for="vdiType">VDI Type</label>
+    <select id="vdiType" name="vdiType" class="form-control" [(ngModel)]="vdiObj.vdiType" required #vdiType="ngModel">
+      <option value="" disabled selected>Select VDI Type</option>
+      <option value="Type A">Type A</option>
+      <option value="Type B">Type B</option>
+    </select>
+    <span class="error" *ngIf="vdiType.invalid && vdiType.touched">VDI Type is required</span>
+  </div>
+
+  <div class="form-group">
+    <label for="softwareStack">Software Stack</label>
+    <textarea id="softwareStack" name="softwareStack" class="form-control" [(ngModel)]="softwareInput"
+      required #softwareStack="ngModel" rows="3"></textarea>
+    <span class="error" *ngIf="softwareStack.invalid && softwareStack.touched">Software Stack is required</span>
+  </div>
+
+  <div class="form-group">
+    <label for="allocationDate">Allocation Date</label>
+    <input type="datetime-local" id="allocationDate" name="allocationDate" class="form-control"
+      [(ngModel)]="vdiObj.allocationDate" required #allocationDate="ngModel">
+    <span class="error" *ngIf="allocationDate.invalid && allocationDate.touched">Allocation Date is required</span>
+  </div>
+
+  <div class="form-group">
+    <label for="status">Status</label>
+    <select id="status" name="status" class="form-control" [(ngModel)]="vdiObj.status" required #status="ngModel">
+      <option value="" disabled selected>Select Status</option>
+      <option value="ACTIVE">ACTIVE</option>
+      <option value="INACTIVE">INACTIVE</option>
+    </select>
+    <span class="error" *ngIf="status.invalid && status.touched">Status is required</span>
+  </div>
+
+  <div class="form-buttons">
+    <button type="submit" [disabled]="vdiForm.invalid" class="submit-button">Allocate VDI</button>
+  </div>
+</form>
+<div *ngIf="responseMessage" class="response-message">{{ responseMessage }}</div>
+
+<h2>VDI Resources</h2>
+<table class="table table-bordered" *ngIf="vdiList.length > 0">
+  <thead>
+    <tr>
+      <th>Allocation ID</th>
+      <th>Client ID</th>
+      <th>Project Name</th>
+      <th>VDI Type</th>
+      <th>Software Stack</th>
+      <th>Allocation Date</th>
+      <th>Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let vdi of vdiList">
+      <td>{{ vdi.allocationId }}</td>
+      <td>{{ vdi.clientId }}</td>
+      <td>{{ vdi.projectName }}</td>
+      <td>{{ vdi.vdiType }}</td>
+      <td>{{ vdi.softwareStack }}</td>
+      <td>{{ vdi.allocationDate | date:'short' }}</td>
+      <td>{{ vdi.status }}</td>
+    </tr>
+  </tbody>
+</table>
+<div *ngIf="vdiList.length === 0">No VDI resources available.</div>
+</div>
+
+vdi.component.spec.ts
+
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+
+import { VdiComponent } from './vdi.component';
+
+describe('VdiComponent', () => {
+  let component: VdiComponent;
+  let fixture: ComponentFixture<VdiComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      declarations: [VdiComponent]
+    })
+    .compileComponents();
+
+    fixture = TestBed.createComponent(VdiComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it('should create', () => {
+    expect(component).toBeTruthy();
+  });
+});
+
+vdi.component.ts
+
+
+// import { Component } from '@angular/core';
+// import { HttpClient } from '@angular/common/http';
+// import { FormsModule } from '@angular/forms';
+// import { CommonModule } from '@angular/common';
+
+// @Component({
+//   selector: 'app-vdi',
+//   standalone:true,
+//   imports:[FormsModule,CommonModule],
+//   templateUrl: './vdi.component.html',
+//   styleUrls: ['./vdi.component.css']
+// })
+// export class VdiComponent {
+//   vdiObj = {
+//     clientId: '',
+//     projectName: '',
+//     vdiType: '',
+//     softwareStack: '',
+//     allocationDate: '',
+//     status: ''
+//   };
+
+//   softwareInput = ''; 
+//   // responseMessage = '';
+//   responseMessage : string= '';
+
+
+
+
+//   vdiList: any[]=[];
+
+
+
+//   constructor(private http: HttpClient) {}
+
+
+
+//   ngOnInit(): void {
+//     this.getVdiResources();
+//   }
+
+
+
+
+
+//   allocateVDI() {
+//     // this.vdiObj.softwareStack = JSON.stringify({ software: [this.softwareInput] });
+
+//     this.http.post('http://localhost:8089/vdis/allocate', this.vdiObj).subscribe(
+//       (res) => {
+//         this.responseMessage = 'VDI allocated successfully!';
+
+
+//         this.getVdiResources(); 
+
+
+        
+//       },
+//       error => {
+//         this.responseMessage = 'Error allocating VDI!';
+//       }
+//     );
+//   }
 
 
 
 
 
 
+
+
+
+
+//   getVdiResources(): void {
+//     this.http.get<any[]>('http://localhost:8089/vdis/all').subscribe(
+//       (data) => {
+//         this.vdiList = data;
+//       },
+//       (error) => {
+//         console.error('Error fetching VDI resources', error);
+//       }
+//     );
+//   }
+// }
+
+import { Component } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+
+@Component({
+  selector: 'app-vdi',
+  standalone: true,
+  imports: [FormsModule, CommonModule],
+  templateUrl: './vdi.component.html',
+  styleUrls: ['./vdi.component.css']
+})
+export class VdiComponent {
+  vdiObj = {
+    clientId: '',
+    projectName: '',
+    vdiType: '',
+    softwareStack: '',
+    allocationDate: '',
+    status: ''
+  };
+
+  softwareInput = ''; 
+  responseMessage: string = '';
+  vdiList: any[] = [];
+
+  constructor(private http: HttpClient) {}
+
+  ngOnInit(): void {
+    this.getVdiResources();
+  }
+
+  allocateVDI() {
+    // Convert comma-separated software names to an array
+    const softwareArray = this.softwareInput.split(',').map(software => software.trim());
+    
+    // Convert the array to the required JSON format
+    this.vdiObj.softwareStack = JSON.stringify({ software: softwareArray });
+
+    this.http.post('http://localhost:8089/vdis/allocate', this.vdiObj).subscribe(
+      (res) => {
+        this.responseMessage = 'VDI allocated successfully!';
+        this.getVdiResources(); 
+      },
+      error => {
+        this.responseMessage = 'Error allocating VDI!';
+      }
+    );
+  }
+
+  getVdiResources(): void {
+    this.http.get<any[]>('http://localhost:8089/vdis/all').subscribe(
+      (data) => {
+        this.vdiList = data;
+      },
+      (error) => {
+        console.error('Error fetching VDI resources', error);
+      }
+    );
+  }
+}
+
+
+
+
+
+user.service.spec.ts
+
+import { TestBed } from '@angular/core/testing';
+
+import { UserService } from './user.service';
+
+describe('UserService', () => {
+  let service: UserService;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({});
+    service = TestBed.inject(UserService);
+  });
+
+  it('should be created', () => {
+    expect(service).toBeTruthy();
+  });
+});
+
+
+
+
+user.service.ts
+
+
+import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class UserService {
+
+  private loginUrl = "http://localhost:8089/api/auth/login";
+  private clientsUrl = "http://localhost:8089/clients/all";
+  private apiUrl = 'http://localhost:8089/clients/register';
+  constructor(private http: HttpClient) { }
+
+  onLogin(obj: any): Observable<any> {
+    return this.http.post(this.loginUrl, obj);
+  }
+
+  getClient(): Observable<any[]> {
+    return this.http.get<any[]>(this.clientsUrl);
+  }
+  registerClient(clientData: any): Observable<any> {
+    return this.http.post(this.apiUrl, clientData);
+  }
+}
 
 
