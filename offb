@@ -1,0 +1,458 @@
+navbar.component.html
+
+
+
+
+
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+
+ <a class="navbar-brand" href="#">VDI Allocation</a>
+
+ <div class="collapse navbar-collapse">
+
+  <ul class="navbar-nav ml-auto">
+
+   <li class="nav-item">
+
+    <button class="btn btn-primary" routerLink="/offboarding">Offboarding</button>
+
+   </li>
+
+  </ul>
+
+ </div>
+
+</nav>
+
+
+
+
+
+
+
+off-boarding.component.html
+
+
+
+
+
+
+
+<div class="container mt-4">
+
+ <h2>Offboarding Management</h2>
+
+ <!-- Create Offboarding Request Form -->
+
+ <form [formGroup]="offboardingForm" (ngSubmit)="submitOffboardingRequest()" enctype="multipart/form-data">
+
+  <div class="form-group">
+
+   <label for="clientId">Client ID</label>
+
+   <input type="text" id="clientId" class="form-control" formControlName="clientId" required>
+
+  </div>
+
+  <div class="form-group">
+
+   <label for="requestDate">Request Date</label>
+
+   <input type="date" id="requestDate" class="form-control" formControlName="requestDate" required>
+
+  </div>
+
+  <div class="form-group">
+
+   <label for="reason">Reason</label>
+
+   <input type="text" id="reason" class="form-control" formControlName="reason" required>
+
+  </div>
+
+  <div class="form-group">
+
+   <label for="files">Upload Documents</label>
+
+   <input type="file" id="files" class="form-control" (change)="onFileSelected($event)">
+
+  </div>
+
+  <button type="submit" class="btn btn-success">Create Offboarding Request</button>
+
+ </form>
+
+ <hr>
+
+ <!-- Get Offboarding Requests by Client ID -->
+
+ <div class="mt-4">
+
+  <h4>Get Offboarding Requests by Client ID</h4>
+
+  <input type="text" [(ngModel)]="searchClientId" class="form-control" placeholder="Enter Client ID">
+
+  <button class="btn btn-primary mt-2" (click)="fetchOffboardingRequestsByClient()">Fetch Requests</button>
+
+  <table class="table mt-3" *ngIf="clientOffboardingRequests.length">
+
+   <thead>
+
+    <tr>
+
+     <th>Client ID</th>
+
+     <th>Request Date</th>
+
+     <th>Reason</th>
+
+    </tr>
+
+   </thead>
+
+   <tbody>
+
+    <tr *ngFor="let request of clientOffboardingRequests">
+
+     <td>{{ request.clientId }}</td>
+
+     <td>{{ request.requestDate }}</td>
+
+     <td>{{ request.reason }}</td>
+
+    </tr>
+
+   </tbody>
+
+  </table>
+
+ </div>
+
+ <hr>
+
+ <!-- Get Pending Offboarding Requests -->
+
+ <div class="mt-4">
+
+  <h4>Pending Offboarding Requests</h4>
+
+  <button class="btn btn-warning" (click)="fetchPendingOffboardingRequests()">Fetch Pending Requests</button>
+
+  <table class="table mt-3" *ngIf="pendingOffboardingRequests.length">
+
+   <thead>
+
+    <tr>
+
+     <th>Client ID</th>
+
+     <th>Request Date</th>
+
+     <th>Reason</th>
+
+     <th>Action</th>
+
+    </tr>
+
+   </thead>
+
+   <tbody>
+
+    <tr *ngFor="let request of pendingOffboardingRequests">
+
+     <td>{{ request.clientId }}</td>
+
+     <td>{{ request.requestDate }}</td>
+
+     <td>{{ request.reason }}</td>
+
+     <td>
+
+      <button class="btn btn-success" (click)="approveOffboardingRequest(request.id)">Approve</button>
+
+     </td>
+
+    </tr>
+
+   </tbody>
+
+  </table>
+
+ </div>
+
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+off-boarding.component.ts
+
+
+
+
+
+import { Component, OnInit } from '@angular/core';
+
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+
+import { HttpClient } from '@angular/common/http';
+
+@Component({
+
+ selector: 'app-off-boarding',
+
+ templateUrl: './off-boarding.component.html',
+
+ styleUrls: ['./off-boarding.component.css']
+
+})
+
+export class OffBoardingComponent implements OnInit {
+
+ offboardingForm: FormGroup;
+
+ selectedFile: File | null = null;
+
+ searchClientId: string = '';
+
+ clientOffboardingRequests: any[] = [];
+
+ pendingOffboardingRequests: any[] = [];
+
+ constructor(private fb: FormBuilder, private http: HttpClient) {
+
+  this.offboardingForm = this.fb.group({
+
+   clientId: ['', Validators.required],
+
+   requestDate: ['', Validators.required],
+
+   reason: ['', Validators.required]
+
+  });
+
+ }
+
+ ngOnInit(): void {}
+
+ onFileSelected(event: any) {
+
+  this.selectedFile = event.target.files[0];
+
+ }
+
+ submitOffboardingRequest() {
+
+  if (this.offboardingForm.invalid) return;
+
+  const formData = new FormData();
+
+  formData.append('request', JSON.stringify(this.offboardingForm.value));
+
+  if (this.selectedFile) {
+
+   formData.append('files', this.selectedFile);
+
+  }
+
+  this.http.post('http://localhost:9084/api/offboarding', formData).subscribe(response => {
+
+   alert('Offboarding request created successfully.');
+
+   this.offboardingForm.reset();
+
+  });
+
+ }
+
+ fetchOffboardingRequestsByClient() {
+
+  this.http.get(`http://localhost:8080/api/offboarding/client/${this.searchClientId}`)
+
+   .subscribe((data: any) => this.clientOffboardingRequests = data);
+
+ }
+
+ fetchPendingOffboardingRequests() {
+
+  this.http.get('http://localhost:8080/api/offboarding/pending')
+
+   .subscribe((data: any) => this.pendingOffboardingRequests = data);
+
+ }
+
+ approveOffboardingRequest(offboardingId: string) {
+
+  this.http.post(`http://localhost:8080/api/offboarding/approve/${offboardingId}`, {})
+
+   .subscribe(response => {
+
+    alert('Offboarding request approved.');
+
+    this.fetchPendingOffboardingRequests();
+
+   });
+
+ }
+
+}
+
+
+
+
+
+
+
+
+
+off-boarding.component.csS
+
+
+
+
+
+
+
+.container {
+
+ max-width: 800px;
+
+ margin: auto;
+
+}
+
+h2, h4 {
+
+ text-align: center;
+
+}
+
+form {
+
+ background: #f9f9f9;
+
+ padding: 20px;
+
+ border-radius: 5px;
+
+}
+
+.table {
+
+ margin-top: 20px;
+
+}
+
+
+
+
+
+off-boarding.component.spec.ts
+
+
+
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+
+import { OffBoardingComponent } from './off-boarding.component';
+
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+
+import { ReactiveFormsModule } from '@angular/forms';
+
+describe('OffBoardingComponent', () => {
+
+ let component: OffBoardingComponent;
+
+ let fixture: ComponentFixture<OffBoardingComponent>;
+
+ beforeEach(async () => {
+
+  await TestBed.configureTestingModule({
+
+   declarations: [ OffBoardingComponent ],
+
+   imports: [ ReactiveFormsModule, HttpClientTestingModule ]
+
+  }).compileComponents();
+
+ });
+
+ beforeEach(() => {
+
+  fixture = TestBed.createComponent(OffBoardingComponent);
+
+  component = fixture.componentInstance;
+
+  fixture.detectChanges();
+
+ });
+
+ it('should create the component', () => {
+
+  expect(component).toBeTruthy();
+
+ });
+
+ it('should have a valid form when input values are provided', () => {
+
+  component.offboardingForm.setValue({
+
+   clientId: 'CID-TEST',
+
+   requestDate: '2025-02-20',
+
+   reason: 'Project End'
+
+  });
+
+  expect(component.offboardingForm.valid).toBeTrue();
+
+ });
+
+});
+
+
+
+
+
+
+
+
+
+
+
+app-routing.module.ts
+
+
+
+
+
+const routes: Routes = [
+
+ { path: 'offboarding', component: OffBoardingComponent },
+
+];
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
