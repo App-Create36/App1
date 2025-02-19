@@ -1,0 +1,198 @@
+EUREKA_SERVICE-8761
+CLIENT-SERVICE-9081
+VDI-SERVICE-9082
+KT-SESSION-SERVICE-9083
+OFFBOARDING-SERVICE-9084
+DASHBOARD-SERVICE-9085
+
+
+We've to Ensure the Eureka server is running: Check that your Eureka server is accessible at http://localhost:8761/.
+
+Start client-service: Run your client-service application.Check whether registered on eureka or not.
+1....FOR CLIENT-SERVICE:-
+-----------------------------------
+
+Testing Endpoints in Postman:
+
+1.>---Register a New Client(POST)
+Endpoint: POST http://localhost:9081/clients/register
+Body:
+json
+{
+    "employeeName": "John Doe",
+    "employeeGender": "Male",
+    "dateOfJoining": "2023-04-01",
+    "role": "Developer",
+    "phoneNumber": "1234567890",
+    "email": "harshrajput08608@gmail.com",
+    "status": "ACTIVE"
+}
+2.>---Get Client by ID
+Endpoint: GET http://localhost:9081/clients/CID-0001
+
+3.>----Get All Clients
+Endpoint: GET http://localhost:9081/clients/all
+
+4.>-- I've endpoint with put mapping which makes client id inactive through feign cllient from offboarding-service
+-----------------------------------------------------------------------------------
+
+2.KT-SESSION-SERVICE
+---------------------------
+
+1.>--- Create KT Session with Participants
+Request Type: POST URL: http://localhost:9083/api/kt-sessions Headers:
+
+Request Body:
+
+json
+{
+    "sessionName": "Java Basics Training",
+    "sessionDate": "2025-03-20",
+    "sessionTime": "10:00:00",
+    "mentorName": "John Doe",
+    "organizerId": "CID-0004",
+    "participantIds": ["CID-0005", "CID-0006"]
+}
+
+2.>---- Get KT Session by ID
+Request Type: GET URL: http://localhost:9083/api/kt-sessions/{sessionId}
+
+Steps:
+
+Open Postman and select "GET".
+
+Enter the URL: http://localhost:9083/api/kt-sessions/1 (replace 1 with the actual session ID).
+
+3.--> Get KT Sessions by Client ID
+Request Type: GET URL: http://localhost:9083/api/kt-sessions/client/{organizer_id}
+
+
+4.--> Get All Clients by Session ID
+Request Type: GET URL: http://localhost:9083/api/kt-sessions/session/clients/{sessionId}
+
+
+5. Mark Attendance
+Request Type: PUT URL: http://localhost:9083/api/kt-sessions/attendance/{sessionId}/{clientId}?status=PRESENT
+
+
+Open Postman and select "PUT".
+
+Enter the URL: http://localhost:9083/api/kt-sessions/attendance/1/CID-0005?status=PRESENT (replace 1 with the actual session ID and CID-0005 with the actual client ID).
+
+6. Submit Feedback
+Request Type: POST URL: http://localhost:9083/api/kt-sessions/feedback/{sessionId}/{clientId}
+
+Request Body:
+
+json
+{
+    "clientId": "CID-0005",
+    "feedback": "Great session!",
+    "feedbackDate": "2025-03-20T11:00:00"
+}
+
+http://localhost:9083/api/kt-sessions-get all sessions'
+------------------------------------------------------------------------------------------
+3.> VDI-SERVICE:
+---------------------------
+1.>Allocate VDI:-
+
+http://localhost:9082/vdis/allocate post
+{
+    "clientId": "CID-0004",  // Assume this client ID does not exist
+    "projectName": "Project A",
+    "vdiType": "Type A",
+    "softwareStack": "{\"software\": [\"Example Software\"]}",
+    "allocationDate": "2023-04-01T10:00:00",
+    "status": "ACTIVE"
+}
+2.> GET ALL VDI Allocations
+http://localhost:9082/vdis/all get
+3.> GET VDI By allocation ID
+http://localhost:9082/vdis/1 - get - allocation id
+4.> Implemeneted one PUT API for offboarding-service feign client
+
+---------------------------
+4.> OFFBOARDING-SERVICE:-
+-----------------------------------------------------
+1.>----- Create Offboarding Request
+
+Request Type: POST URL: http://localhost:9084/api/offboarding:
+
+Request Body (form-data):
+
+Key: request, Type: Text, Value:
+
+json
+{
+    "clientId": "CID-0004",
+    "requestDate": "2025-02-13",
+    "reason": "Resignation"
+}
+Key: files, Type: File,
+
+
+2.>-----Get Offboarding Requests by Client ID
+Request Type: GET URL: http://localhost:8080/api/offboarding/client/{clientId} 
+
+
+3.>-- Get Pending Offboarding Requests
+Request Type: GET URL: http://localhost:8080/api/offboarding/pending 
+
+
+4.>-- Approve Offboarding Request
+Request Type: POST URL: http://localhost:8080/api/offboarding/approve/{offboarding_id}
+
+Verify the response contains a message indicating the client's status has been changed to Inactive
+------------------------------------------------------------------------------------------------------
+
+
+DASHBOARD:
+
+
+URL: http://localhost:9085/api/dashboard/status GET Just to check for working
+
+URL: http://localhost:9085/api/dashboard/tasks/{clientId} GET'
+
+http://localhost:9085/api/dashboard/profile/{CLientId} Get- userprofile
+
+http://localhost:9085/api/dashboard/kt-sessions/update - PUT
+
+{
+    "sessionId": 1,
+    "status": "completed",
+    "progressPercentage": 100
+}
+
+
+http://localhost:9085/api/dashboard/tasks/{clientId} - user dashboard
+
+-----------------------------------------------------
+
+
+Auth-service
+
+http://localhost:9096/api/auth/login post
+
+{
+    "username": "user",
+    "password": "password"
+}
+
+
+http://localhost:9096/api/auth/generate-otp - post
+
+{
+    "email": "user@example.com"
+}
+
+
+http://localhost:9096/api/auth/verify-otp -post
+
+// // {
+// //   "email": "email",
+// //   "otp": "841503",
+// //   "newPassword": "Hi8iiNiEW"
+// // }
+
+http://localhost:9096/api/auth/logout - post
