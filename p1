@@ -1,0 +1,1953 @@
+
+<!-- create-client.component.html -->
+
+<div class="page-container">
+
+  <!-- Header -->
+ 
+  <header class="header">
+ 
+   <h1>Client Management System</h1>
+ 
+   <nav>
+ 
+    <button (click)="goBack()" class="nav-button">Back to Dashboard</button>
+ 
+   </nav>
+ 
+  </header>
+ 
+  <!-- Main Content -->
+ 
+  <main class="main-content">
+ 
+   <!-- Left Side - Form -->
+ 
+   <div class="form-section">
+ 
+    <h2>Generate New Client ID</h2>
+ 
+    <form #clientForm="ngForm" (ngSubmit)="onSubmit()" class="client-form">
+ 
+     <div class="form-row">
+ 
+      <div class="form-group">
+ 
+       <label for="employeeName">Employee Name</label>
+ 
+       <input type="text" id="employeeName" name="employeeName" class="form-control" [(ngModel)]="clientObj.employeeName"
+ 
+        required #employeeName="ngModel">
+ 
+       <span class="error" *ngIf="employeeName.invalid && employeeName.touched">Employee Name is required</span>
+ 
+      </div>
+ 
+      <div class="form-group">
+ 
+       <label for="email">Email</label>
+ 
+       <input type="email" id="email" name="email" class="form-control" [(ngModel)]="clientObj.email"
+ 
+        required email #email="ngModel">
+ 
+       <span class="error" *ngIf="email.invalid && email.touched">Enter a valid email</span>
+ 
+      </div>
+ 
+     </div>
+ 
+     <div class="form-row">
+ 
+      <div class="form-group">
+ 
+       <label for="phone">Phone Number</label>
+ 
+       <input type="tel" id="phone" name="phone" class="form-control" [(ngModel)]="clientObj.phoneNumber"
+ 
+        required pattern="^\d{10}$" #phone="ngModel">
+ 
+       <span class="error" *ngIf="phone.invalid && phone.touched">Enter a valid 10-digit phone number</span>
+ 
+      </div>
+ 
+      <div class="form-group">
+ 
+       <label for="gender">Gender</label>
+ 
+       <select id="gender" name="employeeGender" class="form-control" [(ngModel)]="clientObj.employeeGender" required #gender="ngModel">
+ 
+        <option value="" disabled selected>Select Gender</option>
+ 
+        <option value="Male">Male</option>
+ 
+        <option value="Female">Female</option>
+ 
+       </select>
+ 
+       <span class="error" *ngIf="gender.invalid && gender.touched">Gender is required</span>
+ 
+      </div>
+ 
+     </div>
+ 
+     <div class="form-row">
+ 
+      <div class="form-group">
+ 
+       <label for="department">Department</label>
+ 
+       <select id="department" name="department" class="form-control" [(ngModel)]="clientObj.department" required #department="ngModel">
+ 
+        <option value="" disabled selected>Select Department</option>
+ 
+        <option value="Business">Business</option>
+ 
+        <option value="Development">Development</option>
+ 
+       </select>
+ 
+       <span class="error" *ngIf="department.invalid && department.touched">Department is required</span>
+ 
+      </div>
+ 
+      <div class="form-group">
+ 
+       <label for="role">Role</label>
+ 
+       <select id="role" name="role" class="form-control" [(ngModel)]="clientObj.role" required #role="ngModel">
+ 
+        <option value="" disabled selected>Select Role</option>
+ 
+        <option value="Trainer">Trainer</option>
+ 
+        <option value="Developer">Developer</option>
+ 
+       </select>
+ 
+       <span class="error" *ngIf="role.invalid && role.touched">Role is required</span>
+ 
+      </div>
+ 
+     </div>
+ 
+     <div class="form-row">
+ 
+      <div class="form-group">
+ 
+       <label for="startDate">Start Date</label>
+ 
+       <input type="date" id="startDate" name="startDate" class="form-control" [(ngModel)]="clientObj.dateOfJoining" required #startDate="ngModel">
+ 
+       <span class="error" *ngIf="startDate.invalid && startDate.touched">Start date is required</span>
+ 
+      </div>
+ 
+     </div>
+ 
+     <div class="form-buttons">
+ 
+      <button type="submit" [disabled]="clientForm.invalid" class="submit-button">Create Client ID</button>
+ 
+     </div>
+ 
+    </form>
+ 
+   </div>
+ 
+   <!-- Right Side - Recent Client Details -->
+ 
+   <div class="details-section" *ngIf="recentClient">
+ 
+    <h2>Recently Generated Client ID</h2>
+ 
+    <div class="client-details">
+ 
+     <div class="detail-card">
+ 
+      <h3>Client Information</h3>
+ 
+      <div class="detail-row">
+ 
+       <span class="label">Client ID:</span>
+ 
+       <span class="value">{{recentClient.clientId}}</span>
+ 
+      </div>
+ 
+      <div class="detail-row">
+ 
+       <span class="label">Name:</span>
+ 
+       <span class="value">{{recentClient.employeeName}}</span>
+ 
+      </div>
+ 
+      <div class="detail-row">
+ 
+       <span class="label">Email:</span>
+ 
+       <span class="value">{{recentClient.email}}</span>
+ 
+      </div>
+ 
+      <div class="detail-row">
+ 
+       <span class="label">Phone:</span>
+ 
+       <span class="value">{{recentClient.phoneNumber}}</span>
+ 
+      </div>
+ 
+      <div class="detail-row">
+ 
+       <span class="label">Gender:</span>
+ 
+       <span class="value">{{recentClient.employeeGender}}</span>
+ 
+      </div>
+ 
+      <div class="detail-row">
+ 
+       <span class="label">Department:</span>
+ 
+       <span class="value">{{recentClient.department}}</span>
+ 
+      </div>
+ 
+      <div class="detail-row">
+ 
+       <span class="label">Role:</span>
+ 
+       <span class="value">{{recentClient.role}}</span>
+ 
+      </div>
+ 
+      <div class="detail-row">
+ 
+       <span class="label">Start Date:</span>
+ 
+       <span class="value">{{recentClient.dateOfJoining | date}}</span>
+ 
+      </div>
+ 
+      <div class="detail-row">
+ 
+       <span class="label">Status:</span>
+ 
+       <span class="value status-active">{{recentClient.status}}</span>
+ 
+      </div>
+ 
+     </div>
+ 
+    </div>
+ 
+   </div>
+ 
+  </main>
+ 
+  <!-- Footer -->
+ 
+  <footer class="footer">
+ 
+   <p>&copy; 2024 Client Management System. All rights reserved.</p>
+ 
+  </footer>
+ 
+ </div>
+ 
+
+
+
+
+
+
+
+ 
+  /* create-client.component.css */
+
+.page-container {
+
+  display: flex;
+ 
+  flex-direction: column;
+ 
+  min-height: 100vh;
+ 
+ }
+ 
+ /* Header Styles */
+ 
+ .header {
+ 
+  background-color: #2c3e50;
+ 
+  color: white;
+ 
+  padding: 1rem 2rem;
+ 
+  display: flex;
+ 
+  justify-content: space-between;
+ 
+  align-items: center;
+ 
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+ 
+ }
+ 
+ .header h1 {
+ 
+  margin: 0;
+ 
+  font-size: 1.5rem;
+ 
+ }
+ 
+ .nav-button {
+ 
+  background-color: #34495e;
+ 
+  color: white;
+ 
+  border: none;
+ 
+  padding: 0.5rem 1rem;
+ 
+  border-radius: 4px;
+ 
+  cursor: pointer;
+ 
+  transition: background-color 0.3s;
+ 
+ }
+ 
+ .nav-button:hover {
+ 
+  background-color: #465c71;
+ 
+ }
+ 
+ /* Main Content Styles */
+ 
+ .main-content {
+ 
+  display: flex;
+ 
+  flex: 1;
+ 
+  padding: 2rem;
+ 
+  gap: 2rem;
+ 
+  background-color: #f5f6fa;
+ 
+ }
+ 
+ /* Form Section Styles */
+ 
+ .form-section {
+ 
+  flex: 1;
+ 
+  background-color: white;
+ 
+  padding: 2rem;
+ 
+  border-radius: 8px;
+ 
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+ 
+ }
+ 
+ .form-row {
+ 
+  display: flex;
+ 
+  gap: 1rem;
+ 
+  margin-bottom: 1rem;
+ 
+ }
+ 
+ .form-group {
+ 
+  flex: 1;
+ 
+  display: flex;
+ 
+  flex-direction: column;
+ 
+ }
+ 
+ .form-control {
+ 
+  padding: 0.5rem;
+ 
+  border: 1px solid #ddd;
+ 
+  border-radius: 4px;
+ 
+  margin-top: 0.25rem;
+ 
+ }
+ 
+ .error {
+ 
+  color: #e74c3c;
+ 
+  font-size: 0.8rem;
+ 
+  margin-top: 0.25rem;
+ 
+ }
+ 
+ /* Details Section Styles */
+ 
+ .details-section {
+ 
+  flex: 1;
+ 
+  background-color: white;
+ 
+  padding: 2rem;
+ 
+  border-radius: 8px;
+ 
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+ 
+ }
+ 
+ .client-details {
+ 
+  background-color: #f8f9fa;
+ 
+  border-radius: 6px;
+ 
+  padding: 1.5rem;
+ 
+ }
+ 
+ .detail-card {
+ 
+  background-color: white;
+ 
+  border-radius: 6px;
+ 
+  padding: 1.5rem;
+ 
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+ 
+ }
+ 
+ .detail-row {
+ 
+  display: flex;
+ 
+  justify-content: space-between;
+ 
+  padding: 0.75rem 0;
+ 
+  border-bottom: 1px solid #eee;
+ 
+ }
+ 
+ .detail-row:last-child {
+ 
+  border-bottom: none;
+ 
+ }
+ 
+ .label {
+ 
+  font-weight: 600;
+ 
+  color: #2c3e50;
+ 
+ }
+ 
+ .value {
+ 
+  color: #34495e;
+ 
+ }
+ 
+ .status-active {
+ 
+  color: #27ae60;
+ 
+  font-weight: 600;
+ 
+ }
+ 
+ /* Footer Styles */
+ 
+ .footer {
+ 
+  background-color: #2c3e50;
+ 
+  color: white;
+ 
+  text-align: center;
+ 
+  padding: 1rem;
+ 
+  margin-top: auto;
+ 
+ }
+ 
+ /* Button Styles */
+ 
+ .submit-button {
+ 
+  background-color: #3498db;
+ 
+  color: white;
+ 
+  border: none;
+ 
+  padding: 0.75rem 1.5rem;
+ 
+  border-radius: 4px;
+ 
+  cursor: pointer;
+ 
+  transition: background-color 0.3s;
+ 
+  width: 100%;
+ 
+  margin-top: 1rem;
+ 
+ }
+ 
+ .submit-button:hover {
+ 
+  background-color: #2980b9;
+ 
+ }
+ 
+ .submit-button:disabled {
+ 
+  background-color: #bdc3c7;
+ 
+  cursor: not-allowed;
+ 
+ }
+ 
+ /* Responsive Design */
+ 
+ @media (max-width: 768px) {
+ 
+  .main-content {
+ 
+   flex-direction: column;
+ 
+  }
+ 
+  .form-row {
+ 
+   flex-direction: column;
+ 
+  }
+ 
+ }
+ 
+ 
+ 
+ 
+ 
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+
+import { CreateClientComponent } from './create-client.component';
+
+describe('CreateClientComponent', () => {
+  let component: CreateClientComponent;
+  let fixture: ComponentFixture<CreateClientComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      declarations: [CreateClientComponent]
+    })
+    .compileComponents();
+
+    fixture = TestBed.createComponent(CreateClientComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it('should create', () => {
+    expect(component).toBeTruthy();
+  });
+});
+
+
+
+
+
+
+
+
+// create-client.component.ts
+
+import { Component } from '@angular/core';
+
+import { HttpClient } from '@angular/common/http';
+
+import { Router } from '@angular/router';
+
+@Component({
+
+ selector: 'app-create-client',
+ standalone:false,
+ 
+ templateUrl: './create-client.component.html',
+
+ styleUrls: ['./create-client.component.css']
+
+})
+
+export class CreateClientComponent {
+
+ clientObj: any = {
+
+  employeeName: '',
+
+  employeeGender: '',
+
+  dateOfJoining: '',
+
+  role: '',
+
+  phoneNumber: '',
+
+  email: '',
+
+  department: '',
+
+  status: 'ACTIVE'
+
+ };
+
+ recentClient: any = null;
+
+ constructor(
+
+  private http: HttpClient,
+
+  private router: Router
+
+ ) {}
+
+ onSubmit() {
+
+  this.http.post('http://localhost:8089/clients/register', this.clientObj)
+
+   .subscribe(
+
+    (response: any) => {
+
+     this.recentClient = { ...this.clientObj, ...response };
+
+     alert('Client ID Created Successfully!');
+
+    },
+
+    error => {
+
+     alert('Error creating client ID');
+
+     console.error('Error:', error);
+
+    }
+
+   );
+
+ }
+
+ goBack() {
+
+  this.router.navigate(['/user-list']);
+
+ }
+
+}
+
+
+
+layout.component.html
+<head>
+  <title>Bootstrap Example</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+</head>
+<body style="height:1500px">
+
+<nav class="navbar navbar-inverse navbar-fixed-top">
+<div class="container-fluid">
+<div class="navbar-header">
+  <a class="navbar-brand" href="#">WebSiteName</a>
+</div>
+<ul class="nav navbar-nav">
+  <li class="active"><a href="http://localhost:4200/login">Home</a></li>
+  <li><a href="http://localhost:4200/create-client">Create Client Id</a></li>
+  <li><a href="http://localhost:4200/user-list">List of Users</a></li>
+  <li><a href="http://localhost:4200/vdi">VDI Resources</a></li>
+  <li><a href="http://localhost:8089/api/kt-sessions">KT Session</a></li>
+  <li><a href="/kt-session">KT Session</a></li>
+
+   <li><a href="http://localhost:4200/Offboarding">Offboarding</a></li>
+</ul>
+</div>
+</nav>
+<router-outlet></router-outlet>
+
+
+
+
+
+
+
+
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+
+import { LayoutComponent } from './layout.component';
+
+describe('LayoutComponent', () => {
+  let component: LayoutComponent;
+  let fixture: ComponentFixture<LayoutComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      declarations: [LayoutComponent]
+    })
+    .compileComponents();
+
+    fixture = TestBed.createComponent(LayoutComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it('should create', () => {
+    expect(component).toBeTruthy();
+  });
+});
+
+
+
+
+
+
+
+import { Component } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
+
+
+@Component({
+  selector: 'app-layout',
+  standalone: true,
+  imports:[RouterOutlet],
+
+  templateUrl: './layout.component.html',
+  styleUrl: './layout.component.css'
+})
+export class LayoutComponent {
+
+}
+
+
+
+
+
+login.component.html
+<p>login works!</p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Form</title>
+    <link rel="stylesheet" href="login.component.css">
+</head>
+<body>
+    <div class="form-container">
+        <h2>LOGIN</h2>
+        <form class="login-form">
+            <input type="text" name="username" [(ngModel)]="loginObj.username" placeholder="email" required>
+            <input type="password" name="password" [(ngModel)]="loginObj.password" placeholder="Password" required>
+            <input type="submit" (click)="login()" value="Login">
+             <!-- <button (click)="login()"  class="button login_submit">
+                <span>Log in now</span>
+             </button> -->
+        </form>
+        <div class="signup-link">
+            <p>Don't have an account? <a href="login.component.html">Sign Up</a></p>
+        </div>
+    </div>
+</body>
+
+</html>
+
+
+
+
+
+ body {
+    font-family: 'Roboto', sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    background-color: #2c3e50;
+}
+
+.form-container {
+    background-color: #34495e;
+    border-radius: 8px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+    max-width: 400px;
+    width: 100%;
+    padding: 20px;
+    box-sizing: border-box;
+    text-align: center;
+    animation: slideIn 0.8s ease-in-out, borderLight 2s infinite alternate;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes borderLight {
+    from {
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+    }
+    to {
+        box-shadow: 0 0 20px rgba(122, 206, 167, 0.856);
+    }
+}
+
+.form-container h2 {
+    color: #ecf0f1;
+    margin-bottom: 20px;
+}
+
+.login-form input, .signup-form input {
+    width: 100%;
+    padding: 12px;
+    margin: 8px 0;
+    box-sizing: border-box;
+    border: none;
+    border-radius: 4px;
+    outline: none;
+}
+
+.login-form input[type="submit"] {
+    background-color: #2ecc71;
+    color: #fff;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.login-form input[type="submit"]:hover {
+    background-color: #27ae60;
+}
+
+.login-form input[type="text"],
+.login-form input[type="password"] {
+    background-color: #ecf0f1;
+    color: #333;
+}
+
+.login-form input[type="text"]:focus,
+.login-form input[type="password"]:focus {
+    background-color: #d5dbdb;
+}
+
+
+/* COMMON CSS */
+
+.signup-link a,
+.login-link a {
+    color: #9294ee;
+    text-decoration: none;
+    font-weight: bold;
+    transition: color 0.3s ease;
+}
+
+.signup-link a:hover,
+.login-link a:hover {
+    color: #2980b9;
+}
+
+.signup-link p,
+.login-link p {
+    color: #7f8c8d;
+    margin-top: 12px;
+    font-size: 16px;
+}
+
+
+/* SIGNUP PAGE CSS */
+
+.signup-form input[type="submit"] {
+    background-color: #e74c3c;
+    color: #fff;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.signup-form input[type="submit"]:hover {
+    background-color: #c0392b;
+}
+
+.signup-form input[type="text"],
+.signup-form input[type="password"] {
+    background-color: #cbd1d3;
+    color: #333;
+}
+
+.signup-form input[type="text"]:focus,
+.signup-form input[type="password"]:focus {
+    background-color: #9eb1b1;
+}
+
+
+
+
+
+
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+
+import { LoginComponent } from './login.component';
+
+describe('LoginComponent', () => {
+  let component: LoginComponent;
+  let fixture: ComponentFixture<LoginComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      declarations: [LoginComponent]
+    })
+    .compileComponents();
+
+    fixture = TestBed.createComponent(LoginComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it('should create', () => {
+    expect(component).toBeTruthy();
+  });
+});
+
+
+
+
+
+
+
+
+
+ import { Component, inject } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { UserService } from '../../service/user.service';
+import { Router } from '@angular/router';
+
+@Component({
+  selector: 'app-login',
+  standalone: true,
+  imports: [FormsModule],
+  templateUrl: './login.component.html',
+  styleUrl: './login.component.css'
+})
+export class LoginComponent {
+  loginObj: any = {
+    username: '',
+    password: ''
+  };
+
+  userService = inject(UserService);
+  router = inject(Router);
+
+  login() {
+    // Log original values for debugging
+    console.log('Before Trim - Username:', this.loginObj.username);
+    console.log('Before Trim - Password:', this.loginObj.password);
+  
+    // Trim spaces
+    this.loginObj.username = this.loginObj.username.trim();
+    this.loginObj.password = this.loginObj.password.trim();
+  
+    // Log trimmed values for debugging
+    console.log('After Trim - Username:', this.loginObj.username);
+    console.log('After Trim - Password:', this.loginObj.password);
+  
+    if (!this.loginObj.username || !this.loginObj.password) {
+      alert('Username and Password are required!');
+      return;
+    }
+  
+    this.userService.onLogin(this.loginObj).subscribe(
+      (res: any) => {
+        if (res && res.token) {
+          localStorage.setItem('userApp', JSON.stringify(res));
+          this.router.navigateByUrl('/user-list');
+        } else {
+          alert('Invalid credentials. Please try again.');
+        }
+      },
+      (error) => {
+        console.error('Login Error:', error);
+        if (error.status === 403) {
+          alert('Access Denied! Invalid credentials.');
+        } else {
+          alert('Login failed. Please check your credentials or try again later.');
+        }
+      }
+    );
+  }
+}
+
+
+
+
+
+
+ off-boarding.component.html
+
+ 
+  <div class="container mt-4">
+    <h2>Offboarding Management</h2>
+  
+ 
+  
+    <div class="mt-4">
+      <h4>Get Offboarding Requests by Client ID</h4>
+      <input type="text" [(ngModel)]="searchClientId" class="form-control" placeholder="Enter Client ID">
+      <button class="btn btn-primary mt-2" (click)="fetchOffboardingRequestsByClient()">Fetch Requests</button>
+      <table class="table mt-3" *ngIf="clientOffboardingRequests.length">
+        <thead>
+          <tr>
+            <th>ID</th>
+            
+            <th>Client ID</th>
+            <th>Request Date</th>
+            <th>Reason</th>
+            <th>Status</th>
+            
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let request of clientOffboardingRequests">
+            <td>{{ request.id }}</td>
+            <td>{{ request.clientId }}</td>
+            <td>{{ request.requestDate }}</td>
+            <td>{{ request.reason }}</td>
+            <td>{{ request.status}}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  
+    <hr>
+  
+    <div class="mt-4">
+      <h4>Pending Offboarding Requests</h4>
+      <button class="btn btn-warning" (click)="fetchPendingOffboardingRequests()">Fetch Pending Requests</button>
+      <table class="table mt-3" *ngIf="pendingOffboardingRequests.length">
+        <thead>
+          <tr>
+            <th>Id</th>
+            <th>Client ID</th>
+            <th>Request Date</th>
+            <th>Reason</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let request of pendingOffboardingRequests">
+            <td>{{request.id}}</td>
+            <td>{{ request.clientId }}</td>
+            <td>{{ request.requestDate }}</td>
+            <td>{{ request.reason }}</td>
+            <td>
+              <button class="btn btn-success" (click)="approveOffboardingRequest(request.clientId)">Approve</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+
+
+
+
+container {
+
+    max-width: 800px;
+   
+    margin: auto;
+   
+   }
+   
+   h2, h4 {
+   
+    text-align: center;
+   
+   }
+   
+   form {
+   
+    background: #f9f9f9;
+   
+    padding: 20px;
+   
+    border-radius: 5px;
+   
+   }
+   
+   .table {
+   
+    margin-top: 20px;
+   
+   }
+   
+
+
+
+
+
+   
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+
+import { OffBoardingComponent } from './off-boarding.component';
+
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+
+import { ReactiveFormsModule } from '@angular/forms';
+
+describe('OffBoardingComponent', () => {
+
+ let component: OffBoardingComponent;
+
+ let fixture: ComponentFixture<OffBoardingComponent>;
+
+ beforeEach(async () => {
+
+  await TestBed.configureTestingModule({
+
+   declarations: [ OffBoardingComponent ],
+
+   imports: [ ReactiveFormsModule, HttpClientTestingModule ]
+
+  }).compileComponents();
+
+ });
+
+ beforeEach(() => {
+
+  fixture = TestBed.createComponent(OffBoardingComponent);
+
+  component = fixture.componentInstance;
+
+  fixture.detectChanges();
+
+ });
+
+ it('should create the component', () => {
+
+  expect(component).toBeTruthy();
+
+ });
+
+ it('should have a valid form when input values are provided', () => {
+
+  component.offboardingForm.setValue({
+
+   clientId: 'CID-TEST',
+
+   requestDate: '2025-02-20',
+
+   reason: 'Project End'
+
+  });
+
+  expect(component.offboardingForm.valid).toBeTrue();
+
+ });
+
+});
+
+
+
+
+
+
+
+import { Component, OnInit } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
+
+@Component({
+  selector: 'app-off-boarding',
+  standalone:false,
+  templateUrl: './off-boarding.component.html',
+  styleUrls: ['./off-boarding.component.css']
+})
+export class OffBoardingComponent implements OnInit {
+  offboardingForm: FormGroup;
+  selectedFile: File | null = null;
+  searchClientId: string = '';
+  clientOffboardingRequests: any[] = [];
+  pendingOffboardingRequests: any[] = [];
+
+  constructor(private fb: FormBuilder, private http: HttpClient) {
+    this.offboardingForm = this.fb.group({
+      clientId: ['', Validators.required],
+      requestDate: ['', Validators.required],
+      reason: ['', Validators.required]
+    });
+  }
+
+  ngOnInit(): void {}
+
+  onFileSelected(event: any) {
+    this.selectedFile = event.target.files[0];
+  }
+
+  submitOffboardingRequest() {
+    if (this.offboardingForm.invalid) return;
+
+    const formData = new FormData();
+    formData.append('request', JSON.stringify(this.offboardingForm.value));
+    if (this.selectedFile) {
+      formData.append('files', this.selectedFile);
+    }
+
+    this.http.post('http://localhost:8089/api/offboarding', formData).subscribe(response => {
+      alert('Offboarding request created successfully.');
+      this.offboardingForm.reset();
+    });
+  }
+
+  fetchOffboardingRequestsByClient() {
+    this.http.get(`http://localhost:8089/api/offboarding/client/${this.searchClientId}`)
+      .subscribe((data: any) => this.clientOffboardingRequests = data);
+  }
+
+  fetchPendingOffboardingRequests() {
+    this.http.get('http://localhost:8089/api/offboarding/pending')
+      .subscribe((data: any) => this.pendingOffboardingRequests = data);
+  }
+
+  approveOffboardingRequest(clientId: String) {
+    this.http.post(`http://localhost:8089/api/offboarding/approve/${clientId}`, {})
+      .subscribe(response => {
+        alert('Offboarding request approved.');
+        this.fetchPendingOffboardingRequests();
+      });
+  }
+}
+
+
+
+user-list.component.html
+
+   <div class="row">
+    <div class="col-12">
+        <h2>User List</h2>
+        <!-- Loading State -->
+        <div *ngIf="isLoading" class="text-center text-primary">
+            <p>Loading data, please wait...</p>
+        </div>
+
+        <!-- Error Message -->
+        <div *ngIf="errorMessage" class="text-center text-danger">
+            <p>{{ errorMessage }}</p>
+        </div>
+
+        <!-- Employee Table -->
+        <table class="table table-bordered" *ngIf="!isLoading && users.length > 0; else noData">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Employee Name</th>
+                    <th>Gender</th>
+                    <th>Date of Joining</th>
+                    <th>Role</th>
+                    <th>Phone Number</th>
+                    <th>Email</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let item of users; let i = index">
+                    <td>{{ i + 1 }}</td>
+                    <td>{{ item.employeeName }}</td>
+                    <td>{{ item.employeeGender }}</td>
+                    <td>{{ item.dateOfJoining  }}</td> <!-- Format date -->
+                    <td>{{ item.role }}</td>
+                    <td>{{ item.phoneNumber }}</td>
+                    <td>{{ item.email }}</td>
+                    <td>{{ item.status }}</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- No Data Message -->
+        <ng-template #noData>
+            <p class="text-center text-warning">No data available</p>
+        </ng-template>
+    </div>
+</div>
+
+
+
+
+
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+
+import { UserListComponent } from './user-list.component';
+
+describe('UserListComponent', () => {
+  let component: UserListComponent;
+  let fixture: ComponentFixture<UserListComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      declarations: [UserListComponent]
+    })
+    .compileComponents();
+
+    fixture = TestBed.createComponent(UserListComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it('should create', () => {
+    expect(component).toBeTruthy();
+  });
+});
+
+
+
+
+
+import { Component, OnInit } from '@angular/core';
+import { UserService } from '../../service/user.service';
+
+@Component({
+  selector: 'app-user-list',
+  standalone:false,
+  templateUrl: './user-list.component.html',
+  styleUrls: ['./user-list.component.css']
+})
+export class UserListComponent implements OnInit {
+  users: any[] = [];  // Store fetched users
+  errorMessage: string = ''; // Store error messages
+  isLoading: boolean = true; // Show loading state
+
+  constructor(private userService: UserService) {}
+
+  ngOnInit(): void {
+    this.getUsers();
+  }
+
+  getUsers(): void {
+    this.userService.getClient().subscribe({
+      next: (response) => {
+        this.users = response; // Ensure this matches the backend response
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('Error fetching users:', error);
+        this.errorMessage = 'Unable to fetch user data. Please try again later.';
+        this.isLoading = false;
+      }
+    });
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+vdi.component.html
+
+
+<head>
+  <title>Bootstrap Example</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+</head>
+<body style="height:1500px">
+
+<nav class="navbar navbar-inverse navbar-fixed-top">
+<div class="container-fluid">
+  <div class="navbar-header">
+    <a class="navbar-brand" href="#">WebSiteName</a>
+  </div>
+  <ul class="nav navbar-nav">
+    <!-- <li class="active"><a href="#">Home</a></li>
+    
+    <li><a href="http://localhost:8089/vdis/all" (click)="getVdiResources()">Get VDI Resources</a></li>
+    <li><a href="#" (click)="getVdiResources()">Get VDI Resources</a></li> -->
+    <li class="active"><a routerLink="/">Home</a></li>
+    
+
+    <li><a href="http://localhost:8089/vdis/1">Get VDI Resources by id</a></li>
+    <li><a href="#">VDI Deallocate</a></li>
+  </ul>
+</div>
+</nav>
+
+<div class="container">
+  <h2>VDI Allocation Form</h2>
+  <form #vdiForm="ngForm" (ngSubmit)="allocateVDI()" class="vdi-form">
+    <div class="form-group">
+      <label for="clientId">Client ID</label>
+      <input type="text" id="clientId" name="clientId" class="form-control" [(ngModel)]="vdiObj.clientId"
+        required #clientId="ngModel">
+      <span class="error" *ngIf="clientId.invalid && clientId.touched">Client ID is required</span>
+    </div>
+
+    <div class="form-group">
+      <label for="projectName">Project Name</label>
+      <input type="text" id="projectName" name="projectName" class="form-control" [(ngModel)]="vdiObj.projectName"
+        required #projectName="ngModel">
+      <span class="error" *ngIf="projectName.invalid && projectName.touched">Project Name is required</span>
+    </div>
+
+    <div class="form-group">
+      <label for="vdiType">VDI Type</label>
+      <select id="vdiType" name="vdiType" class="form-control" [(ngModel)]="vdiObj.vdiType" required #vdiType="ngModel">
+        <option value="" disabled selected>Select VDI Type</option>
+        <option value="Type A">Type A</option>
+        <option value="Type B">Type B</option>
+      </select>
+      <span class="error" *ngIf="vdiType.invalid && vdiType.touched">VDI Type is required</span>
+    </div>
+
+    <div class="form-group">
+      <label for="softwareStack">Software Stack</label>
+      <textarea id="softwareStack" name="softwareStack" class="form-control" [(ngModel)]="softwareInput"
+        required #softwareStack="ngModel" rows="3"></textarea>
+      <span class="error" *ngIf="softwareStack.invalid && softwareStack.touched">Software Stack is required</span>
+    </div>
+
+    <div class="form-group">
+      <label for="allocationDate">Allocation Date</label>
+      <input type="datetime-local" id="allocationDate" name="allocationDate" class="form-control"
+        [(ngModel)]="vdiObj.allocationDate" required #allocationDate="ngModel">
+      <span class="error" *ngIf="allocationDate.invalid && allocationDate.touched">Allocation Date is required</span>
+    </div>
+
+    <div class="form-group">
+      <label for="status">Status</label>
+      <select id="status" name="status" class="form-control" [(ngModel)]="vdiObj.status" required #status="ngModel">
+        <option value="" disabled selected>Select Status</option>
+        <option value="ACTIVE">ACTIVE</option>
+        <option value="INACTIVE">INACTIVE</option>
+      </select>
+      <span class="error" *ngIf="status.invalid && status.touched">Status is required</span>
+    </div>
+
+    <div class="form-buttons">
+      <button type="submit" [disabled]="vdiForm.invalid" class="submit-button">Allocate VDI</button>
+    </div>
+  </form>
+  <div *ngIf="responseMessage" class="response-message">{{ responseMessage }}</div>
+
+  <h2>VDI Resources</h2>
+  <table class="table table-bordered" *ngIf="vdiList.length > 0">
+    <thead>
+      <tr>
+        <th>Allocation ID</th>
+        <th>Client ID</th>
+        <th>Project Name</th>
+        <th>VDI Type</th>
+        <th>Software Stack</th>
+        <th>Allocation Date</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let vdi of vdiList">
+        <td>{{ vdi.allocationId }}</td>
+        <td>{{ vdi.clientId }}</td>
+        <td>{{ vdi.projectName }}</td>
+        <td>{{ vdi.vdiType }}</td>
+        <td>{{ vdi.softwareStack }}</td>
+        <td>{{ vdi.allocationDate | date:'short' }}</td>
+        <td>{{ vdi.status }}</td>
+      </tr>
+    </tbody>
+  </table>
+  <div *ngIf="vdiList.length === 0">No VDI resources available.</div>
+</div>
+ 
+ 
+ 
+ 
+ 
+ .vdi-form {
+    max-width: 600px;
+    margin: auto;
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  .form-group {
+    margin-bottom: 15px;
+  }
+  
+  label {
+    font-weight: bold;
+    display: block;
+    margin-bottom: 5px;
+  }
+  
+  input, select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+  }
+  
+  button {
+    width: 100%;
+    padding: 10px;
+    background-color: #003366;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  button:hover {
+    background-color: #002244;
+  }
+  
+  .error {
+    color: red;
+    font-size: 12px;
+  }
+  
+  .response-message {
+    text-align: center;
+    font-weight: bold;
+    margin-top: 15px;
+  }
+  
+  
+  
+  import { ComponentFixture, TestBed } from '@angular/core/testing';
+
+import { VdiComponent } from './vdi.component';
+
+describe('VdiComponent', () => {
+  let component: VdiComponent;
+  let fixture: ComponentFixture<VdiComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      declarations: [VdiComponent]
+    })
+    .compileComponents();
+
+    fixture = TestBed.createComponent(VdiComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it('should create', () => {
+    expect(component).toBeTruthy();
+  });
+});
+
+
+
+
+
+
+
+import { Component } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+
+@Component({
+  selector: 'app-vdi',
+  standalone: true,
+  imports: [FormsModule, CommonModule],
+  templateUrl: './vdi.component.html',
+  styleUrls: ['./vdi.component.css']
+})
+export class VdiComponent {
+  vdiObj = {
+    clientId: '',
+    projectName: '',
+    vdiType: '',
+    softwareStack: '',
+    allocationDate: '',
+    status: ''
+  };
+
+  softwareInput = ''; 
+  responseMessage: string = '';
+  vdiList: any[] = [];
+
+  constructor(private http: HttpClient) {}
+
+  ngOnInit(): void {
+    this.getVdiResources();
+  }
+
+  allocateVDI() {
+    // Convert comma-separated software names to an array
+    const softwareArray = this.softwareInput.split(',').map(software => software.trim());
+    
+    // Convert the array to the required JSON format
+    this.vdiObj.softwareStack = JSON.stringify({ software: softwareArray });
+
+    this.http.post('http://localhost:8089/vdis/allocate', this.vdiObj).subscribe(
+      (res) => {
+        this.responseMessage = 'VDI allocated successfully!';
+        this.getVdiResources(); 
+      },
+      error => {
+        this.responseMessage = 'Error allocating VDI!';
+      }
+    );
+  }
+
+  getVdiResources(): void {
+    this.http.get<any[]>('http://localhost:8089/vdis/all').subscribe(
+      (data) => {
+        this.vdiList = data;
+      },
+      (error) => {
+        console.error('Error fetching VDI resources', error);
+      }
+    );
+  }
+}
+
+user.service.spec.ts
+import { TestBed } from '@angular/core/testing';
+
+import { UserService } from './user.service';
+
+describe('UserService', () => {
+  let service: UserService;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({});
+    service = TestBed.inject(UserService);
+  });
+
+  it('should be created', () => {
+    expect(service).toBeTruthy();
+  });
+});
+  
+  
+  
+  user.service.ts
+  
+import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class UserService {
+
+  private loginUrl = "http://localhost:8089/api/auth/login";
+  private clientsUrl = "http://localhost:8089/clients/all";
+  private apiUrl = 'http://localhost:8089/clients/register';
+  public  clientUrl="http://localhost:4200/create-client";
+  constructor(private http: HttpClient) { }
+
+  onLogin(obj: any): Observable<any> {
+    return this.http.post(this.loginUrl, obj);
+  }
+
+  getClient(): Observable<any[]> {
+    return this.http.get<any[]>(this.clientsUrl);
+  }
+  registerClient(clientData: any): Observable<any> {
+    return this.http.post(this.apiUrl, clientData);
+  }
+}
+
+
+
+
+
+app.routing.module.ts
+
+import { NgModule } from '@angular/core';
+import { RouterModule, Routes } from '@angular/router';
+import { LoginComponent } from './pages/login/login.component';
+import { LayoutComponent } from './pages/layout/layout.component';
+import { UserListComponent } from './pages/user-list/user-list.component';
+import { CreateClientComponent } from './pages/create-client/create-client.component';
+import { VdiComponent } from './pages/vdi/vdi.component';
+import { KtSessionComponent } from './pages/kt-session/kt-session.component';
+import { OffBoardingComponent } from './pages/off-boarding/off-boarding.component';
+export const routes: Routes = [
+  
+  {
+    path:'',
+    redirectTo:'login',
+    pathMatch:'full'
+  },
+  {
+    path:'login',
+    component:LoginComponent
+  },
+  {
+    path:'',
+    component:LayoutComponent,
+    
+    children:[
+    
+      {
+        path:'user-list',
+        component:UserListComponent
+      },
+      {
+        path:'createUser',
+        component:CreateClientComponent
+      },
+      {
+        path:'vdi',
+        component:VdiComponent
+      },
+      {path:'kt-session',component:KtSessionComponent},
+  {path:'',redirectTo:'/kt-session',pathMatch:'full'},
+
+  { path: 'Offboarding', component: OffBoardingComponent },
+  { path: '', redirectTo: '/Offboarding', pathMatch: 'full' }
+      
+    ]
+  }
+];
+
+@NgModule({
+  imports: [RouterModule.forRoot(routes)],
+  exports: [RouterModule]
+})
+export class AppRoutingModule { }
+  
+ 
+ 
+ 
+ 
+ 
+app.component.html
+  <router-outlet></router-outlet>
+ 
+ 
+ app.componet.spec.ts
+ import { TestBed } from '@angular/core/testing';
+import { RouterModule } from '@angular/router';
+import { AppComponent } from './app.component';
+
+describe('AppComponent', () => {
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [
+        RouterModule.forRoot([])
+      ],
+      declarations: [
+        AppComponent
+      ],
+    }).compileComponents();
+  });
+
+  it('should create the app', () => {
+    const fixture = TestBed.createComponent(AppComponent);
+    const app = fixture.componentInstance;
+    expect(app).toBeTruthy();
+  });
+
+  it(`should have as title 'resource-management'`, () => {
+    const fixture = TestBed.createComponent(AppComponent);
+    const app = fixture.componentInstance;
+    expect(app.title).toEqual('resource-management');
+  });
+
+  it('should render title', () => {
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('h1')?.textContent).toContain('Hello, resource-management');
+  });
+});
+
+
+
+app.component.ts
+import { Component } from '@angular/core';
+
+
+@Component({
+  selector: 'app-root',
+  standalone: false,
+  templateUrl: './app.component.html',
+  
+  styleUrl: './app.component.css'
+})
+export class AppComponent {
+  title = 'resource-management';
+}
+
+
+
+
+app.module.ts
+
+
+
+
+
+import { importProvidersFrom, NgModule } from '@angular/core';
+import { BrowserModule } from '@angular/platform-browser';
+import { FormGroup, FormsModule } from '@angular/forms';
+//import { HttpClientModule } from '@angular/common/http';
+import { RouterModule, Routes } from '@angular/router';
+import { AppRoutingModule } from './app-routing.module';
+import { AppComponent } from './app.component';
+import { LoginComponent } from './pages/login/login.component';
+import { LayoutComponent } from './pages/layout/layout.component';
+import { UserListComponent } from './pages/user-list/user-list.component';
+import { CreateClientComponent } from './pages/create-client/create-client.component';
+import { HttpClient, provideHttpClient} from '@angular/common/http';
+import { VdiComponent } from './pages/vdi/vdi.component';
+import { KtSessionComponent } from './pages/kt-session/kt-session.component';
+import { CommonModule } from '@angular/common';
+import { OffBoardingComponent } from './pages/off-boarding/off-boarding.component';
+//import { ReactiveFormsModule } from '@angular/forms';
+import { ReactiveFormsModule } from '@angular/forms';
+
+const routes: Routes = [
+  { path: 'create-client', component: CreateClientComponent },
+  { path: '', redirectTo: '/create-client', pathMatch: 'full' },
+  { path: 'offboarding', component: OffBoardingComponent }
+];
+
+@NgModule({
+  declarations: [
+    AppComponent,
+    
+
+    //KtSessionComponent,
+    UserListComponent,
+    CreateClientComponent,
+    OffBoardingComponent,
+   //ReactiveFormsModule
+   
+     
+    
+  ],
+  imports: [
+    BrowserModule,
+    LoginComponent,
+    AppRoutingModule,
+    FormsModule,
+    CommonModule,
+    VdiComponent,
+    ReactiveFormsModule,
+    LayoutComponent,
+    RouterModule.forRoot(routes)
+    
+  ],
+  providers: [
+    provideHttpClient()
+    
+  ],
+  bootstrap: [AppComponent]
+})
+export class AppModule { }
+
+
+index.html
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>ResourceManagement</title>
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+</head>
+<body>
+  <app-root></app-root>
+</body>
+</html>
+
+
+
+main.ts
+import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
+import { AppModule } from './app/app.module';
+
+platformBrowserDynamic().bootstrapModule(AppModule, {
+  ngZoneEventCoalescing: true,
+})
+  .catch(err => console.error(err));
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+  
