@@ -1,0 +1,45 @@
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { PolicyLookupComponent } from './policy-lookup.component';
+
+describe('PolicyLookupComponent - isFarmersOnly Logic', () => {
+  let component: PolicyLookupComponent;
+  let fixture: ComponentFixture<PolicyLookupComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      declarations: [PolicyLookupComponent]
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(PolicyLookupComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it('should create component', () => {
+    expect(component).toBeTruthy();
+  });
+
+  it('should be false when isBW = true and isFM = true', () => {
+    component.isBW = true;
+    component.isFM = true;
+    expect(component.isFarmersOnly).toBeFalse();
+  });
+
+  it('should be false when isBW = true and isFM = false', () => {
+    component.isBW = true;
+    component.isFM = false;
+    expect(component.isFarmersOnly).toBeFalse();
+  });
+
+  it('should be false when isBW = false and isFM = true', () => {
+    component.isBW = false;
+    component.isFM = true;
+    expect(component.isFarmersOnly).toBeFalse();
+  });
+
+  it('should be true when isBW = false and isFM = false', () => {
+    component.isBW = false;
+    component.isFM = false;
+    expect(component.isFarmersOnly).toBeTrue();
+  });
+});
