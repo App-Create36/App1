@@ -1,0 +1,587 @@
+import {
+  Component,
+  ElementRef,
+  EventEmitter,
+  Input,
+  OnDestroy,
+  OnInit,
+  Output,
+  ViewChild,
+  ViewEncapsulation,
+} from '@angular/core';
+import { DatePipe } from '@angular/common';
+import { finalize } from 'rxjs/operators';
+import { get } from 'lodash';
+import { AbstractControl, FormControl, FormGroup, ValidationErrors, Validators } from '@angular/forms';
+import { EBannerActions, TuiBannerService, TuiSpinnerService, TuiTrackerService } from 'ng-tractor-ui';
+ 
+//services
+import { LocalStorageService } from '@src/app/core/services/local-storage';
+import { SessionStorageService } from '@src/app/core/services/session-storage/session-storage.service';
+import { LoginService } from '@src/app/core/services/login.service';
+import { RegistrationService } from '@src/app/core/services/registration/registration.service';
+import { ageValidator } from '@src/app/forgot-credential/validators/dob.validator';
+import { FeatureFlagsService } from '@src/app/core/services/featureFlags/feature-flags.service';
+import { PolicySummaryService } from '@src/app/core/services/policy-summary/policy-summary.service';
+import { BillingSummaryFWSService } from '@src/app/core/services/billing-summary-fws/billing-summary-fws.service';
+import { BillingSummaryService } from '@src/app/core/services/billing-summary/billing-summary.service';
+ 
+//constants
+import {
+  ErrorCode,
+  ErrorMessages,
+  ID_CARDS_ERROR_CODES,
+  UOTP_ERROR_CODES,
+} from '@src/app/core/constants/error.constants';
+import { STORAGE_CONST } from '@src/app/core/constants/storage.constants';
+import {
+  IRegisterCustomerResponseError,
+  ICustomerSearch,
+  ICustomerSearchResponseV2,
+} from '@src/app/core/interfaces/registration.interface';
+import { environment } from '@src/environments/environment';
+import { ENotifications } from '@src/app/core/constants/notification.constants';
+import { Subscription } from 'rxjs';
+import { MakePaymentService } from '@src/app/core/services/make-payment.service';
+import { StepperService } from '@src/app/core/services/stepper.service';
+import { EnvironmentDetectionService } from '@src/app/core/services/environment-detection/environment-detection.service';
+import { segEventNames, segmentEntrySource, segmentParams } from '@src/app/core/constants/segment-constants';
+import { HttpErrorResponse } from '@angular/common/http';
+import { REGEX_VALIDATIONS } from '@src/app/core/constants/core-css.constants';
+import { validatePolicyNumber } from '../validator/core-policynumber.validator';
+ 
+@Component({
+  selector: 'css-policy-look-up-form',
+  templateUrl: './policy-look-up-form.component.html',
+  styleUrls: ['./policy-look-up-form.component.scss'],
+  encapsulation: ViewEncapsulation.None,
+})
+export class PolicyLookUpFormComponent implements OnInit, OnDestroy {
+  submitted: boolean;
+  errorHeading: string;
+  errorMsg: string;
+  policyLookUpForm: FormGroup;
+  showCalendarIcon = true;
+  dateInput = new Date();
+  today = new Date();
+  notificationId: any;
+  showFormErrors = true;
+  private readonly TYPE_TEXT = 'text';
+  private readonly ERRORS_FOUND = 'ERRORS FOUND';
+  isFM = environment.isFMLogin;
+  isBW = environment.isBWLogin;
+  isFarmersOnly = !this.isBW && !this.isFM;
+  private readonly CSS_CONTINUE_POLICY_LOOK_UP = 'CSS_continue_policy_look_up';
+  private readonly CSS_CANCEL_POLICY_LOOK_UP = 'CSS_cancel_policy_look_up';
+  private readonly CSS_CONTINUE_REGISRATION = 'CSS_continue_registration_step_one';
+  private readonly CSS_CANCEL_REGISRATION = 'CSS_cancel_registartion_step_one';
+  private readonly CSS_CONTINUE_FORGOT_USERNAME = 'CSS_continue_forgot_username';
+  private readonly CSS_CANCEL_FORGOT_USERNAME = 'CSS_cancel_forgot_username';
+  private readonly CSS_CANCEL_ID_CARDS = 'CSS_cancel_id_cards';
+  private readonly FIND_YOUR_POLICY_INFO = 'find your policy your info';
+  private readonly CONTINUE_CLICKED = 'Continue Clicked';
+  private readonly UOTP = 'UOTP';
+  private readonly CREATE_ACCOUNT = 'Create Account';
+  private readonly FORGOT_USERNAME = 'Forgot Username';
+  private readonly PRE_LOGIN_ID_CARDS = 'PreLoginIdCards';
+  continueCtaTrackingId = this.CSS_CONTINUE_POLICY_LOOK_UP;
+  cancelCtaTrackingId = this.CSS_CANCEL_POLICY_LOOK_UP;
+  @ViewChild('sectionContainer', { static: true }) sectionElement: ElementRef;
+  @Input() isSecurityMaintenanceEnabled: boolean;
+  @Input() isOnlyFarmersSecurityMaintenanceEnabled: boolean;
+  @Input() farmersSecurityMaintenanceTitle: string;
+  @Input() farmersSecurityMaintenanceMessage: string;
+  @Input() isForgotUsernameFlow: boolean;
+  @Input() isRegistrationFlow: boolean;
+  @Input() isFindPolicyFlow: boolean;
+  @Input() idCardFlow: boolean = false;
+  @Output() onFormSubmitEvent = new EventEmitter<ICustomerSearchResponseV2>();
+  @Output() yourInfoFlow = new EventEmitter<boolean>();
+  featureFlagSubscription: Subscription;
+  @ViewChild('firstNameInput', { static: false }) firstNameInputElement: ElementRef;
+ 
+  /** Form Error Helpers */
+  get dob(): AbstractControl {
+    return this.policyLookUpForm.get('dob');
+  }
+  get dobAgeError(): ValidationErrors {
+    return this.dob.errors && this.dob.errors.ageValidation;
+  }
+  get dobRequiredError(): boolean {
+    return this.dob.errors && this.dob.errors.required && this.dob.dirty && this.dob.touched && this.showFormErrors;
+  }
+  get dobFormatError(): ValidationErrors {
+    return this.dob.errors && this.dob.errors.dateFormat;
+  }
+  get firstName(): AbstractControl {
+    return this.policyLookUpForm.get('firstName');
+  }
+  get firstNameRequiredError(): boolean {
+    return (
+      this.firstName.errors &&
+      this.firstName.errors.required &&
+      this.firstName.dirty &&
+      this.firstName.touched &&
+      this.showFormErrors
+    );
+  }
+  get firstNamePatternError(): ValidationErrors {
+    return this.firstName.errors && this.firstName.errors.pattern;
+  }
+  get lastName(): AbstractControl {
+    return this.policyLookUpForm.get('lastName');
+  }
+  get lastNameRequiredError(): boolean {
+    return (
+      this.lastName.errors &&
+      this.lastName.errors.required &&
+      this.lastName.dirty &&
+      this.lastName.touched &&
+      this.showFormErrors
+    );
+  }
+  get lastNamePatternError(): ValidationErrors {
+    return this.lastName.errors && this.lastName.errors.pattern;
+  }
+  get zipCode(): AbstractControl {
+    return this.policyLookUpForm.get('zipCode');
+  }
+  get policyNumber(): AbstractControl {
+    return this.policyLookUpForm.get('policyNumber');
+  }
+ 
+  get zipCodeRequiredError(): boolean {
+    return (
+      this.zipCode.errors &&
+      this.zipCode.errors.required &&
+      this.zipCode.dirty &&
+      this.zipCode.touched &&
+      this.showFormErrors
+    );
+  }
+  get zipCodePatternError(): ValidationErrors {
+    return this.zipCode.errors && this.zipCode.errors.pattern;
+  }
+  get policyNumberFormatError(): ValidationErrors {
+    return (
+      this.policyNumber.errors && !this.policyNumber.errors.required && this.policyNumber.errors.policyNumberInvalid
+    );
+  }
+  get policyNumberRequiredError(): boolean {
+    return (
+      this.policyNumber.errors &&
+      this.policyNumber.errors.required &&
+      this.policyNumber.dirty &&
+      this.policyNumber.touched &&
+      this.showFormErrors
+    );
+  }
+ 
+  get isFirstNameInvalid(): boolean {
+    return (
+      this.policyLookUpForm.get('firstName').invalid &&
+      this.policyLookUpForm.get('firstName').touched &&
+      this.policyLookUpForm.get('firstName').dirty
+    );
+  }
+  get isLastNameInvalid(): boolean {
+    return (
+      this.policyLookUpForm.get('lastName').invalid &&
+      this.policyLookUpForm.get('lastName').touched &&
+      this.policyLookUpForm.get('lastName').dirty
+    );
+  }
+  get isDobInvalid(): boolean {
+    return (
+      this.policyLookUpForm.get('dob').invalid &&
+      this.policyLookUpForm.get('dob').touched &&
+      this.policyLookUpForm.get('dob').dirty
+    );
+  }
+  get isZipcodeInvalid(): boolean {
+    return (
+      this.policyLookUpForm.get('zipCode').invalid &&
+      this.policyLookUpForm.get('zipCode').touched &&
+      this.policyLookUpForm.get('zipCode').dirty
+    );
+  }
+  get isPolicyNumberInvalid(): boolean {
+    return (
+      this.policyLookUpForm.get('policyNumber').invalid &&
+      this.policyLookUpForm.get('policyNumber').touched &&
+      this.policyLookUpForm.get('policyNumber').dirty
+    );
+  }
+  /** End Form Error Helpers */
+ 
+  constructor(
+    private loginService: LoginService,
+    private registrationService: RegistrationService,
+    private localStorageService: LocalStorageService,
+    private sessionStorageService: SessionStorageService,
+    private datePipe: DatePipe,
+    private bannerService: TuiBannerService,
+    private tuiSpinnerService: TuiSpinnerService,
+    private featureFlagsService: FeatureFlagsService,
+    private makePaymentService: MakePaymentService,
+    private stepperService: StepperService,
+    private policySummaryService: PolicySummaryService,
+    private billingSummaryFWSService: BillingSummaryFWSService,
+    private billingSummaryService: BillingSummaryService,
+    private screenSizeDetectionService: EnvironmentDetectionService,
+    private tuiTrackerService: TuiTrackerService
+  ) {}
+ 
+  ngOnInit(): void {
+    this.setSegmentTrackingIdToCta();
+    this.policyLookUpForm = this.initForm();
+    this.policyLookUpForm.valueChanges.subscribe(() => {
+      this.handleErrors();
+    });
+    setTimeout(() => {
+      if (!this.screenSizeDetectionService.isMobileView()) {
+        this.makePaymentService.setFoucsToInputElement(this.firstNameInputElement);
+      }
+    }, 0);
+    this.clearPcnSearchParamFromSessionStorage();
+    this.clearCacheResponse();
+  }
+ 
+  clearPcnSearchParamFromSessionStorage(): void {
+    const pcnSearchParams = this.sessionStorageService.getParsedItem(
+      STORAGE_CONST.sessionStorage.pcnSearchRequestPayload
+    );
+    if (pcnSearchParams) {
+      this.sessionStorageService.removeItem(STORAGE_CONST.sessionStorage.pcnSearchRequestPayload);
+    }
+  }
+ 
+  clearCacheResponse(): void {
+    this.policySummaryService.removeUotpPolicySummaryCache$();
+    this.billingSummaryService.removeBillingSummaryUotpCache$();
+    this.billingSummaryFWSService.removeBillingSummaryFWSCache$();
+    this.billingSummaryService.removeBWBillingSummaryUotpCache$();
+  }
+ 
+  setSegmentTrackingIdToCta(): void {
+    if (this.isRegistrationFlow) {
+      this.continueCtaTrackingId = this.CSS_CONTINUE_REGISRATION;
+      this.cancelCtaTrackingId = this.CSS_CANCEL_REGISRATION;
+    }
+ 
+    if (this.isForgotUsernameFlow) {
+      this.continueCtaTrackingId = this.CSS_CONTINUE_FORGOT_USERNAME;
+      this.cancelCtaTrackingId = this.CSS_CANCEL_FORGOT_USERNAME;
+    }
+ 
+    if (this.idCardFlow) {
+      this.cancelCtaTrackingId = this.CSS_CANCEL_ID_CARDS;
+    }
+  }
+ 
+  changeToDate(): void {
+    this.dateInput = new Date(this.dob.value);
+  }
+ 
+  selectDate(event): void {
+    this.dob.setValue(this.datePipe.transform(event.value, 'MM/dd/yyyy'));
+    this.dob.markAsTouched();
+  }
+ 
+  submitForm(): void {
+    this.submitted = true;
+    if (this.handleErrors() === this.ERRORS_FOUND) {
+      return;
+    }
+    const reqPayload = this.getRequestPayload();
+    this.tuiSpinnerService.show();
+    this.registrationService
+      .customerSearch(reqPayload)
+      .pipe(finalize(() => this.tuiSpinnerService.hide()))
+      .subscribe({
+        next: (res: ICustomerSearchResponseV2) => {
+          this.bannerService.clearAllNotifications();
+          // adds response values to local storage
+          this.setLocalStorageItems(reqPayload, res);
+          this.trackSegmentEvents(true);
+          this.onFormSubmitEvent.emit(res);
+          this.featureFlagSubscription = this.featureFlagsService.getFeatureFlags().subscribe(
+            data =>
+              this.sessionStorageService.setItem(
+                STORAGE_CONST.sessionStorage.featureFlags,
+                JSON.stringify({ flags: data }),
+                true
+              ) // storing feature flags response to the session storage
+          );
+        },
+        error: err => {
+          this.setInputFocus();
+          const errorRes: IRegisterCustomerResponseError = err.error;
+          this.trackSegmentEvents(false, errorRes?.description);
+          if (this.isRegistrationFlow) {
+            this.setCoreErrorMessage(err);
+            return;
+          }
+          if (this.isForgotUsernameFlow || this.isFindPolicyFlow) {
+            this.setErrorMessage(err);
+          }
+        },
+      });
+  }
+ 
+  setCoreErrorMessage(err: HttpErrorResponse): void {
+    if (this.loginService.isSuspendedAccount(err)) {
+      this.bannerService.updateNotification({
+        action: EBannerActions.ADD,
+        id: ENotifications.SUSPENDED_ACCOUNT,
+      });
+      this.setSuspendParams();
+      return;
+    }
+    const errorRes = err.error;
+    if (!errorRes?.code || errorRes.code === ErrorCode.E_500) {
+      this.updateBannerMessage(
+        ENotifications.GENERIC_API_ERROR_HANDLER,
+        ErrorMessages.GENERIC_API_ERROR_HANDLER_HEADING,
+        this.isFM
+          ? ErrorMessages.GENERIC_API_ERROR_HANDLER_DESCRIPTION_IA
+          : ErrorMessages.GENERIC_API_ERROR_HANDLER_DESCRIPTION_EA
+      );
+      return;
+    }
+    if (errorRes.code !== ErrorCode.E3001 && errorRes.code !== ErrorCode.E3000) {
+      const isUOTPErrorCode = UOTP_ERROR_CODES.includes(errorRes.code);
+      const isIDCardsErrorCode = ID_CARDS_ERROR_CODES.includes(errorRes.code);
+      const isCustomErrorCode = isUOTPErrorCode || isIDCardsErrorCode;
+      const notificationId = isCustomErrorCode
+        ? ENotifications.CORE_UOTP_API_ERROR_HANDLER
+        : ENotifications.CORE_API_ERROR_HANDLER;
+      this.updateBannerMessage(notificationId, errorRes.description, errorRes.error, isCustomErrorCode);
+    }
+    if (errorRes.code === ErrorCode.E3001) {
+      this.updateBannerMessage(
+        ENotifications.REGISTRATION_CANNOT_BE_IDENTIFY,
+        ErrorMessages.REGISTRATION_CANT_COMPLETED_HEADING,
+        ErrorMessages.REGISTRATION_CANNOT_IDENTIFY_DESCRIPTION
+      );
+    }
+    if (errorRes.code === ErrorCode.E3000) {
+      this.updateBannerMessage(
+        ENotifications.REGISTRATION_CANNOT_BE_PROCEEDED,
+        ErrorMessages.REGISTRATION_CANT_COMPLETED_HEADING,
+        ErrorMessages.REGISTRATION_CANNOT_COMPLETED_DESCRIPTION
+      );
+    }
+  }
+ 
+  setSuspendParams(): void {
+    let activityName: string;
+ 
+    switch (true) {
+      case this.isRegistrationFlow:
+        activityName = this.CREATE_ACCOUNT;
+        break;
+      case this.isForgotUsernameFlow:
+        activityName = this.FORGOT_USERNAME;
+        break;
+      case this.isFindPolicyFlow:
+        activityName = this.UOTP;
+        break;
+      case this.idCardFlow:
+        activityName = this.PRE_LOGIN_ID_CARDS;
+        break;
+      default:
+        break;
+    }
+ 
+    this.tuiTrackerService.track(segEventNames.suspendedActivityDetected, {
+      action: this.CONTINUE_CLICKED,
+      activity_name: activityName,
+    });
+  }
+ 
+  updateBannerMessage(id: string, title: string, info: string, isCustomErrorCode = false) {
+    this.bannerService.clearAllNotifications();
+    this.bannerService.updateNotification({
+      action: EBannerActions.ADD,
+      id: id,
+      data: {
+        title: title,
+        info: info,
+      },
+    });
+    setTimeout(() => {
+      if (
+        id === ENotifications.REGISTRATION_CANNOT_BE_IDENTIFY ||
+        id === ENotifications.REGISTRATION_CANNOT_BE_PROCEEDED ||
+        id === ENotifications.CORE_UOTP_API_ERROR_HANDLER
+      ) {
+        if (isCustomErrorCode) {
+          this.makePaymentService.setFocusOnChatLink();
+        } else {
+          const chatBtn = document.getElementById('registerLaunchChatBtn');
+          chatBtn?.focus();
+        }
+      }
+    });
+  }
+ 
+  setErrorMessage(err: HttpErrorResponse): void {
+    const errorRes: IRegisterCustomerResponseError = err.error;
+    if (errorRes.code === ErrorCode.E3001) {
+      this.updateBannerMessage(
+        ENotifications.INVALID_POLICY_NUMBER,
+        ErrorMessages.INVALID_POLICY_NUMBER_HEADING,
+        this.isFM
+          ? ErrorMessages.GENERIC_API_ERROR_HANDLER_DESCRIPTION_IA
+          : ErrorMessages.GENERIC_API_ERROR_HANDLER_DESCRIPTION_EA
+      );
+    } else {
+      this.setCoreErrorMessage(err);
+    }
+  }
+ 
+  setLocalStorageItems(reqPayload: ICustomerSearch, res: ICustomerSearchResponseV2): void {
+    this.localStorageService.addMultipleValuesToLocalStorage(res);
+    const policyNumber = get(res, 'customer.policies[0].policyNumber');
+    this.localStorageService.setItem('policyNumber', policyNumber, true);
+    this.localStorageService.setItem('userFirstName', reqPayload.firstName);
+    this.sessionStorageService.setItem(STORAGE_CONST.sessionStorage.oktaUID, res?.oktaId);
+    if (res?.encryptedCssId) {
+      this.sessionStorageService.setItem(STORAGE_CONST.sessionStorage.cssId, JSON.stringify(res.encryptedCssId));
+    }
+    if (res?.loginId) {
+      this.localStorageService.setItem(STORAGE_CONST.localStorage.usernameForPasswordRecovery, res.loginId);
+      if (!this.localStorageService.getItem(STORAGE_CONST.localStorage.rememberMe)) {
+        this.localStorageService.setItem(STORAGE_CONST.localStorage.user_name, res.loginId);
+      }
+    }
+    if (this.isRegistrationFlow) {
+      this.sessionStorageService.setItem(STORAGE_CONST.RegistrationCustomerDetails, JSON.stringify(reqPayload));
+    }
+    if (this.isForgotUsernameFlow) {
+      this.sessionStorageService.setItem(
+        STORAGE_CONST.sessionStorage.forgotUserNameCustomerDetails,
+        JSON.stringify(reqPayload)
+      );
+    }
+    if (this.isFindPolicyFlow) {
+      this.sessionStorageService.removeItem(STORAGE_CONST.sessionStorage.pcnSearchRequestPayload);
+      this.sessionStorageService.setItem(
+        STORAGE_CONST.sessionStorage.findYourPolicyCustomerDetails,
+        JSON.stringify(reqPayload)
+      );
+    }
+  }
+ 
+  getRequestPayload(): ICustomerSearch {
+    const dobFormatted = this.dob.value.replace(/(..).(..).(....)/, '$3-$1-$2');
+    const zipCodeParts = this.zipCode.value.split('-');
+    let navigationToSearchAPI;
+    if (this.isRegistrationFlow) {
+      navigationToSearchAPI = 'Registration';
+    }
+    if (this.isForgotUsernameFlow) {
+      navigationToSearchAPI = 'ForgotUserName';
+    }
+    if (this.isFindPolicyFlow) {
+      navigationToSearchAPI = this.idCardFlow ? this.PRE_LOGIN_ID_CARDS : this.UOTP;
+    }
+    return {
+      firstName: this.firstName.value.trim(),
+      lastName: this.lastName.value.trim(),
+      dateOfBirth: dobFormatted,
+      zipCode: zipCodeParts[0],
+      zipCodeExt: zipCodeParts[1] || undefined,
+      policyNumber: this.policyNumber?.value?.trim() || undefined,
+      navigation: navigationToSearchAPI,
+    };
+  }
+ 
+  /**
+   * Checks the form for errors. Focuses on first error if found
+   */
+  handleErrors(): string {
+    if (!this.policyLookUpForm.valid) {
+      const invalidControls = this.sectionElement.nativeElement.querySelectorAll('.ng-invalid');
+      invalidControls[0]?.focus();
+      return this.ERRORS_FOUND;
+    }
+  }
+ 
+  setInputFocus(): void {
+    const inputControls = this.sectionElement.nativeElement.querySelectorAll('input');
+    inputControls[0].focus();
+  }
+ 
+  initForm(): FormGroup<{ [key: string]: AbstractControl }> {
+    const nameValidatorPattern = "^[-.A-Za-z'’ ]*$";
+    const form = new FormGroup<{ [key: string]: AbstractControl }>({
+      firstName: new FormControl('', [
+        Validators.required,
+        Validators.maxLength(15),
+        Validators.pattern(nameValidatorPattern),
+      ]),
+      lastName: new FormControl('', [
+        Validators.required,
+        Validators.maxLength(20),
+        Validators.pattern(nameValidatorPattern),
+      ]),
+      dob: new FormControl('', [Validators.required, ageValidator(15, 105)]),
+      zipCode: new FormControl('', [
+        Validators.required,
+        Validators.maxLength(15),
+        Validators.minLength(5),
+        Validators.pattern('^[0-9]{5}(?:-[0-9]{4})?$'),
+      ]),
+    });
+ 
+    if (this.isBW) {
+      form.setControl('policyNumber', new FormControl('', [Validators.required, validatePolicyNumber]));
+    }
+    return form;
+  }
+ 
+  goBack(): void {
+    this.showFormErrors = false;
+    this.localStorageService.setItem(STORAGE_CONST.localStorage.user_name, '');
+    this.stepperService.initiateStepsArray([]);
+    this.isFindPolicyFlow && !this.idCardFlow
+      ? this.makePaymentService.goToPaymentGatewayPage()
+      : this.loginService.goToLoginPage();
+  }
+ 
+  toggleYourInfoFlow() {
+    const segmentTrackingParams = this.policySummaryService.getSegmentTrackingParamsInfo();
+    this.tuiTrackerService.addToState({
+      entry_source: segmentTrackingParams?.entrySource,
+    });
+    this.yourInfoFlow.emit(false);
+  }
+ 
+  trackSegmentEvents(successful: boolean, error?: string): void {
+    if (this.isFindPolicyFlow) {
+      const params = {
+        action: segmentParams.continueClick,
+        step: this.FIND_YOUR_POLICY_INFO,
+        entry_source: this.idCardFlow ? segmentEntrySource.idCards : segmentEntrySource.uotp,
+        successful,
+        failure_reason: error,
+      };
+      this.tuiTrackerService.track(segEventNames.ctaClicked, params);
+    }
+  }
+ 
+  omitSpecialCharacters(event: KeyboardEvent): boolean {
+    return REGEX_VALIDATIONS.WHITE_SPACES.test(event.key)
+      ? !REGEX_VALIDATIONS.SPECIAL_CHARACTERS.test(event.key)
+      : false;
+  }
+ 
+  ngOnDestroy(): void {
+    if (this.featureFlagSubscription) {
+      this.featureFlagSubscription.unsubscribe();
+    }
+  }
+}
+ 
