@@ -1,3 +1,6 @@
+
+/*policy-lookup.component.ts/
+
 import {
   Component,
   ElementRef,
@@ -584,4 +587,513 @@ export class PolicyLookUpFormComponent implements OnInit, OnDestroy {
     }
   }
 }
+ 
+
+
+
+
+/* policy-lookup.component.spec.ts */
+describe('PolicyLookUpFormComponent', () => {
+
+  let component: PolicyLookUpFormComponent;
+
+  let fixture: ComponentFixture<PolicyLookUpFormComponent>;
+ 
+  const mockDatePipe = jasmine.createSpyObj('DatePipe', ['transform']);
+
+  const mockRegistrationService = jasmine.createSpyObj('RegistrationService', [
+
+    'customerSearch',
+
+    'navigateToRecoverUsername',
+
+  ]);
+
+  const mockLoginService = jasmine.createSpyObj('LoginService', ['goToLoginPage', 'isSuspendedAccount']);
+
+  const mockMakePaymentService = jasmine.createSpyObj('MakePaymentService', [
+
+    'goToPaymentGatewayPage',
+
+    'setFocusOnChatLink',
+
+    'setFoucsToInputElement',
+
+  ]);
+
+  const mockLocalStorageService = jasmine.createSpyObj('LocalStorageService', [
+
+    'addMultipleValuesToLocalStorage',
+
+    'setItem',
+
+    'clearLocalStorage',
+
+    'getItem',
+
+  ]);
+
+  const sessionStorageServiceSpy = jasmine.createSpyObj('SessionStorageService', [
+
+    'setItem',
+
+    'removeItem',
+
+    'getParsedItem',
+
+  ]);
+
+  const bannerServiceSpy = jasmine.createSpyObj('TuiBannerService', ['updateNotification', 'clearAllNotifications']);
+
+  const mockRouter = jasmine.createSpyObj('Router', ['navigate']);
+
+  const mockMixpanelService = jasmine.createSpyObj('MixpanelService', ['trackEventOnly']);
+
+  const segmentServiceSpy = jasmine.createSpyObj('SegmentService', [
+
+    'trackEventWithParams',
+
+    'trackEventOnly',
+
+    'identify',
+
+  ]);
+
+  const tuiSpinnerServiceSpy = jasmine.createSpyObj('TuiSpinnerService', ['show', 'hide']);
+
+  const featureFlagsServiceSpy = jasmine.createSpyObj('FeatureFlagsService', ['getFeatureFlags']);
+
+  const stepperServiceSpy = jasmine.createSpyObj('StepperService', [
+
+    'initiateStepsArray',
+
+    'markStepCompleted',
+
+    'resetStepper',
+
+  ]);
+ 
+  const policySummaryServiceSpy = jasmine.createSpyObj('PolicySummaryService', [
+
+    'removeUotpPolicySummaryCache$',
+
+    'getSegmentTrackingParamsInfo',
+
+  ]);
+
+  const billingSummaryFWSServiceSpy = jasmine.createSpyObj('BillingSummaryFWSService', [
+
+    'removeBillingSummaryFWSCache$',
+
+  ]);
+
+  const billingSummaryServiceSpy = jasmine.createSpyObj('BillingSummaryService', [
+
+    'removeBillingSummaryUotpCache$',
+
+    'removeBWBillingSummaryUotpCache$',
+
+  ]);
+
+  const screenSizeDetectionServiceSpy = jasmine.createSpyObj('EnvironmentDetectionService', ['isMobileView']);
+
+  const tuiTrackerServiceSpy = jasmine.createSpyObj('TuiTrackerService', ['track', 'addToState']);
+ 
+  beforeEach(async () => {
+
+    await TestBed.configureTestingModule({
+
+      declarations: [PolicyLookUpFormComponent],
+
+      imports: [
+
+        SharedModule,
+
+        ReactiveFormsModule,
+
+        RouterTestingModule,
+
+        HttpClientTestingModule,
+
+        BrowserAnimationsModule,
+
+      ],
+
+      providers: [
+
+        {
+
+          provide: RegistrationService,
+
+          useValue: mockRegistrationService,
+
+        },
+
+        {
+
+          provide: LoginService,
+
+          useValue: mockLoginService,
+
+        },
+
+        {
+
+          provide: MakePaymentService,
+
+          useValue: mockMakePaymentService,
+
+        },
+
+        {
+
+          provide: LocalStorageService,
+
+          useValue: mockLocalStorageService,
+
+        },
+
+        {
+
+          provide: SessionStorageService,
+
+          useValue: sessionStorageServiceSpy,
+
+        },
+
+        {
+
+          provide: StepperService,
+
+          useValue: stepperServiceSpy,
+
+        },
+
+        {
+
+          provide: TuiBannerService,
+
+          useValue: bannerServiceSpy,
+
+        },
+
+        {
+
+          provide: EnvironmentDetectionService,
+
+          useValue: screenSizeDetectionServiceSpy,
+
+        },
+
+        { provide: DatePipe, useValue: mockDatePipe },
+
+        { provide: MixpanelService, useValue: mockMixpanelService },
+
+        { provide: SegmentService, useValue: segmentServiceSpy },
+
+        { provide: Router, useValue: mockRouter },
+
+        { provide: TuiSpinnerService, useValue: tuiSpinnerServiceSpy },
+
+        { provide: FeatureFlagsService, useValue: featureFlagsServiceSpy },
+
+        { provide: PolicySummaryService, useValue: policySummaryServiceSpy },
+
+        { provide: BillingSummaryFWSService, useValue: billingSummaryFWSServiceSpy },
+
+        { provide: BillingSummaryService, useValue: billingSummaryServiceSpy },
+
+        { provide: TuiTrackerService, useValue: tuiTrackerServiceSpy },
+
+        GlobalErrorHandler,
+
+        Window,
+
+      ],
+
+      schemas: [CUSTOM_ELEMENTS_SCHEMA],
+
+    }).compileComponents();
+
+  });
+ 
+  beforeEach(() => {
+
+    fixture = TestBed.createComponent(PolicyLookUpFormComponent);
+
+    component = fixture.componentInstance;
+
+    fixture.detectChanges();
+
+    featureFlagsServiceSpy.getFeatureFlags.and.returnValue(of({}));
+
+    component.idCardFlow = false;
+
+  });
+ 
+  let testNumber = 1;
+
+  afterEach(done => {
+
+    runAdaTests(fixture, 'PolicyLookUpFormComponent', testNumber, done);
+
+    testNumber++;
+
+  });
+ 
+  it('should create', () => {
+
+    expect(component).toBeTruthy();
+
+  });
+ 
+  describe('#ngOnInit', () => {
+
+    it('should call setSegmentTrackingIdToCta', () => {
+
+      spyOn(component, 'setSegmentTrackingIdToCta');
+ 
+      component.ngOnInit();
+ 
+      expect(component.setSegmentTrackingIdToCta).toHaveBeenCalled();
+
+    });
+
+ 
+
+
+    it('should call initForm method', () => {
+
+      const nameValidatorPattern = "^[-.A-Za-z'’ ]*$";
+
+      const policyLookupForm = new FormGroup({
+
+        firstName: new FormControl('', [
+
+          Validators.required,
+
+          Validators.maxLength(15),
+
+          Validators.pattern(nameValidatorPattern),
+
+        ]),
+
+        lastName: new FormControl('', [
+
+          Validators.required,
+
+          Validators.maxLength(20),
+
+          Validators.pattern(nameValidatorPattern),
+
+        ]),
+
+        dob: new FormControl('', [Validators.required, ageValidator(15, 99)]),
+
+        zipCode: new FormControl('', [
+
+          Validators.required,
+
+          Validators.maxLength(15),
+
+          Validators.minLength(5),
+
+          Validators.pattern('^[0-9]{5}(?:-[0-9]{4})?$'),
+
+        ]),
+
+      });
+
+      spyOn(component, 'initForm').and.returnValue(policyLookupForm);
+ 
+      component.ngOnInit();
+ 
+      expect(component.policyLookUpForm).toEqual(policyLookupForm);
+
+    });
+ 
+    it('should call setFoucsToInputElement method', fakeAsync(() => {
+
+      component.firstNameInputElement = null;
+
+      screenSizeDetectionServiceSpy.isMobileView.and.returnValue(false);
+ 
+      component.ngOnInit();
+
+      tick(0);
+ 
+      expect(mockMakePaymentService.setFoucsToInputElement).toHaveBeenCalledWith(null);
+
+    }));
+ 
+    it('should not call setFoucsToInputElement method if mobile view', fakeAsync(() => {
+
+      component.firstNameInputElement = null;
+
+      screenSizeDetectionServiceSpy.isMobileView.and.returnValue(true);
+
+      mockMakePaymentService.setFoucsToInputElement.calls.reset();
+ 
+      component.ngOnInit();
+
+      tick(0);
+ 
+      expect(mockMakePaymentService.setFoucsToInputElement).not.toHaveBeenCalled();
+
+    }));
+ 
+    it('should call clearPcnSearchParamFromSessionStorage', () => {
+
+      spyOn(component, 'clearPcnSearchParamFromSessionStorage');
+ 
+      component.ngOnInit();
+ 
+      expect(component.clearPcnSearchParamFromSessionStorage).toHaveBeenCalled();
+
+    });
+ 
+    it('should call clearCacheResponse', () => {
+
+      spyOn(component, 'clearCacheResponse');
+ 
+      component.ngOnInit();
+ 
+      expect(component.clearCacheResponse).toHaveBeenCalled();
+
+    });
+
+  });
+ 
+  describe('#setSegmentTrackingIdToCta', () => {
+
+    beforeEach(() => {
+
+      component.isRegistrationFlow = false;
+
+      component.isForgotUsernameFlow = false;
+
+      component.idCardFlow = false;
+
+    });
+
+    it('should set default values to policy_look_up', () => {
+
+      component.setSegmentTrackingIdToCta();
+ 
+      expect(component.continueCtaTrackingId).toEqual('CSS_continue_policy_look_up');
+
+      expect(component.cancelCtaTrackingId).toEqual('CSS_cancel_policy_look_up');
+
+    });
+ 
+    it('should set registration realted CTA values', () => {
+
+      component.isRegistrationFlow = true;
+ 
+      component.setSegmentTrackingIdToCta();
+ 
+      expect(component.continueCtaTrackingId).toEqual('CSS_continue_registration_step_one');
+
+      expect(component.cancelCtaTrackingId).toEqual('CSS_cancel_registartion_step_one');
+
+    });
+ 
+    it('should set forgot username realted CTA values', () => {
+
+      component.isForgotUsernameFlow = true;
+ 
+      component.setSegmentTrackingIdToCta();
+ 
+      expect(component.continueCtaTrackingId).toEqual('CSS_continue_forgot_username');
+
+      expect(component.cancelCtaTrackingId).toEqual('CSS_cancel_forgot_username');
+
+    });
+ 
+    it('should set id card realted CTA values', () => {
+
+      component.idCardFlow = true;
+ 
+      component.setSegmentTrackingIdToCta();
+ 
+      expect(component.cancelCtaTrackingId).toEqual('CSS_cancel_id_cards');
+
+    });
+
+  });
+ 
+  describe('#changeToDate', () => {
+
+    it('should be set date in datePicker model box', () => {
+
+      component.policyLookUpForm.controls['dob'].setValue('10/10/2000');
+ 
+      component.changeToDate();
+ 
+      expect(component.dateInput).toEqual(new Date('10/10/2000'));
+
+    });
+
+  });
+ 
+  describe('#selectDate', () => {
+
+    it('should set date value when selected from datepicker', () => {
+
+      const date: any = { value: new Date(2000, 0, 1) };
+
+      mockDatePipe.transform.and.returnValue('01/01/2000');
+
+      spyOn(component.policyLookUpForm.controls['dob'], 'markAsTouched');
+ 
+      component.selectDate(date);
+ 
+      expect(component.policyLookUpForm.controls['dob'].value).toEqual('01/01/2000');
+
+      expect(component.policyLookUpForm.controls['dob'].markAsTouched).toHaveBeenCalled();
+
+    });
+
+  });
+ 
+  describe('#submitForm', () => {
+
+    it('should call handleErrors', () => {
+
+      // Arrange
+
+      const handleErrorsSpy = spyOn(component, 'handleErrors').and.returnValue(null);
+
+      mockRegistrationService.customerSearch.and.returnValue(of({}));
+
+      // Act
+
+      component.submitForm();
+
+      // Assert
+
+      expect(handleErrorsSpy).toHaveBeenCalled();
+
+    });
+
+    it('should call registrationService.customerSearch when no errors are found in the form', () => {
+
+      // Arrange
+
+      spyOn(component, 'handleErrors').and.returnValue(null);
+
+      mockRegistrationService.customerSearch.calls.reset();
+
+      mockRegistrationService.customerSearch.and.returnValue(of({}));
+
+      // Act
+
+      component.submitForm();
+
+      // Assert
+
+      expect(mockRegistrationService.customerSearch).toHaveBeenCalledTimes(1);
+
+    });
+
  
