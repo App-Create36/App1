@@ -1,0 +1,832 @@
+help-customer.component.ts
+
+import { Component, OnInit, OnDestroy, ViewEncapsulation, Output, EventEmitter } from '@angular/core';
+import { Subject, Subscription, forkJoin, of } from 'rxjs';
+import { Router } from '@angular/router';
+import { NAV_CONFIG } from '~core/constants/nav.constants';
+import { INavConfigProp, ISingleRoute } from '~core/constants/nav.models';
+import { ClaimsService } from '~/services/claims/claims.service';
+import { FeatureFlagService } from '~/services/feature-flag/feature-flag.service';
+import { featureConstants } from '~/services/feature-flag/feature-flag.constants';
+import { MyAgentsService } from '~/services/my-agents/my-agents.service';
+import { FarmersAnalyticsService } from '~/services/farmers-analytics/farmers-analytics.service';
+import { eventNames, entrySources } from '~/core/constants/mixpanel-events.constant';
+import { NavbarService } from '~/services/navbar/navbar.service';
+import { ExpansionService } from '~/services/expansion/expansion.service';
+import { EasternExpansionModel } from '~/services/expansion/expansion.model';
+import { DISABLE_LINKS_CONFIG } from '~/services/navbar/navbar-disable-link.constants';
+import {
+    fmRoutePath,
+    fwsMailIds,
+    helpCustomerServiceNumbers,
+    HELP_BW_STATES,
+    lifeEffectiveDate,
+    lifePolicyTypes,
+    policyTypeBasedAddress,
+    serviceTypes,
+    contactNumbersIA,
+    helpCustomerServiceTimeLife,
+} from '~/services/customer-service-info/customer-service-info.constants';
+import { PolicySummaryService } from '~/services/policy-summary/policy-summary.service';
+import { BillingSummaryService } from '~/services/billing-summary/billing-summary.service';
+import { PolicyDropdownService } from '~/services/policy-dropdown/policy-dropdown.service';
+import {
+    PolicyDetailModel,
+    PolicySummaryModel,
+    SubjectOfInsuranceModel,
+} from '~/data/repository/policy-summary/policy-summary.model';
+import {
+    IPolicyDropdownDisplayData,
+    IPolicyDropdownOnePolicy,
+} from '~/ui/policies/shared/dropdown/policy-dropdown.model';
+import { FormControl } from '@angular/forms';
+import {
+    HelpFmRoutes,
+    IHelpAddress,
+    IHelpCustomerNumberTypes,
+    NewHelpPageGtmTags,
+    SelectedPolicyTypeDetail,
+} from './help-customer.model';
+import { convertToDateOnly } from '~/ui/shared/utilities/date-utility';
+import { isAfter, isEqual } from 'date-fns';
+import { SessionStorageService } from '~/services/session-storage/session-storage.service';
+import { PayBillService } from '~/services/pay-bill/pay-bill.service';
+import { STORAGE_CONST } from '~/core/constants/storage.constants';
+import { HELP_PAGE } from '~/core/constants/help-customer.constants';
+import { TuiTrackerService } from 'ng-tractor-ui';
+import { TrackerEventUIModel } from '~/services/farmers-analytics/tracker-events.model';
+import { catchError, map, mergeMap, take } from 'rxjs/operators';
+import { BillingSummaryFWSModel } from '~/data/repository/billing-summary-fws/billing-summary-fws.model';
+import { BillingSummaryModel } from '~/data/repository/billing-summary/billing-summary.model';
+import { BillingSummaryFWSService } from '~/services/billing-summary-fws/billing-summary-fws.service';
+import { BillingSummaryFmModel } from '~/data/repository/billing-summary-fm/billing-summary-fm.model';
+import { BillingSummaryFmService } from '~/services/billing-summary-fm/billing-summary-fm.service';
+import { ChatConfigurationService } from '~/services/chat-configuration/chat-configuration.service';
+import { POLICY_CONST } from '~/core/constants/policy.constants';
+import { CustomerServiceInfoService } from '~/services/customer-service-info/customer-service-info.service';
+import { EnvService } from '~/services/env/env.service';
+import { LoginBrand } from '~/core/constants/core-css.constants';
+import { environment } from '~environments/environment';
+ 
+@Component({
+    selector: 'app-help-customer',
+    templateUrl: './help-customer.component.html',
+    styleUrls: ['./help-customer.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+})
+export class HelpCustomerComponent implements OnInit, OnDestroy {
+    sendMessageRoute = NAV_CONFIG.subLevelRoutes.sendMessage;
+    billingSummaryRoute = NAV_CONFIG.topLevelRoutes.payments;
+    billingSummaryRoutePath = NAV_CONFIG.topLevelRoutes.payments.routePath;
+    FAQLinks: INavConfigProp = NAV_CONFIG.FAQRoutesLink;
+    teleCommunicationsRoute = NAV_CONFIG.otherRoutes.teleCommunicationsRelay;
+    generalIAFAQ = NAV_CONFIG.generalIAFAQ;
+    forArea = {
+        claims: serviceTypes.claims,
+        makeAPayment: serviceTypes.makeAPayment,
+    };
+    selectedPolicySubjectAsObservableSubscription: Subscription;
+    buttonDisablementSubscription: Subscription;
+    payBillSubscription: Subscription;
+    oldAppBaseUrl = NAV_CONFIG.oldAppBaseUrl;
+    sendMessageLink: string;
+    fileOnline = 'Online';
+    disablePayment: boolean;
+    disableClaims: boolean;
+    easternExpansion: EasternExpansionModel;
+    hasBWDirectPolicy: boolean;
+    isDirectPolicyAgentOn: boolean;
+    private dropDownParamsSubject = new Subject<IPolicyDropdownDisplayData>();
+    dropdownParamsObservable$ = this.dropDownParamsSubject.asObservable();
+    policySummarySubscription: Subscription;
+    policiesDropdown: IPolicyDropdownDisplayData = { isShow: false, isDisabled: true, policies: [] };
+    policyDropdownCtrl: FormControl = new FormControl('');
+    @Output() selectedPolicyNumber = new EventEmitter<string>();
+    selectedPolicyDetail: SelectedPolicyTypeDetail;
+    fwsBillingSummaryData: BillingSummaryFWSModel;
+    billingSummaryData: BillingSummaryModel;
+    fmBillingSummaryData: BillingSummaryFmModel;
+    showCustomerInfoComp = false;
+    hideDropdown = false;
+    policyContactNumbers: IHelpCustomerNumberTypes = helpCustomerServiceNumbers;
+    helpCustomerLifeTime = helpCustomerServiceTimeLife;
+    lifePolicyClaimsAddress: IHelpAddress;
+    fmRoutes: HelpFmRoutes = fmRoutePath;
+    getHelpCustomerContactNumber: string;
+    claimsContactNumber: string;
+    roadsideAssistanceNumber: string;
+    websiteHelpNumber: string;
+    paymentContactNumber: string;
+    lifePolicyAddress: IHelpAddress;
+    fwsMailId: string;
+    fwsMailAddress: IHelpAddress;
+    fmOvernightAddress: string[];
+    bwMailAddress: string[];
+    showFileClaimBtn = true;
+    validAgentIds: string[];
+    hideSendMsgBtn = false;
+    hidePayOnlineBtn = false;
+    helpPageGtmTags: NewHelpPageGtmTags = HELP_PAGE.newHelpPageGtmTags;
+    policyLob = '';
+    policySource = '';
+    claimsTitle = 'Claims';
+    policySummaryLoaded = false;
+    private readonly SEND_REQUEST = 'send-request';
+    private readonly QUERY_PARAM_REFERENCE = 'Email Agent';
+    private readonly CLAIM_BTN_BW_TXT = 'Report a Claim';
+    private readonly CLAIM_BTN_PLA_TXT = 'File a claim online';
+    private readonly CLAIM_BTN_CORE_TXT = 'Report or view a claim';
+    private readonly CLAIMS_TITLE_BY_TYPE = {
+        PROPERTY: 'Claims',
+        CASUALTY: 'Claims and roadside assistance',
+        '': 'Claims',
+    };
+    showFwsEmailToCustomerCare = true;
+    operatingTime = HELP_PAGE.operatingTime;
+    isFMDirectPolicy = false;
+    claimsButtonText = this.CLAIM_BTN_PLA_TXT;
+    isIAEnabled: boolean;
+    brand = LoginBrand.FARMERS;
+    isAccountIA = environment.isAccountIA;
+    isLifeFrontBookPolicy = false;
+    hasAgent = false;
+ 
+    constructor(
+        private claimsService: ClaimsService,
+        private featureFlagService: FeatureFlagService,
+        private myAgentsService: MyAgentsService,
+        private router: Router,
+        private analyticsService: FarmersAnalyticsService,
+        private navbarService: NavbarService,
+        private expansionService: ExpansionService,
+        private policySummaryService: PolicySummaryService,
+        private billingSummaryService: BillingSummaryService,
+        private billingSummaryFWSService: BillingSummaryFWSService,
+        private policyDropdownService: PolicyDropdownService,
+        private sessionStorageService: SessionStorageService,
+        private payBillService: PayBillService,
+        private tuiTrackerService: TuiTrackerService,
+        private billingSummaryFMService: BillingSummaryFmService,
+        private chatConfigService: ChatConfigurationService,
+        private customerService: CustomerServiceInfoService,
+        private envService: EnvService,
+    ) {}
+ 
+    ngOnInit() {
+        this.chatConfigService.runChatVerification();
+        this.isDirectPolicyAgentOn = this.featureFlagService.isEnvVariableEnabledCheck(
+            featureConstants.isDirectPolicyAgentOn,
+        );
+        this.isIAEnabled = this.featureFlagService.isIA();
+        this.fmOvernightAddress = this.isIAEnabled
+            ? policyTypeBasedAddress.fmIAOvernightAddress
+            : policyTypeBasedAddress.fmEAOvernightAddress;
+        this.setPolicySummaryData();
+        this.trackMixpanelPageLoadEvent(NAV_CONFIG.topLevelRoutes.help);
+        this.disablePaymentOrClaims();
+        this.setPaymentOfflineForBilling();
+        this.setEasternExpansionInfo();
+        this.setLobToGtmTags();
+        this.disablePaymentForDriverOnlyAndNoPolicies();
+        this.selectedPolicySubjectAsObservableSubscription = this.policySummaryService
+            .getSelectedPolicySubjectAsObservable()
+            .subscribe({
+                next: () => {
+                    this.myAgentsService
+                        .getAgentAccordionList(NAV_CONFIG.topLevelRoutes.help.routePath)
+                        .pipe(take(1))
+                        .subscribe((data) => {
+                            this.hasAgent = data.length > 0;
+                        });
+                },
+            });
+    }
+ 
+    setContactNumbers(agentRecordId: string) {
+        this.customerService
+            .getContactNumbersByType(agentRecordId, this.selectedPolicyDetail)
+            .subscribe((contactNumbers) => {
+                this.claimsContactNumber = contactNumbers.claims;
+                this.roadsideAssistanceNumber = contactNumbers.roadsideAssistance;
+                this.websiteHelpNumber = contactNumbers.websiteHelp;
+                this.paymentContactNumber = contactNumbers.payment;
+            });
+    }
+ 
+    disablePaymentOrClaims() {
+        this.buttonDisablementSubscription = this.navbarService.disableLinksObservable().subscribe((type) => {
+            if (type) {
+                const isSSOUser =
+                    this.sessionStorageService.getParsedItem(STORAGE_CONST.sessionStorage.isSSOUser, true) || false;
+                if (type !== DISABLE_LINKS_CONFIG.types.BILLINGMAINTENANCE && isSSOUser) {
+                    this.disablePayment = true;
+                }
+                if (type === DISABLE_LINKS_CONFIG.types.DRIVER_ONLY) {
+                    this.disableClaims = true;
+                }
+            }
+        });
+    }
+ 
+    setPaymentOfflineForBilling() {
+        const billingSummary = this.billingSummaryService
+            .getAccountSummaryWithPolicyData()
+            .pipe(catchError(() => of(null)));
+ 
+        const fwsBillingSummary = this.billingSummaryFWSService
+            .getFWSBillingAccountSummary()
+            .pipe(catchError(() => of(null)));
+ 
+        const fmBillingSummary = this.billingSummaryFMService
+            .getFmBillingAccountSummary()
+            .pipe(catchError(() => of(null)));
+ 
+        forkJoin({ billingSummary, fwsBillingSummary, fmBillingSummary }).subscribe((summaryResponse) => {
+            this.disablePayment =
+                summaryResponse?.billingSummary?.paymentusOfflineEnabled ||
+                summaryResponse?.fwsBillingSummary?.paymentusOfflineEnabled ||
+                summaryResponse?.fmBillingSummary?.paymentusOfflineEnabled ||
+                this.disablePayment;
+        });
+    }
+ 
+    setEasternExpansionInfo() {
+        this.expansionService.getEasternExpansionData().subscribe((expansionData) => {
+            this.easternExpansion = expansionData;
+        });
+    }
+ 
+    setBWDirectPolicyInfo(policyDetail?: IPolicyDropdownOnePolicy) {
+        this.hasBWDirectPolicy = policyDetail?.directPolicy && this.isDirectPolicyAgentOn;
+    }
+ 
+    trackMixpanelEvent(route: ISingleRoute) {
+        if (route.mixpanelEventName) {
+            this.analyticsService.trackEvent(route.mixpanelEventName);
+        }
+    }
+ 
+    redirectToPaymentPath(routePath: string) {
+        const isSelectedTypes =
+            this.selectedPolicyDetail.isBw ||
+            this.selectedPolicyDetail.isCea;
+        if (isSelectedTypes) {
+            this.redirectToExternalPath();
+        } else {
+            this.router.navigateByUrl(routePath);
+        }
+    }
+ 
+    redirectToExternalPath() {
+        let policyContractNumber: string;
+        if (this.selectedPolicyDetail.isFm) {
+            policyContractNumber = this.selectedPolicy.productCode?.concat(this.selectedPolicy.policyContractNumber);
+        } else if (this.selectedPolicyDetail.isBw) {
+            // Using the same logic as the policy card component for UOTP 1.0 flow
+            policyContractNumber = this.policySummaryService.getPolicyDescriptionBristolWest(this.selectedPolicy, { format: 2 });
+        } else if (this.selectedPolicyDetail.isCea) {
+            policyContractNumber = this.selectedPolicy.policyContractNumber;
+        }
+        const payBillRequestObj = {
+            iframe: 'true',
+            step: '1',
+            firstName: this.selectedPolicy.firstName,
+            lastName: this.selectedPolicy.lastName,
+            loginId: this.sessionStorageService.getParsedItem(STORAGE_CONST.sessionStorage.loginId),
+            page: 'uotp',
+            accountNumber: policyContractNumber?.replace(/-|\s/g, ''),
+            zipCode: '',
+        };
+        if (this.selectedPolicyDetail.isCea) {
+            payBillRequestObj.zipCode =
+                this.selectedPolicy.zipCode?.length > 5
+                    ? this.selectedPolicy.zipCode.substr(0, 5)
+                    : this.selectedPolicy.zipCode;
+            payBillRequestObj.step = '2';
+        }
+        this.payBillSubscription = this.payBillService.payBillOther(payBillRequestObj).subscribe((response) => {
+            if (response && response.url) {
+                window.open(response.url, '_blank');
+            }
+        });
+    }
+ 
+    redirectToClaims() {
+        let claimPath = this.isIAEnabled
+            ? this.claimsService.getIAClaimsRoute()
+            : this.claimsService.getNewClaimsRoute();
+ 
+        if (this.selectedPolicyDetail?.isBw) {
+            claimPath = this.fmRoutes.fileAclaimBw;
+            window.open(claimPath, '_blank');
+        } else {
+            const windowTabOpenConfig = this.isAccountIA ? '_blank' : '_self';
+            window.open(claimPath, windowTabOpenConfig);
+        }
+ 
+        this.trackMixpanelClaims();
+    }
+ 
+    trackMixpanelClaims() {
+        const params = {
+            eventName: eventNames.fileClaim,
+            fileOnline: this.fileOnline,
+        };
+        this.analyticsService.trackEventWithParams(params);
+    }
+ 
+    trackMixpanelFaqs(faqType: string) {
+        const params = {
+            eventName: eventNames.faq,
+            type: faqType,
+        };
+        this.analyticsService.trackEventWithParams(params);
+    }
+ 
+    trackMixpanelPageLoadEvent(route: ISingleRoute) {
+        if (route.mixpanelEventName) {
+            const entrySource = this.analyticsService.getEntrySource();
+            const params = {
+                eventName: route.mixpanelEventName,
+                entrySource,
+            };
+            this.analyticsService.trackEventWithParams(params);
+        }
+    }
+ 
+    trackMixpanel(contactMethod: string, phoneNumber: string, location?: string, isExpansion?: boolean) {
+        const pageName = this.envService.getCurrentPage();
+        const entrySource = entrySources[pageName];
+        const linkLocation = entrySource !== entrySources.contactus ? serviceTypes.customerService : location;
+        this.policySummaryService.trackPhoneNumberEvent(phoneNumber, linkLocation);
+        this.analyticsService.trackCustomerCareEvent(entrySource, contactMethod, isExpansion);
+    }
+ 
+    setPolicySummaryData(): void {
+        this.policySummarySubscription = this.policySummaryService
+            .execute()
+            .pipe(
+                mergeMap((policySummary: PolicySummaryModel) => {
+                    return this.policySummaryService.getFwsEligibilityForCSSWebForms().pipe(
+                        map((isFwsEligibleForCSSWebForms) => {
+                            this.showFwsEmailToCustomerCare = isFwsEligibleForCSSWebForms;
+                            return policySummary;
+                        }),
+                    );
+                }),
+            )
+            .subscribe(
+                (policySummary: PolicySummaryModel) => {
+                    if (policySummary) {
+                        this.policySummaryLoaded = true;
+                        const presentAndFuture = this.policySummaryService.getAllPoliciesExceptNBXChoice(policySummary);
+                        const billingAccountNumbers =
+                            this.billingSummaryService.getBillingAccountNumbers(policySummary);
+                        const isPolicyTimeOut =
+                            this.policySummaryService.isPartialDataEnabledAndPartialPoliciesAvailable(policySummary);
+                        const allAvailablePoliciesList: PolicyDetailModel[] = this.getAllAvailablePolicies(
+                            policySummary,
+                            presentAndFuture,
+                            isPolicyTimeOut,
+                        );
+ 
+                        this.setDropDownParams(allAvailablePoliciesList, billingAccountNumbers, isPolicyTimeOut);
+                        this.disablePayment = !presentAndFuture?.length && isPolicyTimeOut;
+                        this.trackIdentify(policySummary.userId);
+                    }
+                },
+                () => {
+                    this.setDefaultHomePageView();
+                },
+            );
+    }
+ 
+ 
+    getAllAvailablePolicies(
+        policySummary: PolicySummaryModel,
+        presentAndFuturePolicies: PolicyDetailModel[],
+        isPolicyTimeOut: boolean,
+    ): PolicyDetailModel[] {
+        if (isPolicyTimeOut) {
+            const partialPoliciesList = policySummary.partialPolicies || [];
+            return [...presentAndFuturePolicies, ...partialPoliciesList];
+        }
+ 
+        return presentAndFuturePolicies;
+    }
+ 
+    trackIdentify(email?: String) {
+        const params = {
+            css_id: atob(JSON.parse(this.sessionStorageService.getItem(STORAGE_CONST.sessionStorage.encodedCssId))),
+            okta_id: this.sessionStorageService.getItem(STORAGE_CONST.sessionStorage.oktaId),
+            email: email,
+            policy_sources: this.policySummaryService.policySourceValue,
+        };
+        this.tuiTrackerService.addToState(params);
+        this.tuiTrackerService.identify();
+    }
+ 
+    setDropDownParams(
+        presentAndFuturePolicies: PolicyDetailModel[],
+        billingAccountNumbers: string[],
+        isPolicyTimeOut: boolean,
+    ): void {
+        this.policiesDropdown = this.policyDropdownService.getDropdownParams(
+            NAV_CONFIG.topLevelRoutes.help.routePath,
+            presentAndFuturePolicies,
+            billingAccountNumbers,
+            null,
+            isPolicyTimeOut,
+        );
+        this.dropDownParamsSubject.next(this.policiesDropdown);
+        if (this.policiesDropdown.policies.length) {
+            this.groupPolicies();
+        } else {
+            this.setDefaultHomePageView();
+        }
+        this.handleDropdownInit();
+    }
+ 
+    handleDropdownInit(): void {
+        this.dropdownParamsObservable$.subscribe((params) => {
+            this.policiesDropdown = params;
+        });
+    }
+ 
+    onPolicySelection(value: IPolicyDropdownOnePolicy): void {
+        this.disablePayment = !!value.isPartialPolicy;
+        this.tuiTrackerService.addToState({
+            policy_source: value?.policySource,
+            policy_number: value?.policyContractNumber.replace(/-/g, ''),
+            description: value?.policyType,
+        });
+        this.selectedPolicyNumber.emit(value.policyContractNumber);
+        this.setSelectedPolicyType(value);
+        if (this.selectedPolicyDetail.isFm || this.selectedPolicyDetail.isFws) {
+            this.setContactNumbers(value.agentOfRecordId);
+        }
+        this.setClaimsTitle();
+        this.policyLob = value?.lineOfBusiness || '';
+        this.policySource = value?.policySource;
+        this.setLobToGtmTags();
+        this.setBWDirectPolicyInfo(value);
+        this.setFMDirectPolicyStatus(value);
+        this.policySummaryService.setPolicyParamsToSessionStorage(value);
+    }
+ 
+    get selectedPolicy(): IPolicyDropdownOnePolicy {
+        return this.policyDropdownCtrl.value;
+    }
+ 
+    getVehicleNames(subjectOfInsurances: SubjectOfInsuranceModel[]): string[] {
+        const nameList = subjectOfInsurances?.map((item) => {
+            return this.policySummaryService.getPolicyDescriptionMultiAuto(item);
+        });
+        return nameList || [];
+    }
+ 
+    setClaimsTitle() {
+        if (this.selectedPolicyDetail.isEe ||
+                this.selectedPolicyDetail.isPl ||
+                this.selectedPolicyDetail.isFm ||
+                this.selectedPolicyDetail.isFws) {
+            const policyCategory = POLICY_CONST.policyCategories[this.selectedPolicy.lineOfBusiness] || '';
+            this.claimsTitle = this.CLAIMS_TITLE_BY_TYPE[policyCategory];
+        } else {
+            this.claimsTitle = this.CLAIMS_TITLE_BY_TYPE[''];
+        }
+    }
+ 
+    setSelectedPolicyType(policy: IPolicyDropdownOnePolicy) {
+        this.selectedPolicyDetail = new SelectedPolicyTypeDetail();
+        this.resetIsLifeFrontBookPolicyFlag();
+ 
+        if (this.expansionService.isExpansionStatePolicy(policy)) {
+            this.selectedPolicyDetail.isEe = true;
+        } else if (this.policySummaryService.isLineOfBusinessCea(policy)) {
+            this.selectedPolicyDetail.isCea = true;
+        } else if (this.policySummaryService.isLineOfBusinessLife(policy)) {
+            if (this.policySummaryService.isLifeFrontBookPolicy(policy)) {
+                this.isLifeFrontBookPolicy = this.featureFlagService.isEnabled(featureConstants.isFNWLPostLoginEnabled);
+            }
+            this.selectedPolicyDetail.isLife = true;
+            this.setLifePolicyContactInfo(policy);
+        } else if (this.policySummaryService.isPLAOrGWPCPolicy(policy)) {
+            this.selectedPolicyDetail.isPl = true;
+        } else if (this.policySummaryService.isBristolWestPolicy(policy)) {
+            this.selectedPolicyDetail.isBw = true;
+            this.setBwPolicyContactInfo(policy);
+        } else if (this.policySummaryService.isForemostPolicy(policy)) {
+            this.selectedPolicyDetail.isFm = true;
+        } else if (this.policySummaryService.isFWSPolicy(policy)) {
+            this.selectedPolicyDetail.isFws = true;
+            this.setFwsPolicyContactInfo(policy);
+            if (this.policySummaryService.isFwsARSPolicy(policy)) {
+                this.selectedPolicyDetail.isFwsArs = true;
+            }
+        }
+        const loginBrand = this.isIAEnabled ? LoginBrand.FM : LoginBrand.FARMERS;
+        this.brand = this.selectedPolicyDetail.isBw ? LoginBrand.BW : loginBrand;
+        this.showCustomerInfoComp =
+            this.selectedPolicyDetail.isEe ||
+            this.selectedPolicyDetail.isPl ||
+            this.selectedPolicyDetail.isCea;
+ 
+        if (this.showCustomerInfoComp) {
+            this.selectedPolicyDetail.isAuto = this.policySummaryService.isLineOfBusinessAuto(policy);
+            this.selectedPolicyDetail.isHome = this.policySummaryService.isLineOfBusinessHome(policy);
+        }
+ 
+        this.showFileClaimBtn = this.shouldShowFileClaimButton();
+        this.hideSendMsgBtn =
+            this.selectedPolicyDetail.isCea ||
+            this.selectedPolicyDetail.isLife ||
+            this.selectedPolicyDetail.isBw ||
+            (!this.isIAEnabled && this.selectedPolicyDetail.isFm) ||
+            (!this.isIAEnabled && this.selectedPolicyDetail.isFws) ||
+            this.selectedPolicyDetail.isEe;
+ 
+        this.hidePayOnlineButton();
+        this.sessionStorageService.setItem('helpPageSelectedPolicy', JSON.stringify(policy));
+        this.claimsButtonText = this.getClaimsBtnText(this.selectedPolicyDetail.isBw);
+    }
+ 
+    getClaimsBtnText(isBw: boolean): string {
+        if (isBw) {
+            return this.CLAIM_BTN_BW_TXT;
+        }
+        return this.CLAIM_BTN_CORE_TXT;
+    }
+ 
+    groupAvailablePolicies() {
+        const policyCount = {
+            eeCount: 0,
+            ceaCount: 0,
+            vulLifeCount: 0,
+            normalLifeCount: 0,
+            fiulLifeIssueBeforeCount: 0,
+            fiulLifeIssueAfterCount: 0,
+            plCount: 0,
+            bwSelectedStateCount: 0,
+            bwOtherStateCount: 0,
+            fmCount: 0,
+            fwsArsCount: 0,
+            fwsA360Count: 0,
+        };
+        const groupedPolicyCount = this.policiesDropdown.policies.reduce((policyCount, item) => {
+            if (this.expansionService.isExpansionStatePolicy(item)) {
+                policyCount.eeCount++;
+            } else if (this.policySummaryService.isLineOfBusinessCea(item)) {
+                policyCount.ceaCount++;
+            } else if (this.policySummaryService.isLineOfBusinessLife(item)) {
+                const policyType = this.getLifePolicyType(item);
+                switch (policyType) {
+                    case lifePolicyTypes.vul:
+                        policyCount.vulLifeCount++;
+                        break;
+                    case lifePolicyTypes.fiulOnOrAfterEffective:
+                        policyCount.fiulLifeIssueAfterCount++;
+                        break;
+                    case lifePolicyTypes.fiulBeforeEffectiveDate:
+                        policyCount.fiulLifeIssueBeforeCount++;
+                        break;
+                    default:
+                        policyCount.normalLifeCount++;
+                        break;
+                }
+            } else if (this.policySummaryService.isPLAOrGWPCPolicy(item)) {
+                policyCount.plCount++;
+            } else if (this.policySummaryService.isBristolWestPolicy(item)) {
+                if (this.checkBwSelectedStatePolicy(item)) {
+                    policyCount.bwSelectedStateCount++;
+                } else {
+                    policyCount.bwOtherStateCount++;
+                }
+            } else if (this.policySummaryService.isForemostPolicy(item)) {
+                policyCount.fmCount++;
+            } else if (this.policySummaryService.isFwsARSPolicy(item)) {
+                policyCount.fwsArsCount++;
+            } else if (this.policySummaryService.isFwsA360Policy(item)) {
+                policyCount.fwsA360Count++;
+            }
+            return policyCount;
+        }, policyCount);
+ 
+        const countList = Object.values(groupedPolicyCount);
+        const totalpolicyCount = this.policiesDropdown.policies.length;
+        const allFMPoliciesMorethanOne =
+            countList.includes(groupedPolicyCount.fmCount) && groupedPolicyCount.fmCount > 1;
+        if (countList.includes(totalpolicyCount) && !allFMPoliciesMorethanOne) {
+            const policy = this.policiesDropdown.policies[0];
+            this.policyDropdownCtrl.setValue(policy);
+            const agentIds = this.policiesDropdown.policies.map((policy) => policy.agentOfRecordId);
+            // if all policies from same source group have same agent id, then only hide the policy dropdown
+            this.hideDropdown = agentIds.length === 1;
+            this.onPolicySelection(policy);
+        }
+    }
+ 
+    setLifePolicyContactInfo(policy: IPolicyDropdownOnePolicy) {
+        this.getHelpCustomerContactNumber = this.policyContactNumbers.lifeContactNumber;
+        this.lifePolicyClaimsAddress = {
+            standardAddress: policyTypeBasedAddress.lifePolicyClaimsAddress,
+        };
+        const policyType = this.getLifePolicyType(policy);
+ 
+        switch (policyType) {
+            case lifePolicyTypes.vul:
+                this.selectedPolicyDetail.isVul = true;
+                this.lifePolicyAddress = {
+                    standardAddress: policyTypeBasedAddress.viulGetHelpAddress,
+                };
+                break;
+            case lifePolicyTypes.fiulOnOrAfterEffective:
+                this.lifePolicyAddress = {
+                    standardAddress: policyTypeBasedAddress.fiulGetHelpAfterDateAddress,
+                };
+                break;
+            case lifePolicyTypes.fiulBeforeEffectiveDate:
+                this.lifePolicyAddress = {
+                    standardAddress: policyTypeBasedAddress.fiulGetHelpBeforeDateAddress,
+                };
+                break;
+            default:
+                if (!this.isLifeFrontBookPolicy) {
+                    this.lifePolicyAddress = {
+                        standardAddress: policyTypeBasedAddress.lifeGetHelpAddress,
+                        overnightAddress: policyTypeBasedAddress.lifeGetHelpOvernightAddress,
+                    };
+                } else {
+                    this.lifePolicyAddress = {
+                        standardAddress: policyTypeBasedAddress.lifeFrontBookGetHelpAddress,
+                    };
+                }
+ 
+                break;
+        }
+    }
+ 
+    redirectToCheckClaims() {
+        window.open(this.fmRoutes.checkAClaim, '_self');
+    }
+ 
+    setFwsPolicyContactInfo(policy: IPolicyDropdownOnePolicy) {
+        if (this.isIAEnabled) {
+            this.fwsMailAddress = {
+                standardAddress: policyTypeBasedAddress.fwsIAStanderedPaymentAddress,
+                overnightAddress: policyTypeBasedAddress.fwsIAOvernightPaymentAddress,
+            };
+        } else if (this.policySummaryService.isFwsA360Policy(policy)) {
+            this.fwsMailId = fwsMailIds.a360MailId;
+            this.fwsMailAddress = {
+                standardAddress: policyTypeBasedAddress.a360StandardPaymentAddress,
+                overnightAddress: policyTypeBasedAddress.a360OvernightPaymentAddress,
+            };
+        } else {
+            this.fwsMailId = fwsMailIds.arsLegacyMailId;
+            this.fwsMailAddress = {
+                standardAddress: policyTypeBasedAddress.arsStandardPaymentAddress,
+                overnightAddress: policyTypeBasedAddress.arsOvernightPaymentAddress,
+            };
+        }
+    }
+ 
+    setBwPolicyContactInfo(policy: IPolicyDropdownOnePolicy) {
+        if (this.checkBwSelectedStatePolicy(policy)) {
+            this.bwMailAddress = policyTypeBasedAddress.bwSelectedStatePaymentAddress;
+        } else {
+            this.bwMailAddress = policyTypeBasedAddress.bwOtherStatePaymentAddress;
+        }
+    }
+ 
+    checkBwSelectedStatePolicy(policy: IPolicyDropdownOnePolicy): boolean {
+        return HELP_BW_STATES.some(
+            (state) =>
+                state.abbreviation === policy.state?.toUpperCase() ||
+                state.stateName === policy.stateName?.toUpperCase(),
+        );
+    }
+ 
+    setDefaultHomePageView() {
+        this.policyDropdownCtrl.setValue({});
+        this.selectedPolicyDetail = new SelectedPolicyTypeDetail();
+        if (this.isIAEnabled && !this.policySummaryLoaded) {
+            this.selectedPolicyDetail.isFm = true;
+            const contactNumbersFMIA = contactNumbersIA.FM;
+            this.claimsContactNumber = contactNumbersFMIA.claims;
+            this.roadsideAssistanceNumber = contactNumbersFMIA.roadsideAssistance;
+            this.websiteHelpNumber = contactNumbersFMIA.websiteHelp;
+            this.paymentContactNumber = contactNumbersFMIA.payment;
+            this.showCustomerInfoComp = false;
+        } else {
+            this.selectedPolicyDetail.isPl = true;
+            this.showCustomerInfoComp = true;
+        }
+        this.hideDropdown = true;
+    }
+ 
+    getLifePolicyType(policy: IPolicyDropdownOnePolicy): string {
+        const inceptionDate = convertToDateOnly(policy.policyInceptionDate);
+        const effectiveDate = convertToDateOnly(lifeEffectiveDate);
+        const isInceptionOnOrAfterEffective =
+            isAfter(inceptionDate, effectiveDate) || isEqual(inceptionDate, effectiveDate);
+ 
+        if (this.policySummaryService.isPolicyTypeVariableUniversalLife(policy.policyType)) {
+            return lifePolicyTypes.vul;
+        } else if (this.policySummaryService.isFiulPolicy(policy)) {
+            return isInceptionOnOrAfterEffective
+                ? lifePolicyTypes.fiulOnOrAfterEffective
+                : lifePolicyTypes.fiulBeforeEffectiveDate;
+        } else {
+            return lifePolicyTypes.nonVulFiul;
+        }
+    }
+ 
+    hidePayOnlineButton() {
+        this.featureFlagService.isFeatureFlagReady().subscribe((flagsReady) => {
+            if (flagsReady) {
+                this.hidePayOnlineBtn =
+                    (!this.isLifeFrontBookPolicy && this.selectedPolicyDetail.isLife);
+            }
+        });
+    }
+ 
+    /**
+     * If user only has driver role polic(ies) there is nothing to pay online
+     * If user only has "partial data policies", getAllPolicies returns [], there is nothing to pay online
+     */
+    disablePaymentForDriverOnlyAndNoPolicies() {
+        this.policySummaryService.execute().subscribe((policySummary) => {
+            const policyList = this.policySummaryService.getAllPoliciesExceptNBXChoice(policySummary);
+            const hasPolicyYouCanPay = policyList.length && !policySummary.isDriverOnly;
+            if (!hasPolicyYouCanPay) {
+                this.disablePayment = true;
+            }
+        });
+    }
+ 
+    setLobToGtmTags() {
+        const newHelpPageGtmTags = { ...HELP_PAGE.newHelpPageGtmTags };
+        for (const gtmTag in newHelpPageGtmTags) {
+            newHelpPageGtmTags[gtmTag] = this.policyLob
+                ? `${newHelpPageGtmTags[gtmTag]}_${this.policySource}`
+                : `${newHelpPageGtmTags[gtmTag]}`;
+        }
+        this.helpPageGtmTags = { ...newHelpPageGtmTags };
+    }
+ 
+    ngOnDestroy() {
+        if (this.buttonDisablementSubscription) {
+            this.buttonDisablementSubscription.unsubscribe();
+        }
+ 
+        if (this.selectedPolicySubjectAsObservableSubscription) {
+            this.selectedPolicySubjectAsObservableSubscription.unsubscribe();
+        }
+ 
+        if (this.payBillSubscription) {
+            this.payBillSubscription.unsubscribe();
+        }
+    }
+ 
+    fwsSendEmailRequest() {
+        const params: TrackerEventUIModel = {
+            eventName: eventNames.fwsEmailToCustomerCareStart,
+            entrySource: entrySources.contactus,
+        };
+        this.analyticsService.trackEventWithParams(params);
+        this.router.navigate([this.SEND_REQUEST], { queryParams: { reference: this.QUERY_PARAM_REFERENCE } });
+    }
+ 
+    setFMDirectPolicyStatus(policyDetail: IPolicyDropdownOnePolicy): void {
+        this.isFMDirectPolicy =
+            this.selectedPolicyDetail.isFm && this.policySummaryService.isDirectPolicy(policyDetail);
+    }
+ 
+    shouldShowFileClaimButton(): boolean {
+        // Don't show file claim button if line of business is life
+        if (this.selectedPolicyDetail?.isLife) {
+            return false;
+        }
+        if (this.selectedPolicyDetail?.isFws) {
+            // Core cleanup - this will always be true post core enabled
+            return true;
+        }
+        return true;
+    }
+ 
+    resetIsLifeFrontBookPolicyFlag() {
+        this.isLifeFrontBookPolicy = false;
+    }
+ 
+    groupPolicies(): void {
+        const policy = this.policiesDropdown.policies[0];
+        this.hideDropdown = this.policiesDropdown.policies.length < 2;
+        if (this.hideDropdown) {
+            this.policyDropdownCtrl.setValue(policy);
+        }
+        this.onPolicySelection(policy);
+    }
+}
+ 
+ 
