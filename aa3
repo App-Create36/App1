@@ -1,0 +1,189 @@
+customer-info.constant.ts
+import { IServiceTypes } from '~/data/repository/customer-service-info/customer-service-info.model';
+import { HelpFmRoutes, IHelpCustomerNumberTypes } from '~/ui/contact-us/help-customer/help-customer.model';
+ 
+export const mapServiceNamesForDisplay = {
+    ConsumerSolutions: 'Customer Service',
+    Registration: 'Registration',
+    ReplaceVehicle: 'Replace Vehicle',
+    MakeAPayment: 'Make a Payment',
+    CustomerService: 'Customer Service',
+    Claims: 'Claims',
+    Life: 'Life',
+};
+ 
+export const serviceTypes: IServiceTypes = {
+    customerService: 'CustomerService',
+    customerServiceText: 'CustomerServiceText',
+    makeAPayment: 'MakeAPayment',
+    claims: 'Claims',
+    easternExpansion: 'EasternExpansion',
+    life: 'Life',
+    fws: 'FWS',
+    fwsCustomerCareCenter: 'FwsCustomerCareCenter',
+    fwsClaimsCustomerCareCenter: 'FwsClaimsCustomerCareCenter',
+    fm: 'FM',
+    foremostChoiceCustomerCare: 'ForemostChoiceCustomerCare',
+};
+ 
+export const customerTextingPhoneNumber = '+18559223025';
+ 
+export const displayTextingPhoneNumber = '1-855-922-3025';
+ 
+export const fwsHelpPageClaimPhoneNumber = '1-800-854-6011';
+ 
+export const requestCancelPolicyCustomerTextingPhoneNumber = '855-922-3025';
+ 
+export const helpCustomerServiceNumbers: IHelpCustomerNumberTypes = {
+    lifeContactNumber: '1-800-238-9671',
+    ceaEspanolPhoneNumber: '1-877-732-5266',
+};
+ 
+export const policyTypeBasedAddress = {
+    ceaPaymentAddress: ['Payment Processing Center', 'PO Box 60171', 'City of Industry, CA ', '91716-0171'],
+    lifeGetHelpAddress: ['PO Box 248831', 'Oklahoma City, OK 73124'],
+    lifeFrontBookGetHelpAddress: ['Farmers New World Life Insurance', 'PO Box 981335', 'Boston, MA 02298-1335'],
+    lifeGetHelpOvernightAddress: ['7340 W Memorial Rd', 'Oklahoma City, OK 73142'],
+    viulGetHelpAddress: ['Payment Processing Center', 'PO Box 724208', 'Atlanta, GA 31139'],
+    fiulGetHelpAfterDateAddress: ['PO Box 248831', 'Oklahoma City, OK 73124'],
+    fiulGetHelpBeforeDateAddress: [
+        'Payment Processing Center/FIUL Service Center',
+        'PO Box 725409',
+        'Atlanta, GA 31139',
+    ],
+    a360StandardPaymentAddress: ['Farmers Insurance', 'PO Box 70221', 'Philadelphia, PA 19176-0221'],
+    arsStandardPaymentAddress: ['Farmers Insurance', 'PO Box 41753', 'Philadelphia, PA 19101- 1753'],
+    a360OvernightPaymentAddress: ['Farmers Insurance', 'Box #70221', '400 White Clay Center Drive', 'Newark, DE 19711'],
+    arsOvernightPaymentAddress: ['Farmers Insurance', 'Box #41753', '400 White Clay Center Drive', 'Newark, DE 19711'],
+    bwSelectedStatePaymentAddress: ['Bristol West Insurance Group', 'PO Box 7142', 'Pasadena, CA 91109-7142'],
+    bwOtherStatePaymentAddress: ['Bristol West Insurance Group', 'PO Box 371329', 'Pittsburgh, PA 15250-7329'],
+    plOvernightMailAddress: [
+        'Box 991 - Farmers Insurance',
+        'C/O Deluxe',
+        '5450 N. Cumberland Ave',
+        'Chicago, IL  60656',
+    ],
+    fwsIAStanderedPaymentAddress: ['Farmers', 'PO Box 41753', 'Philadelphia, PA 19101-1753'],
+    fwsIAOvernightPaymentAddress: ['Farmers', '#753', '400 White Clay Center Drive', 'Newark, DE 19711'],
+    fmIAOvernightAddress: ['P.O.Box 915 - Foremost', 'C/O Deluxe', '5450 N Cumberland Ave', 'Chicago, IL 60656'],
+    fmEAOvernightAddress: [
+        'Foremost - Box #915',
+        'C/O Citibank Lockbox Operations',
+        '8430 W Bryn Mawr Avenue, 3rd Floor',
+        'Chicago, IL 60631',
+    ],
+    lifePolicyClaimsAddress: ['Farmers New World Life Claims', 'PO Box 981334', 'Boston, MA 02298-1334'],
+};
+ 
+export const customerServiceTimeInfoIA = {
+    monToFri: '8am to 10pm',
+    satToSun: '9am to 5pm',
+    fm: '8am to 8pm',
+};
+ 
+export const customerServiceTimeFrontbookLife = {
+    monToFri: '7am to 7pm CT',
+};
+ 
+export const helpCustomerServiceTimeLife = {
+    monToFri: '9am to 5:30pm  CT',
+};
+ 
+export const fmRoutePath: HelpFmRoutes = {
+    fileAclaim: 'https://claims.foremost.com/cmp/s/filealoss?SO=03',
+    checkAClaim: 'https://claims.foremost.com/cmp/s/login/?SO=03',
+    fileAclaimEA: 'https://www.farmers.com/cmp/s/filealoss?SO=01',
+    billingFaqRoute: 'https://www.foremost.com/faq/billing-faq.htm',
+    emailAsQstnRoute: 'https://www.foremost.com/contact/policy-holder.aspx',
+    fileAclaimBw: 'https://claims.bristolwest.com/bwcmp/s/filealoss?SO=04',
+};
+ 
+export const fwsMailIds = {
+    a360MailId: 'customersupport@farmersinsurance.com',
+    arsLegacyMailId: 'eservice@farmersinsurance.com',
+};
+ 
+export const HELP_BW_STATES = [
+    { abbreviation: 'AZ', stateName: 'ARIZONA' },
+    { abbreviation: 'CA', stateName: 'CALIFORNIA' },
+    { abbreviation: 'NV', stateName: 'NEVADA' },
+    { abbreviation: 'TX', stateName: 'TEXAS' },
+];
+ 
+export const lifeEffectiveDate = '2019-10-01';
+ 
+export const lifePolicyTypes = {
+    vul: 'VUL',
+    fiulBeforeEffectiveDate: 'FIULBFOREEFFECTIVE',
+    fiulOnOrAfterEffective: 'FIULONORAFTEREFFECTIVE',
+    nonVulFiul: 'OTHER',
+};
+ 
+export const contactNumbersEA = {
+    FM: {
+        insuranceRep: '',
+        claims: '1-800-527-3907',
+        roadsideAssistance: '1-800-554-6678',
+        customerCare: '1-800-527-3905',
+        websiteHelp: '',
+        payment: '1-800-532-4221',
+    },
+    FWS: {
+        insuranceRep: '',
+        claims: '1-800-854-6011',
+        roadsideAssistance: '1-800-854-6011',
+        customerCare: '1-800-422-4272',
+        websiteHelp: '',
+        payment: '1-800-422-4272',
+    },
+};
+ 
+export const contactNumbersIA = {
+    FM: {
+        insuranceRep: '',
+        claims: '800-527-3907',
+        roadsideAssistance: '800-554-6678',
+        customerCare: '800-527-3905',
+        websiteHelp: '888-383-4244',
+        payment: '800-532-4221',
+    },
+    AARP: {
+        insuranceRep: '800-752-2461',
+        claims: '800-752-2461',
+        roadsideAssistance: '800-330-3103',
+        customerCare: '800-752-2461',
+        websiteHelp: '888-383-4244',
+        payment: '800-752-2461',
+    },
+    USAA: {
+        insuranceRep: '800-315-1122',
+        claims: '800-527-3907',
+        roadsideAssistance: '800-554-6678',
+        customerCare: '800-315-1122',
+        websiteHelp: '888-383-4244',
+        payment: '800-315-1122',
+    },
+    FM_DIRECT: {
+        insuranceRep: '800-237-2060',
+        claims: '800-527-3907',
+        roadsideAssistance: '800-554-6678',
+        customerCare: '800-237-2060',
+        websiteHelp: '888-383-4244',
+        payment: '800-237-2060',
+    },
+    FWS: {
+        insuranceRep: '',
+        claims: '800-854-6011',
+        roadsideAssistance: '1-800-854-6011',
+        customerCare: '800-422-4272',
+        websiteHelp: '888-383-4244',
+        payment: '800-422-4272',
+    },
+};
+ 
+export const terminatedAgentCardNumbers = {
+    CA: '800-641-6000',
+    FL: '800-509-5819',
+    OTHERS: '855-878-3157',
+};
+ 
