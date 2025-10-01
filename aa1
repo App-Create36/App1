@@ -1,1 +1,686 @@
-
+help-customer.component.html
+<div class="contact-us">
+    <div class="row">
+        <div class="col-12">
+            <h1 data-test-id="HELP_PAGE_TITLE">Help</h1>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12">
+            <div data-test-id="HELP_SELECT_POLICY_QUOTE"
+                class="tui-medium-label help-select-policy-quote mb-2">
+                <span *ngIf="selectedPolicy; else choose_policy">
+                    Contact us using any of the methods below, or choose a different policy
+                </span>
+                <ng-template #choose_policy>
+                    <span>
+                        Select a policy so we can point you in the right direction
+                    </span>
+ 
+                </ng-template>
+            </div>
+        </div>
+    </div>
+    <div class="row help-policy-section"
+        *ngIf="!hideDropdown">
+        <mat-form-field class="col-sm-12 col-md-6 col-lg-4"
+            [ngClass]="{'selected-form-field':selectedPolicy, 'dropdown-height' : selectedPolicy?.dropdownItemNameArs}">
+            <mat-label *ngIf="!selectedPolicy">
+                <h2 class="tui-h4 blue-text">Select a policy</h2>
+            </mat-label>
+            <mat-select disableOptionCentering
+                name="policyList-dropdown"
+                [formControl]="policyDropdownCtrl"
+                (selectionChange)="onPolicySelection($event.value)"
+                panelClass="helpPolicyDropdownpanelClass"
+                aria-hidden="true"
+                aria-roledescription="Policy name combo box">
+                <mat-select-trigger *ngIf="selectedPolicy"
+                    aria-hidden="true">
+                    <div class="dropdown-policy">
+                        <div class="content">
+                            <i [ngClass]="selectedPolicy.iconClass"
+                                aria-hidden="true"></i>
+                            <div>
+                                <p class="tui-h4 name mb-0"
+                                    data-test-id="HELP_POLICY_NAME">
+                                    {{selectedPolicy.dropdownItemName }}
+                                </p>
+                                <p *ngIf="selectedPolicy.dropdownItemNameArs"
+                                    class="tui-body-text-1 ars-item-name mb-0"
+                                    data-test-id="HELP_POLICY_NAME_ARS">
+                                    {{ selectedPolicy.dropdownItemNameArs }}
+                                </p>
+                                <p class="tui-body-text-2 desc text-uppercase"
+                                    data-test-id="HELP_POLICY_NUMBER">
+                                    {{ selectedPolicy.dropdownItemDesc }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </mat-select-trigger>
+                <mat-option *ngFor="let policy of policiesDropdown.policies"
+                    [value]="policy">
+                    <div class="dropdown-policy">
+                        <div class="content pt-2 pb-3">
+                            <i [ngClass]="policy.iconClass"
+                                aria-hidden="true"></i>
+                            <div>
+                                <p class="tui-h4 name mb-0"
+                                    data-test-id="HELP_POLICY_NAME">
+                                    {{policy.dropdownItemName }}
+                                </p>
+                                <p *ngIf="policy.dropdownItemNameArs"
+                                    class="tui-body-text-1 ars-item-name mb-0"
+                                    data-test-id="HELP_POLICY_NAME_ARS">
+                                    {{ policy.dropdownItemNameArs }}
+                                </p>
+                                <p class="tui-body-text-2 desc text-uppercase"
+                                    data-test-id="HELP_POLICY_NUMBER">
+                                    {{ policy.dropdownItemDesc }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </mat-option>
+            </mat-select>
+        </mat-form-field>
+    </div>
+    <div class="row" *ngIf="selectedPolicy">
+        <div class="col-12" [ngClass]="{'col-lg-3': hasAgent}">
+            <app-agent-card-group class="h-100 d-block"></app-agent-card-group>
+        </div>
+        <div class="col-md-4" [ngClass]="{'col-lg-3': hasAgent}">
+            <div class="claims">
+                <mat-card>
+                    <app-help-column>
+                        <ng-container header>
+                            <h2 class="tui-h3 tui-card-title"
+                                data-test-id="HELP_CLAIMS_TITLE">
+                                {{ claimsTitle }}
+                            </h2>
+                        </ng-container>
+                        <ng-container snippet>
+                            Skip the phone call. Report or view your claim online. It is quick and easy!
+                        </ng-container>
+                        <ng-container action
+                            *ngIf="showFileClaimBtn">
+                            <button data-tui-tracking-id="CSS_HELP_FILE_CLAIM_CLICK"
+                                (click)="redirectToClaims()"
+                                class="tui-btn tui-btn-cta mt-0"
+                                [attr.data-gtm]="helpPageGtmTags?.fileAClaimOnline"
+                                [disabled]="disableClaims"
+                                data-test-id="HELP_FILE_A_CLAIM_ONLINE">
+                                {{claimsButtonText}}
+                                <i *ngIf="selectedPolicyDetail.isBw" class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
+                            </button>
+                        </ng-container>
+                        <ng-container contactInfo>
+                            <ng-container *ngIf="showCustomerInfoComp; else claimForOtherTypes">
+                                <app-customer-service-info [forArea]=forArea.claims
+                                    [dynamicHelpPageGtmTags]="helpPageGtmTags"
+                                    [isHelpPageView]="true"
+                                    [selectedPolicy]="selectedPolicyDetail"
+                                    [easternExpansion]="easternExpansion"
+                                    [phoneNumberGTM]="'CSS_ContactUs_PhoneClaims_Link'">
+                                </app-customer-service-info>
+                            </ng-container>
+                            <ng-template #claimForOtherTypes>
+                                <ng-container *ngIf="selectedPolicyDetail?.isLife">
+                                    <h3 class="tui-h5"
+                                        data-test-id="HELP_CLAIMS_LIFE_NUMBER">
+                                        For Life Insurance Claims
+                                    </h3>
+                                    <ng-container
+                                        *ngTemplateOutlet="phoneNumberSection;context:{helpCustomerContactNumber:policyContactNumbers.lifeContactNumber}"></ng-container>
+                                        <p aria-hidden="true" class="tui-body-text-2 mt-1 "  data-test-id="HELP_CLAIMS_FNWL_AVAILABLE_TIMES">
+                                            Available hours are {{helpCustomerLifeTime.monToFri}}
+                                        </p>
+                                        <p aria-hidden="true" class="tui-body-text-2 mb-3" data-test-id="HELP_CLAIMS_FNWL_AVAILABLE_DAYS">
+                                            Mon-Fri
+                                        </p>
+                                    <ng-container *ngTemplateOutlet="lifePolicyClaimsSection"></ng-container>
+                                    </ng-container>
+                                <ng-container *ngIf="selectedPolicyDetail?.isFm">
+                                    <ng-container *ngTemplateOutlet="fmPolicyClaimsSection"></ng-container>
+                                </ng-container>
+                                <ng-container *ngIf="selectedPolicyDetail?.isFws">
+                                    <ng-container *ngTemplateOutlet="fwsPolicyClaimsSection"></ng-container>
+                                </ng-container>
+                                <ng-container *ngIf="selectedPolicyDetail?.isBw">
+                                    <ng-container *ngTemplateOutlet="bwPolicyClaimsSection"></ng-container>
+                                </ng-container>
+                            </ng-template>
+                        </ng-container>
+                    </app-help-column>
+                </mat-card>
+            </div>
+        </div>
+ 
+        <div class="col-md-4" [ngClass]="{'col-lg-3': hasAgent}">
+            <div class="get-assistance">
+                <mat-card>
+                    <ng-container *ngTemplateOutlet="faqs">
+                    </ng-container>
+                    <div [ngClass]="{'row m-0':isIAEnabled}">
+                        <div [ngClass]="{'col-12 col-sm-6 col-md-12 pl-0':isIAEnabled}">
+                            <app-customer-care-card></app-customer-care-card>
+                        </div>
+                    </div>
+                </mat-card>
+            </div>
+        </div>
+ 
+        <div class="col-md-4" [ngClass]="{'col-lg-3': hasAgent}">
+            <div class="make-a-payment">
+                <mat-card>
+                    <app-help-column>
+                        <ng-container header>
+                            <h2 class="tui-h3 tui-card-title"
+                                data-test-id="HELP_MAKE_A_PAYMENT_TITLE">
+                                Make a payment
+                            </h2>
+                        </ng-container>
+                        <ng-container snippet>
+                            <ng-container *ngIf="selectedPolicyDetail?.isLife;else noLifePaymentHeading">
+                                <ng-container *ngIf="selectedPolicyDetail?.isVul;else nonVulHeading">
+                                    There are multiple ways you can make your payment with Farmers Life®. Mail your
+                                    payment to us, or to your Farmers® Agent.
+                                </ng-container>
+                                <ng-template #nonVulHeading>
+                                    There are multiple ways you can make your payment with Farmers.  Pay online or over the phone.                                </ng-template>
+                            </ng-container>
+                            <ng-template #noLifePaymentHeading>
+                                There are multiple ways you can make your payment<ng-container
+                                    *ngIf="!selectedPolicyDetail?.isFm">
+                                    with {{brand}}</ng-container>.
+                                Pay online, over the phone, or mail your payment to us.
+                            </ng-template>
+                        </ng-container>
+                        <ng-container action
+                            *ngIf="!hidePayOnlineBtn">
+                            <button *ngIf="!selectedPolicyDetail?.isLife || isLifeFrontBookPolicy"
+                                class="tui-btn tui-btn-cta mt-0"
+                                data-tui-tracking-id="CSS_HELP_PAY_ONLINE_CLICK"
+                                (click)="redirectToPaymentPath(billingSummaryRoute.routePath)"
+                                [attr.data-gtm]="helpPageGtmTags.payOnline"
+                                [disabled]="disablePayment"
+                                data-test-id="HELP_PAYMENT_BTN">
+                                {{billingSummaryRoute.displayTextHelpPage}}
+                            </button>
+                        </ng-container>
+                        <ng-container contactInfo>
+                            <ng-container *ngIf="showCustomerInfoComp; else paymentForOtherTypes">
+                                <app-customer-service-info [forArea]=forArea.makeAPayment
+                                    [dynamicHelpPageGtmTags]="helpPageGtmTags"
+                                    [phoneNumberGTM]="'CSS_ContactUs_PhoneMakeAPayment_Link'"
+                                    [easternExpansion]="easternExpansion"
+                                    [selectedPolicy]="selectedPolicyDetail">
+                                </app-customer-service-info>
+                            </ng-container>
+                            <ng-template #paymentForOtherTypes>
+                                <div class="customer-service-info">
+                                    <div class="row input-view">
+                                        <section class="by-phone col-md-12 col-sm-6">
+                                            <h4 class="section-header-spacing"
+                                                aria-level="3"
+                                                data-test-id="HELP_PAY_BY_PHONE_HEADING">
+                                                <span>
+                                                    Pay by phone
+                                                </span>
+                                            </h4>
+                                            <ng-container *ngIf="selectedPolicyDetail?.isLife">
+                                                <ng-container
+                                                    *ngTemplateOutlet="phoneNumberSection;context:{helpCustomerContactNumber:getHelpCustomerContactNumber}"></ng-container>
+                                                        <p aria-hidden="true"
+                                                            class="tui-body-text-2 service-time">
+                                                            Mon-Fri {{helpCustomerLifeTime.monToFri}}
+                                                        </p>
+                                            </ng-container>
+                                            <ng-container *ngIf="selectedPolicyDetail?.isFm">
+                                                <ng-container
+                                                    *ngTemplateOutlet="phoneNumberSection;context:{helpCustomerContactNumber:paymentContactNumber}"></ng-container>
+                                                <ng-container *ngTemplateOutlet="automatedPhoneSystem;context:{dataTestId:'HELP_FM_PAY_PHONE_HEAD2'}"></ng-container>
+                                            </ng-container>
+                                            <ng-container *ngIf="selectedPolicyDetail?.isFws">
+                                                <ng-container
+                                                    *ngTemplateOutlet="phoneNumberSection;context:{helpCustomerContactNumber:paymentContactNumber}"></ng-container>
+                                                <ng-container *ngTemplateOutlet="automatedPhoneSystem;context:{dataTestId:'HELP_FWS_PAY_PHONE_HEAD2'}"></ng-container>
+                                            </ng-container>
+                                            <ng-container *ngIf="selectedPolicyDetail?.isBw">
+                                                <ng-container
+                                                    *ngTemplateOutlet="phoneNumberSection;context:{helpCustomerContactNumber:'1-888-888-0080'}"></ng-container>
+                                            </ng-container>
+                                        </section>
+                                        <div class="col-sm-6 col-md-12" *ngIf="!isLifeFrontBookPolicy">
+                                            <section class="by-mail ia-payment-section">
+                                                <h4 class="mb-0"
+                                                    aria-level="3"
+                                                    data-test-id="HELP_PAY_BY_MAIL_HEADING">
+                                                    Pay by mail
+                                                </h4>
+                                                <ng-container *ngIf="selectedPolicyDetail?.isLife">
+                                                    <p class="tui-body-text-2"
+                                                        *ngFor="let line of lifePolicyAddress.standardAddress">
+                                                        {{line}}
+                                                    </p>
+                                                    <ng-container *ngIf="lifePolicyAddress.overnightAddress">
+                                                        <p class="tui-subtitle-text-2 tui-text-black mt-3"
+                                                            data-test-id="HELP_LIFE_PAY_BY_MAIL_SUB_HEADING">
+                                                            Overnight Address
+                                                        </p>
+                                                        <p class="tui-body-text-2"
+                                                            *ngFor="let line of lifePolicyAddress.overnightAddress">
+                                                            {{line}}
+                                                        </p>
+                                                    </ng-container>
+                                                </ng-container>
+                                                <ng-container *ngIf="selectedPolicyDetail?.isFm">
+                                                    <ng-container
+                                                        *ngTemplateOutlet="fmPolicyPaymentSection"></ng-container>
+                                                </ng-container>
+                                                <ng-container *ngIf="selectedPolicyDetail?.isFws">
+                                                    <ng-container
+                                                        *ngTemplateOutlet="fwsPolicyPaymentSection"></ng-container>
+                                                </ng-container>
+                                                <ng-container *ngIf="selectedPolicyDetail?.isBw">
+                                                    <ng-container
+                                                        *ngTemplateOutlet="bwPolicyPaymentSection"></ng-container>
+                                                </ng-container>
+                                            </section>
+                                        </div>
+                                    </div>
+                                </div>
+                            </ng-template>
+                        </ng-container>
+                    </app-help-column>
+                </mat-card>
+            </div>
+        </div>
+    </div>
+    <ng-container *ngIf="!selectedPolicy">
+        <div class="separator"></div>
+        <div class="row pl-3">
+            <div class="col-12 pb-3">
+                <h4 class="pt-3 pb-2" aria-level="3">Frequently asked questions</h4>
+                <div class="row">
+                    <div class="col-12 col-md-6">
+                        <ng-container *ngTemplateOutlet="servicingPolicyFaq"></ng-container>
+                        <ng-container *ngTemplateOutlet="faqs; context:{isFrequentAskedSection:true}">
+                        </ng-container>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </ng-container>
+</div>
+ 
+ 
+<ng-template #faqs
+    let-isFrequentAskedSection="isFrequentAskedSection">
+    <ng-container *ngIf="!selectedPolicyDetail?.isCea">
+        <div class="faqs">
+            <h2 class="tui-h3 tui-card-title"
+                data-test-id="HELP_GET_HELP_TITLE"
+                *ngIf="!isFrequentAskedSection">
+                Get help
+            </h2>
+            <ol>
+ 
+                <ng-container *ngIf="isIAEnabled">
+                    <ng-container *ngIf="selectedPolicyDetail?.isFm">
+                        <li>
+                            <a [href]="FAQLinks.billingAndPaymentsIAFaqLink.routePath"
+                                class="d-inline-block tui-body-text-1"
+                                rel="noopener noreferrer"
+                                [attr.data-gtm]="helpPageGtmTags?.billingPayments"
+                                [attr.aria-label]="FAQLinks.billingAndPaymentsIAFaqLink.ariaLabel"
+                                data-test-id="HELP_BILL_AND_PAYEMENT_FAQ"
+                                (click)="trackMixpanelFaqs(FAQLinks.billingAndPaymentsIAFaqLink.mixpanelFaqType)"
+                                target="_blank">
+                                    {{FAQLinks.billingAndPaymentsIAFaqLink.displayText}}
+                            </a>
+                        </li>
+                        <li>
+                            <a [href]="generalIAFAQ"
+                                class="d-inline-block tui-body-text-1"
+                                data-test-id="HELP_GENERAL_FAQ"
+                                target="_blank">
+                                General
+                            </a>
+                        </li>
+                    </ng-container>
+                </ng-container>
+                <ng-container *ngIf="!isIAEnabled">
+                    <ng-container
+                    *ngIf="selectedPolicyDetail?.isEe || selectedPolicyDetail?.isPl || isFrequentAskedSection">
+                    <li>
+                        <a data-tui-tracking-id="CSS_HELP_BILL_PAYMENT_FAQ_CLICK"
+                            [href]="FAQLinks.billingAndPaymentsFaqLink.routePath"
+                            class="d-block tui-body-text-1"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            [attr.data-gtm]="helpPageGtmTags?.billingPayments"
+                            [attr.aria-label]="FAQLinks.billingAndPaymentsFaqLink.ariaLabel"
+                            (click)="trackMixpanelFaqs(FAQLinks.billingAndPaymentsFaqLink.mixpanelFaqType)"
+                            data-test-id="HELP_BILLING_FAQ_LINK">
+                            {{FAQLinks.billingAndPaymentsFaqLink.displayText}}
+                        </a>
+                    </li>
+                    <li>
+                        <a data-tui-tracking-id="CSS_HELP_CLAIM_FAQ_CLICK"
+                            [attr.data-gtm]="helpPageGtmTags?.claimsFAQ"
+                            [href]="FAQLinks.claimsFaqLink.routePath"
+                            class="d-block tui-body-text-1"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            [attr.aria-label]="FAQLinks.claimsFaqLink.ariaLabel"
+                            (click)="trackMixpanelFaqs(FAQLinks.claimsFaqLink.mixpanelFaqType)"
+                            data-test-id="HELP_CLAIM_FAQ_LINK">
+                            {{FAQLinks.claimsFaqLink.displayText}}
+                        </a>
+                    </li>
+                    <li>
+                        <a [attr.data-gtm]="helpPageGtmTags?.policyFAQ"
+                            data-tui-tracking-id="CSS_HELP_POLICY_FAQ_CLICK"
+                            [href]="FAQLinks.policyFaqLink.routePath"
+                            class="d-block tui-body-text-1"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            [attr.aria-label]="FAQLinks.policyFaqLink.ariaLabel"
+                            (click)="trackMixpanelFaqs(FAQLinks.policyFaqLink.mixpanelFaqType)"
+                            data-test-id="HELP_POLICY_FAQ_LINK">
+                            {{FAQLinks.policyFaqLink.displayText}}
+                        </a>
+                    </li>
+                    <li>
+                        <a [attr.data-gtm]="helpPageGtmTags?.managingAccountFAQ"
+                            data-tui-tracking-id="CSS_HELP_MANAGE_ACCOUNT_FAQ_CLICK"
+                            [href]="FAQLinks.manageYourAccountFaqLink.routePath"
+                            class="d-block tui-body-text-1"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            [attr.aria-label]="FAQLinks.manageYourAccountFaqLink.ariaLabel"
+                            (click)="trackMixpanelFaqs(FAQLinks.manageYourAccountFaqLink.mixpanelFaqType)"
+                            data-test-id="HELP_MANAGE_ACCOUNT_FAQ_LINK">
+                            {{FAQLinks.manageYourAccountFaqLink.displayText}}
+                        </a>
+                    </li>
+                    <li>
+                        <a [attr.data-gtm]="helpPageGtmTags?.billingFeeDisclaimer"
+                            data-tui-tracking-id="CSS_HELP_BILLING_FEE_FAQ_CLICK"
+                            [href]="FAQLinks.billingFeeExplainer.routePath"
+                            class="d-block tui-body-text-1"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            [attr.aria-label]="FAQLinks.billingFeeExplainer.ariaLabel"
+                            (click)="trackMixpanelFaqs(FAQLinks.billingFeeExplainer.mixpanelFaqType)"
+                            data-test-id="HELP_BILLINGFEE_FAQ_LINK">
+                            {{FAQLinks.billingFeeExplainer.displayText}}
+                        </a>
+                    </li>
+                    </ng-container>
+                    <ng-container *ngIf="selectedPolicyDetail?.isLife">
+                        <li>
+                            <a [href]="FAQLinks.typesOfLifeInsurance.routePath"
+                                class="d-block tui-body-text-1"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                [attr.data-gtm]="'CSS_ContactUs_TypesOfInsurance_Link'"
+                                [attr.aria-label]="FAQLinks.typesOfLifeInsurance.ariaLabel"
+                                (click)="trackMixpanelFaqs(FAQLinks.typesOfLifeInsurance.mixpanelFaqType)"
+                                data-test-id="HELP_TYPESOFINSURANCE_FAQ_LINK">
+                                {{FAQLinks.typesOfLifeInsurance.displayText}}
+                            </a>
+                        </li>
+                        <li>
+                            <a [attr.data-gtm]="'CSS_ContactUs_LifeInsuranceQuestions_Link'"
+                                [href]="FAQLinks.lifeInsuranceQuestions.routePath"
+                                class="d-block tui-body-text-1"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                [attr.aria-label]="FAQLinks.lifeInsuranceQuestions.ariaLabel"
+                                (click)="trackMixpanelFaqs(FAQLinks.lifeInsuranceQuestions.mixpanelFaqType)"
+                                data-test-id="HELP_LIFEINSURANCEQUESTIONS_FAQ_LINK">
+                                {{FAQLinks.lifeInsuranceQuestions.displayText}}
+                            </a>
+                        </li>
+                    </ng-container>
+                    <ng-container *ngIf="selectedPolicyDetail?.isFm">
+                        <li>
+                            <a [href]="fmRoutes.billingFaqRoute"
+                                class="d-block tui-body-text-1"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                [attr.data-gtm]="helpPageGtmTags?.billingPayments"
+                                [attr.aria-label]="FAQLinks.billingAndPaymentsFaqLink.ariaLabel"
+                                (click)="trackMixpanelFaqs(FAQLinks.billingAndPaymentsFaqLink.mixpanelFaqType)"
+                                data-test-id="HELP_BILLING_FAQ_LINK">
+                                {{FAQLinks.billingAndPaymentsFaqLink.displayText}}
+                            </a>
+                        </li>
+                    </ng-container>
+                    <ng-container *ngIf="selectedPolicyDetail?.isFws">
+                        <li>
+                            <ng-container *ngTemplateOutlet="servicingPolicyFaq"></ng-container>
+                        </li>
+                    </ng-container>
+                    <ng-container *ngIf="selectedPolicyDetail?.isBw">
+                        <li>
+                            <a href="https://www.bristolwest.com/home/faq"
+                                class="d-block tui-body-text-1"
+                                rel="noopener noreferrer"
+                                target="_blank">
+                                General Questions, Payments, Claims and Text Alerts
+                            </a>
+                        </li>
+                    </ng-container>
+                </ng-container>
+            </ol>
+        </div>
+    </ng-container>
+</ng-template>
+ 
+<ng-template #fmPolicyClaimsSection>
+    <div class="row">
+        <div class="col-sm-6 col-md-12 pt-3">
+            <ng-container
+                *ngTemplateOutlet="phoneNumberSection;context:{helpCustomerContactNumber:claimsContactNumber}"></ng-container>
+            <p class="tui-body-text-2" *ngIf="!isIAEnabled"
+                data-test-id="HELP_FM_CHECK_SUB_HEAD">
+                Call us to file or check on a claim 24/7
+            </p>
+            <p class="tui-body-text-2" *ngIf="isIAEnabled"
+                data-test-id="HELP_FM_CHECK_SUB_HEAD">
+                Available 24-hours a day, 7-days a week
+            </p>
+        </div>
+        <div class="col-sm-6 col-md-12  pt-3">
+            <h4 data-test-id="HELP_TOWING_HEADING"
+                aria-level="3">
+                24-hour towing & roadside assistance
+            </h4>
+            <ng-container
+                *ngTemplateOutlet="phoneNumberSection;context:{helpCustomerContactNumber:roadsideAssistanceNumber}"></ng-container>
+            <p class="tui-body-text-2 pb-3"
+                data-test-id="HELP_FM_TOWING_SUB_HEAD">
+                Motor home, travel trailer, fifth-wheel, motorcycle
+            </p>
+            <ng-container *ngTemplateOutlet="hearingImpaired"></ng-container>
+        </div>
+    </div>
+</ng-template>
+ 
+<ng-template #fwsPolicyClaimsSection>
+    <div class="row">
+        <div class="col-sm-6 col-md-12 pt-3">
+            <ng-container
+                *ngTemplateOutlet="phoneNumberSection;context:{helpCustomerContactNumber:claimsContactNumber}"></ng-container>
+            <p class="tui-body-text-2"
+                data-test-id="HELP_FWS_CHECK_SUB_HEAD">
+                Available 24-hours a day, 7-days a week.
+                <span>
+                    Also applies for Towing and Roadside Assistance
+                </span>
+            </p>
+        </div>
+        <div class="col-sm-6 col-md-12  pt-3">
+            <ng-container *ngTemplateOutlet="hearingImpaired"></ng-container>
+        </div>
+    </div>
+ 
+</ng-template>
+ 
+<ng-template #bwPolicyClaimsSection>
+    <div class="row">
+        <div class="col-sm-6 col-md-12 pt-3">
+            <ng-container
+                *ngTemplateOutlet="phoneNumberSection;context:{helpCustomerContactNumber:'1-800-274-7865'}"></ng-container>
+        </div>
+        <div class="col-sm-6 col-md-12 pt-3">
+            <p class="tui-body mb-0"
+                data-test-id="HELP_BW_CLAIM_MAIL_SUB_HEADING">
+                Bristol West Claims Service
+            </p>
+            <p class="tui-body-text-2"
+                data-test-id="HELP_BW_CLAIM_MAIL_ADDRESS_LINE1">
+                PO Box 258806
+            </p>
+            <p class="tui-body-text-2"
+                data-test-id="HELP_BW_CLAIM_MAIL_ADDRESS_LINE2">
+                Oklahoma City, OK 73125-8806
+            </p>
+        </div>
+    </div>
+</ng-template>
+ 
+<ng-template #hearingImpaired>
+    <h4 data-test-id="HELP_CUSTOMER_HEARING_IMPARED"
+        aria-level="3">
+        Hearing impaired
+    </h4>
+    <p class="tui-body-text-2">For persons with a hearing or speech disability, please dial 711 to reach the federal
+        <a [href]="teleCommunicationsRoute.routePath"
+            [attr.aria-label]="teleCommunicationsRoute.ariaLabel"
+            [attr.data-gtm]="teleCommunicationsRoute.gtmTagContactUs"
+            class="tui-body-text-1"
+            target="_blank"
+            rel="noopener noreferrer">
+            {{teleCommunicationsRoute.displayText}}
+        </a>
+    </p>
+</ng-template>
+ 
+<ng-template #phoneNumberSection
+    let-helpCustomerContactNumber="helpCustomerContactNumber">
+    <a class="tui-phone-number tui-body-copy-1"
+        href="tel:{{helpCustomerContactNumber}}"
+        data-gtm="CSS_ContactUs_PhoneCustomerService_Link"
+        data-test-id="HELP_GET_HELP_CUSTOMER_NUMBER">
+        {{helpCustomerContactNumber}}
+    </a>
+</ng-template>
+ 
+<ng-template #fmPolicyPaymentSection>
+    <h5 class="tui-body"
+        data-test-id="HELP_FM_PAY_BY_MAIL_SUB_HEADING">
+        Foremost Insurance Group
+    </h5>
+    <p class="tui-body-text-2">
+        <span *ngIf="isIAEnabled">PO Box 0915</span>
+        <span *ngIf="!isIAEnabled">P.O. Box 0915</span>
+    </p>
+    <p class="tui-body-text-2">
+        Carol Stream, IL 60132-0915
+    </p>
+ 
+    <h5 class="mt-3"
+        data-test-id="HELP_FM_PAY_BY_MAIL_SUB_HEADING">
+        Overnight Mail
+    </h5>
+    <p class="tui-body-text-2"
+        *ngFor="let line of fmOvernightAddress">
+        {{line}}
+    </p>
+    <ng-container *ngTemplateOutlet="importantToInclude;context:{dataTestId:'HELP_FM_IMPORTANT_TO_INCLUDE_HEADING'}"></ng-container>
+</ng-template>
+ 
+<ng-template #importantToInclude let-dataTestId="dataTestId">
+    <h5 class="my-3"
+        [attr.data-test-id]="dataTestId">
+        Important, be sure to include:
+    </h5>
+    <p class="tui-body-text-2">
+        1. The policy number and policyholder's name
+    </p>
+    <p class="tui-body-text-2">
+        2. Remittance slip (proof of payment document)
+    </p>
+</ng-template>
+ 
+<ng-template #fwsPolicyPaymentSection>
+    <p class="tui-body-text-2"
+        *ngFor="let line of fwsMailAddress.standardAddress">
+        {{line}}
+    </p>
+ 
+    <h5 class="mt-3"
+        data-test-id="HELP_FM_PAY_BY_MAIL_SUB_HEADING">
+        Overnight Mail
+    </h5>
+    <p class="tui-body-text-2"
+        *ngFor="let line of fwsMailAddress.overnightAddress">
+        {{line}}
+    </p>
+    <ng-container *ngTemplateOutlet="importantToInclude;context:{dataTestId:'HELP_FWS_IMPORTANT_TO_INCLUDE_HEADING'}"></ng-container>
+</ng-template>
+ 
+<ng-template #bwPolicyPaymentSection>
+    <p class="tui-body-text-2"
+        *ngFor="let line of bwMailAddress">
+        {{line}}
+    </p>
+ 
+    <p class="tui-subtitle-text-2 tui-text-black mt-3"
+        data-test-id="HELP_BW_PAY_BY_MAIL_SUB_HEADING">
+        Overnight Payments
+    </p>
+    <p class="tui-body-text-2">
+        Bristol West Insurance Group
+    </p>
+    <p class="tui-body-text-2">
+        1300 Concord Terrace
+    </p>
+    <p class="tui-body-text-2">
+        Suite 120 Sunrise, FL 33323
+    </p>
+</ng-template>
+ 
+<ng-template #lifePolicyClaimsSection>
+    <h3 class="tui-h5 mb-0"
+        data-test-id="CLAIMS_MESSAGE_MAIL_HEADING">
+        Message by mail
+    </h3>
+    <p class="tui-body-text-2 mt-1"
+        *ngFor="let line of lifePolicyClaimsAddress.standardAddress">
+        {{line}}
+    </p>
+</ng-template>
+ 
+<ng-template #servicingPolicyFaq>
+    <a href="https://www.farmers.com/policyfaq/"
+        class="tui-body-text-1"
+        target="_blank">
+        Servicing your policy
+    </a>
+</ng-template>
+ 
+<ng-template #automatedPhoneSystem let-dataTestId="dataTestId">
+    <p class="tui-body-text-2"
+        [attr.data-test-id]="dataTestId">
+        Automated Phone System: 24/7
+    </p>
+</ng-template>
+ 
+Welcome to Bristol West Insurance Group
+ 
