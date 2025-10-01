@@ -1,0 +1,100 @@
+core-css.constants.ts
+export enum LoginBrand {
+    FARMERS = 'Farmers',
+    FM = 'Foremost',
+    BW = 'Bristol West',
+}
+ 
+export enum BrandLogo {
+    FARMERS = 'farmers-logo.svg',
+    FM = 'Foremost_logo.svg',
+    BW = 'bristol-west-logo.svg',
+}
+ 
+export enum DomainLink {
+    FARMERS = 'farmers',
+    FM = 'myforemostaccount',
+    BW = 'bristolwest',
+}
+ 
+export enum websiteLink {
+    FARMERS = 'Farmers.com',
+    FM = 'MyForemostAccount.com',
+}
+ 
+export enum BrandTitle {
+    FARMERS = 'Farmers Insurance',
+    FM = 'Foremost Customer Self Service',
+    BW = 'Bristol West Insurance',
+}
+ 
+export enum FrmsRegion {
+    dev1 = 'DEV1',
+    dev2 = 'DEV2',
+    qa = 'QA2',
+    uat = 'UAT',
+    perf = 'PERF',
+    prod = 'PROD',
+    // eslint-disable-next-line
+    www = 'PROD',
+}
+ 
+export const OktaTenantUrl = {
+    farmers: {
+        preview: 'https://farmersinsuranceext.oktapreview.com',
+        uat: 'https://farmersinsuranceext-uat.okta.com',
+        prod: 'https://farmersinsuranceext.okta.com',
+    },
+    foremost: {
+        preview: 'https://foremost.oktapreview.com',
+        uat: 'https://foremost-uat.okta.com',
+        prod: 'https://foremost.okta.com',
+    },
+    bristolWest: {
+        preview: 'https://bristolwest-preview.oktapreview.com',
+        uat: 'https://bristolwest-uat.oktapreview.com',
+        prod: 'https://bristolwest.okta.com',
+    },
+};
+ 
+const FnwlZinniaBaseUrl = {
+    qa: 'https://sso.qa.mypolicyview.com?connection=FNWL-Consumer-Okta&redirectTo=',
+    uat: 'https://sso.uat.mypolicyview.com?connection=FNWL-Consumer-Okta&redirectTo=',
+    prod: 'https://sso.mypolicyview.com?connection=FNWL-Consumer-Okta&redirectTo=',
+};
+ 
+const ZinniaPolicyCoverageString = 'coverage/policies/';
+const ZinniaAppPageNames = {
+    MY_COVERAGE: 'my-coverage',
+    ASSET_ALLOCATION: 'account/allocations',
+    PREMIUM: 'premium',
+    BENEFICIARIES: 'beneficiaries',
+    PROFILE: 'profile',
+    DOCUMENTS: 'documents',
+};
+ 
+export enum BrandURL {
+    FARMERS = 'farmers.com',
+}
+ 
+export enum FMAgentChannel {
+    BOTH = 'BOTH',
+    IA = 'IA',
+    EA = 'EA',
+    NOT_SURE = 'NOT SURE',
+}
+ 
+export const CORE_CONST = {
+    LoginBrand,
+    BrandLogo,
+    DomainLink,
+    FrmsRegion,
+    BrandURL,
+    OktaTenantUrl,
+    BrandTitle,
+    FMAgentChannel,
+    FnwlZinniaBaseUrl,
+    ZinniaPolicyCoverageString,
+    ZinniaAppPageNames,
+};
+ 
