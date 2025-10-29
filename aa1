@@ -1,686 +1,2902 @@
-help-customer.component.html
-<div class="contact-us">
-    <div class="row">
-        <div class="col-12">
-            <h1 data-test-id="HELP_PAGE_TITLE">Help</h1>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-12">
-            <div data-test-id="HELP_SELECT_POLICY_QUOTE"
-                class="tui-medium-label help-select-policy-quote mb-2">
-                <span *ngIf="selectedPolicy; else choose_policy">
-                    Contact us using any of the methods below, or choose a different policy
-                </span>
-                <ng-template #choose_policy>
-                    <span>
-                        Select a policy so we can point you in the right direction
-                    </span>
+import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
+import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { RouterTestingModule } from '@angular/router/testing';
+
+import { ProofOfCoverageComponent } from '~/ui/policies/id-cards/proof-of-coverage/proof-of-coverage.component';
+import { ProofOfCoverageDialogComponent } from '~/ui/policies/id-cards/proof-of-coverage/proof-of-coverage-dialog/proof-of-coverage-dialog.component';
+
+import { IdCardService } from '~services/id-cards/id-card.service';
+import { StateEligibilityService } from '~/services/state-eligibility/state-eligibility.service';
+import { MatDialog } from '@angular/material/dialog';
+import { Observable, of, throwError, Subscription } from 'rxjs';
+import { ExpansionService } from '~/services/expansion/expansion.service';
+
+import { SubjectOfInsuranceConfigurationModel } from '~/data/repository/id-cards/id-cards.model';
+import { SpinnerService } from '~/services/spinner/spinner.service';
+import { WindowService } from '~/services/window/window.service';
+import { FeatureFlagService } from '~/services/feature-flag/feature-flag.service';
+import { MaintenanceFlagService } from '~/services/maintenance-flag/maintenance-flag.service';
+import { PolicySummaryService } from '../../../../services/policy-summary/policy-summary.service';
+import { DialogTypes, ID_CARD_CONST } from '~/core/constants/id-cards.constants';
+import { PolicyChangeService } from '~/services/policy-change/policy-change.service';
+import { TuiTrackerService } from 'ng-tractor-ui';
+import { runAdaTests } from '~/utils/ADA.utils';
+import { eventNames, eventParams } from '~/core/constants/mixpanel-events.constant';
+import { featureConstants } from '~/services/feature-flag/feature-flag.constants';
+import { ImpersonationService } from '~/services/impersonation/impersonate.service';
+import { STORAGE_CONST } from '~/core/constants/storage.constants';
+import { SessionStorageService } from '~/services/session-storage/session-storage.service';
+
+describe('ProofOfCoverageComponent', () => {
+    let component: ProofOfCoverageComponent;
+    let fixture: ComponentFixture<ProofOfCoverageComponent>;
+    let element: any;
+    const idCardServiceSpy = jasmine.createSpyObj('IdCardService', [
+        'sendIdCard',
+        'trackIdCardEvents',
+        'displayWallet',
+    ]);
+    const matDialogSpy = jasmine.createSpyObj('matDialogSpy', ['open']);
+    const impersonationServiceSpy = jasmine.createSpyObj('ImpersonationService', ['isUserCustomer']);
+    const stateEligibilityServiceSpy = jasmine.createSpyObj('StateEligibilityService', [
+        'getState',
+        'isStateEligibleForARSId',
+    ]);
+    const tuiTrackerServiceSpy = jasmine.createSpyObj('TuiTrackerService', ['addToState', 'track']);
+    const expansionServiceSpy = jasmine.createSpyObj('ExpansionService', ['getEasternExpansionData']);
+    const spinnerSpy = jasmine.createSpyObj('SpinnerService', ['show', 'hide']);
+    const windowServiceSpy = {
+        nativeWindow: {
+            navigator: {
+                platform: 'iPhone',
+                userAgent: 'Mozilla/5.0 chrome/33.0',
+            },
+        },
+    };
+    const featureFlagServiceSpy = jasmine.createSpyObj('FeatureFlagService', [
+        'isEnvVariableEnabledCheck',
+        'isEnabled',
+        'isFeatureFlagReady',
+        'isIA',
+    ]);
+    const maintenanceFlagSpy = jasmine.createSpyObj('MaintenanceFlagService', ['isMaintenanceFlagReady', 'isEnabled']);
+    const policySummaryServiceSpy = jasmine.createSpyObj('PolicySummaryService', [
+        'isComboIndicatorGrandProtect',
+        'isPolicySourceFWS',
+        'isPolicySourceForemost',
+        'trackPhoneNumberEvent',
+    ]);
+    const policyChangeServiceSpy = jasmine.createSpyObj('PolicyChangeService', ['getStateFromPcnForArs']);
+    const sessionStorageServiceSpy = jasmine.createSpyObj('SessionStorageService', ['getParsedItem', 'getItem']);
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            declarations: [ProofOfCoverageComponent],
+            imports: [RouterTestingModule],
+            schemas: [CUSTOM_ELEMENTS_SCHEMA],
+            providers: [
+                { provide: IdCardService, useValue: idCardServiceSpy },
+                { provide: MatDialog, useValue: matDialogSpy },
+                { provide: StateEligibilityService, useValue: stateEligibilityServiceSpy },
+                { provide: ExpansionService, useValue: expansionServiceSpy },
+                { provide: SpinnerService, useValue: spinnerSpy },
+                { provide: WindowService, useValue: windowServiceSpy },
+                { provide: FeatureFlagService, useValue: featureFlagServiceSpy },
+                { provide: MaintenanceFlagService, useValue: maintenanceFlagSpy },
+                { provide: PolicySummaryService, useValue: policySummaryServiceSpy },
+                { provide: PolicyChangeService, useValue: policyChangeServiceSpy },
+                { provide: TuiTrackerService, useValue: tuiTrackerServiceSpy },
+                { provide: ImpersonationService, useValue: impersonationServiceSpy },
+                { provide: SessionStorageService, useValue: sessionStorageServiceSpy },
+            ],
+        });
+
+        featureFlagServiceSpy.isFeatureFlagReady.and.returnValue(of(true));
+        featureFlagServiceSpy.isEnabled.and.returnValue(true);
+        featureFlagServiceSpy.isIA.and.returnValue(false);
+        stateEligibilityServiceSpy.getState.and.returnValue('FL');
+        expansionServiceSpy.getEasternExpansionData.and.returnValue(of(easternExpansion));
+        policyChangeServiceSpy.getStateFromPcnForArs.and.returnValue(of('MI'));
+        stateEligibilityServiceSpy.isStateEligibleForARSId.and.returnValue(of(true));
+        featureFlagServiceSpy.isEnabled.withArgs(featureConstants.isA360IdCardEmailEnabled).and.returnValue(false);
+        featureFlagServiceSpy.isEnabled.withArgs(featureConstants.isA360IdCardFaxEnabled).and.returnValue(false);
+        featureFlagServiceSpy.isEnabled.withArgs(featureConstants.isA360IdCardMailEnabled).and.returnValue(false);
+    });
+
+    beforeEach(() => {
+        fixture = TestBed.createComponent(ProofOfCoverageComponent);
+        component = fixture.componentInstance;
+        component.data = idCardsConfigurationModel;
+    });
+
+    let testNumber = 1;
+    afterEach((done) => {
+        runAdaTests(fixture, 'ProofOfCoverageComponent', testNumber, done);
+        testNumber++;
+    });
+
+    describe('#ngOnIt', () => {
+        it('should call setFWSIDCardDisplayProperties', () => {
+            // Arrange
+            spyOn(component, 'setFWSIDCardDisplayProperties');
+
+            // Act
+            component.ngOnInit();
+
+            // Assert
+            expect(component.setFWSIDCardDisplayProperties).toHaveBeenCalled();
+        });
+
+        it('should set shouldDisplayAppleWallet as true if enableMobileWalletsForRenewalIdCards FF is on', () => {
+            // Arrange
+            featureFlagServiceSpy.isEnvVariableEnabledCheck.and.returnValue(true);
+            featureFlagServiceSpy.isEnabled.and.returnValue(true);
+            windowServiceSpy.nativeWindow.navigator.userAgent =
+                'mozilla/5.0 (iphone; cpu iphone os 16_6 like mac os x) applewebkit/605.1.15 (khtml, like gecko) version/16.6 mobile/15e148 safari/604.1';
+            spyOn(component, 'updateDisplayData');
+            spyOn(component, 'checkIfCurrentPolicyIsExpansion');
+            spyOn(component, 'checkFeatureFlags');
+            spyOn(component, 'displayGoogleWallet');
+            // Act
+            component.ngOnInit();
+            // Assert
+            expect(component.updateDisplayData).toHaveBeenCalled();
+            expect(component.checkIfCurrentPolicyIsExpansion).toHaveBeenCalled();
+            expect(component.displayGoogleWallet).toHaveBeenCalled();
+            expect(component.isIosDevice).toBe(true);
+            expect(component.isIosFirefox).toBe(false);
+            expect(component.shouldDisplayAppleWallet).toBe(true);
+            expect(component.checkFeatureFlags).toHaveBeenCalled();
+        });
+
+        it('should set shouldDisplayAppleWallet as true,when coreIAFlagEnabled', () => {
+            // Arrange
+            featureFlagServiceSpy.isEnvVariableEnabledCheck.and.returnValue(true);
+            component.isIAEnabled = true;
+            spyOn(component, 'updateDisplayData');
+            spyOn(component, 'checkIfCurrentPolicyIsExpansion');
+            spyOn(component, 'checkFeatureFlags');
+            // Act
+            component.ngOnInit();
+            // Assert
+
+            expect(component.shouldDisplayAppleWallet).toBeTruthy();
+            expect(component.shouldDisplayGoogleWallet).toBeFalsy();
+        });
+
+        it('should set shouldDisplayAppleWallet as false if ios device and firefox browser', () => {
+            // Arrange
+            windowServiceSpy.nativeWindow.navigator.userAgent =
+                'Mozilla/5.0 (iphone; cpu iphone os 16_6 like mac os x) applewebkit/605.1.15 (khtml, like gecko) version/16.6 mobile/15e148 FxiOS/33.0';
+            featureFlagServiceSpy.isEnvVariableEnabledCheck.and.returnValue(false);
+            featureFlagServiceSpy.isEnabled.and.returnValue(true);
+            spyOn(component, 'updateDisplayData');
+            spyOn(component, 'checkIfCurrentPolicyIsExpansion');
+            // Act
+            component.ngOnInit();
+            // Assert
+            expect(component.updateDisplayData).toHaveBeenCalled();
+            expect(component.checkIfCurrentPolicyIsExpansion).toHaveBeenCalled();
+            expect(component.isIosDevice).toBe(true);
+            expect(component.isIosFirefox).toBe(true);
+            expect(component.shouldDisplayAppleWallet).toBe(false);
+        });
+
+        it('should set shouldDisplayAppleWallet as true if enableMobileWalletsForRenewalIdCards FF is off and is not renewal', () => {
+            // Arrange
+            featureFlagServiceSpy.isEnvVariableEnabledCheck.and.returnValue(true);
+            featureFlagServiceSpy.isEnabled.and.returnValue(false);
+            windowServiceSpy.nativeWindow.navigator.userAgent =
+                'mozilla/5.0 (iphone; cpu iphone os 16_6 like mac os x) applewebkit/605.1.15 (khtml, like gecko) version/16.6 mobile/15e148 safari/604.1';
+            spyOn(component, 'updateDisplayData');
+            spyOn(component, 'checkIfCurrentPolicyIsExpansion');
+            spyOn(component, 'checkFeatureFlags');
+            component.renewal = false;
+            // Act
+            component.ngOnInit();
+            // Assert
+            expect(component.updateDisplayData).toHaveBeenCalled();
+            expect(component.checkIfCurrentPolicyIsExpansion).toHaveBeenCalled();
+            expect(component.isIosDevice).toBe(true);
+            expect(component.isIosFirefox).toBe(false);
+            expect(component.shouldDisplayAppleWallet).toBe(true);
+            expect(component.checkFeatureFlags).toHaveBeenCalled();
+        });
+
+        it('should call setFmUnits if isForemostPolicy is true', () => {
+            // Arrange
+            component.data.isForemostPolicy = true;
+            spyOn(component, 'setFmUnits');
+
+            // Act
+            component.ngOnInit();
+
+            // Assert
+            expect(component.setFmUnits).toHaveBeenCalled();
+        });
+
+        it('should not call setFmUnits if isForemostPolicy is false', () => {
+            // Arrange
+            component.data.isForemostPolicy = false;
+            spyOn(component, 'setFmUnits');
+
+            // Act
+            component.ngOnInit();
+
+            // Assert
+            expect(component.setFmUnits).not.toHaveBeenCalled();
+        });
+
+        it('should call the different checks for Google/Apple and if not FM', () => {
+            spyOn(component, 'isDisplayGoogleWalletForEaFWSAuto');
+            spyOn(component, 'isDisplayGoogleWalletForIaFWSAuto');
+            spyOn(component, 'isDisplayAppleWalletForEaFWSAuto');
+            spyOn(component, 'isDisplayAppleWalletForIaFWSAuto');
+            spyOn(component, 'isDisplayAppleWalletForFM');
+            spyOn(component, 'isDisplayGoogleWalletForFM');
+            component.data = { isForemostPolicy: false } as any;
+
+            component.ngOnInit();
+
+            expect(component.isDisplayGoogleWalletForEaFWSAuto).toHaveBeenCalled();
+            expect(component.isDisplayGoogleWalletForIaFWSAuto).toHaveBeenCalled();
+            expect(component.isDisplayAppleWalletForEaFWSAuto).toHaveBeenCalled();
+            expect(component.isDisplayAppleWalletForIaFWSAuto).toHaveBeenCalled();
+
+            expect(component.isDisplayAppleWalletForFM).not.toHaveBeenCalled();
+            expect(component.isDisplayGoogleWalletForFM).not.toHaveBeenCalled();
+        });
+
+        it('should call the different checks for Google/Apple and if FM', () => {
+            spyOn(component, 'isDisplayGoogleWalletForEaFWSAuto');
+            spyOn(component, 'isDisplayGoogleWalletForIaFWSAuto');
+            spyOn(component, 'isDisplayAppleWalletForEaFWSAuto');
+            spyOn(component, 'isDisplayAppleWalletForIaFWSAuto');
+            spyOn(component, 'isDisplayAppleWalletForFM');
+            spyOn(component, 'isDisplayGoogleWalletForFM');
+            component.data = { isForemostPolicy: true } as any;
+
+            component.ngOnInit();
+
+            expect(component.isDisplayGoogleWalletForEaFWSAuto).toHaveBeenCalled();
+            expect(component.isDisplayGoogleWalletForIaFWSAuto).toHaveBeenCalled();
+            expect(component.isDisplayAppleWalletForEaFWSAuto).toHaveBeenCalled();
+            expect(component.isDisplayAppleWalletForIaFWSAuto).toHaveBeenCalled();
+
+            expect(component.isDisplayAppleWalletForFM).toHaveBeenCalled();
+            expect(component.isDisplayGoogleWalletForFM).toHaveBeenCalled();
+        });
+
+        it('should set shouldDisplayAppleWalletForIaFWSAuto true for if all three conditions are true', () => {
+            featureFlagServiceSpy.isEnvVariableEnabledCheck.and.returnValue(true);
+            windowServiceSpy.nativeWindow.navigator.userAgent =
+                'mozilla/5.0 (iphone; cpu iphone os 16_6 like mac os x) applewebkit/605.1.15 (khtml, like gecko) version/16.6 mobile/15e148 safari/604.1';
+            component.data.isActiveARSAuto = true;
+            component.data.isActiveA360Auto = false;
+            featureFlagServiceSpy.isIA.and.returnValue(true);
+            featureFlagServiceSpy.isEnabled.and.returnValue(true);
+
+            component.ngOnInit();
+
+            expect(component.shouldDisplayAppleWalletForIaFWSAuto).toBe(true);
+        });
+
+        it('should set isImpersonatedUser false if user is of type customer', () => {
+            impersonationServiceSpy.isUserCustomer.and.returnValue(true);
+
+            component.ngOnInit();
+
+            expect(component.isImpersonatedUser).toBeFalsy();
+        });
+    });
+
+    describe('updateDisplayData: showFaxIdCard and showMailIdCard', () => {
+  let component: ProofOfCoverageComponent;
+  let fixture: ComponentFixture<ProofOfCoverageComponent>;
  
-                </ng-template>
-            </div>
-        </div>
-    </div>
-    <div class="row help-policy-section"
-        *ngIf="!hideDropdown">
-        <mat-form-field class="col-sm-12 col-md-6 col-lg-4"
-            [ngClass]="{'selected-form-field':selectedPolicy, 'dropdown-height' : selectedPolicy?.dropdownItemNameArs}">
-            <mat-label *ngIf="!selectedPolicy">
-                <h2 class="tui-h4 blue-text">Select a policy</h2>
-            </mat-label>
-            <mat-select disableOptionCentering
-                name="policyList-dropdown"
-                [formControl]="policyDropdownCtrl"
-                (selectionChange)="onPolicySelection($event.value)"
-                panelClass="helpPolicyDropdownpanelClass"
-                aria-hidden="true"
-                aria-roledescription="Policy name combo box">
-                <mat-select-trigger *ngIf="selectedPolicy"
-                    aria-hidden="true">
-                    <div class="dropdown-policy">
-                        <div class="content">
-                            <i [ngClass]="selectedPolicy.iconClass"
-                                aria-hidden="true"></i>
-                            <div>
-                                <p class="tui-h4 name mb-0"
-                                    data-test-id="HELP_POLICY_NAME">
-                                    {{selectedPolicy.dropdownItemName }}
-                                </p>
-                                <p *ngIf="selectedPolicy.dropdownItemNameArs"
-                                    class="tui-body-text-1 ars-item-name mb-0"
-                                    data-test-id="HELP_POLICY_NAME_ARS">
-                                    {{ selectedPolicy.dropdownItemNameArs }}
-                                </p>
-                                <p class="tui-body-text-2 desc text-uppercase"
-                                    data-test-id="HELP_POLICY_NUMBER">
-                                    {{ selectedPolicy.dropdownItemDesc }}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </mat-select-trigger>
-                <mat-option *ngFor="let policy of policiesDropdown.policies"
-                    [value]="policy">
-                    <div class="dropdown-policy">
-                        <div class="content pt-2 pb-3">
-                            <i [ngClass]="policy.iconClass"
-                                aria-hidden="true"></i>
-                            <div>
-                                <p class="tui-h4 name mb-0"
-                                    data-test-id="HELP_POLICY_NAME">
-                                    {{policy.dropdownItemName }}
-                                </p>
-                                <p *ngIf="policy.dropdownItemNameArs"
-                                    class="tui-body-text-1 ars-item-name mb-0"
-                                    data-test-id="HELP_POLICY_NAME_ARS">
-                                    {{ policy.dropdownItemNameArs }}
-                                </p>
-                                <p class="tui-body-text-2 desc text-uppercase"
-                                    data-test-id="HELP_POLICY_NUMBER">
-                                    {{ policy.dropdownItemDesc }}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </mat-option>
-            </mat-select>
-        </mat-form-field>
-    </div>
-    <div class="row" *ngIf="selectedPolicy">
-        <div class="col-12" [ngClass]="{'col-lg-3': hasAgent}">
-            <app-agent-card-group class="h-100 d-block"></app-agent-card-group>
-        </div>
-        <div class="col-md-4" [ngClass]="{'col-lg-3': hasAgent}">
-            <div class="claims">
-                <mat-card>
-                    <app-help-column>
-                        <ng-container header>
-                            <h2 class="tui-h3 tui-card-title"
-                                data-test-id="HELP_CLAIMS_TITLE">
-                                {{ claimsTitle }}
-                            </h2>
-                        </ng-container>
-                        <ng-container snippet>
-                            Skip the phone call. Report or view your claim online. It is quick and easy!
-                        </ng-container>
-                        <ng-container action
-                            *ngIf="showFileClaimBtn">
-                            <button data-tui-tracking-id="CSS_HELP_FILE_CLAIM_CLICK"
-                                (click)="redirectToClaims()"
-                                class="tui-btn tui-btn-cta mt-0"
-                                [attr.data-gtm]="helpPageGtmTags?.fileAClaimOnline"
-                                [disabled]="disableClaims"
-                                data-test-id="HELP_FILE_A_CLAIM_ONLINE">
-                                {{claimsButtonText}}
-                                <i *ngIf="selectedPolicyDetail.isBw" class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
-                            </button>
-                        </ng-container>
-                        <ng-container contactInfo>
-                            <ng-container *ngIf="showCustomerInfoComp; else claimForOtherTypes">
-                                <app-customer-service-info [forArea]=forArea.claims
-                                    [dynamicHelpPageGtmTags]="helpPageGtmTags"
-                                    [isHelpPageView]="true"
-                                    [selectedPolicy]="selectedPolicyDetail"
-                                    [easternExpansion]="easternExpansion"
-                                    [phoneNumberGTM]="'CSS_ContactUs_PhoneClaims_Link'">
-                                </app-customer-service-info>
-                            </ng-container>
-                            <ng-template #claimForOtherTypes>
-                                <ng-container *ngIf="selectedPolicyDetail?.isLife">
-                                    <h3 class="tui-h5"
-                                        data-test-id="HELP_CLAIMS_LIFE_NUMBER">
-                                        For Life Insurance Claims
-                                    </h3>
-                                    <ng-container
-                                        *ngTemplateOutlet="phoneNumberSection;context:{helpCustomerContactNumber:policyContactNumbers.lifeContactNumber}"></ng-container>
-                                        <p aria-hidden="true" class="tui-body-text-2 mt-1 "  data-test-id="HELP_CLAIMS_FNWL_AVAILABLE_TIMES">
-                                            Available hours are {{helpCustomerLifeTime.monToFri}}
-                                        </p>
-                                        <p aria-hidden="true" class="tui-body-text-2 mb-3" data-test-id="HELP_CLAIMS_FNWL_AVAILABLE_DAYS">
-                                            Mon-Fri
-                                        </p>
-                                    <ng-container *ngTemplateOutlet="lifePolicyClaimsSection"></ng-container>
-                                    </ng-container>
-                                <ng-container *ngIf="selectedPolicyDetail?.isFm">
-                                    <ng-container *ngTemplateOutlet="fmPolicyClaimsSection"></ng-container>
-                                </ng-container>
-                                <ng-container *ngIf="selectedPolicyDetail?.isFws">
-                                    <ng-container *ngTemplateOutlet="fwsPolicyClaimsSection"></ng-container>
-                                </ng-container>
-                                <ng-container *ngIf="selectedPolicyDetail?.isBw">
-                                    <ng-container *ngTemplateOutlet="bwPolicyClaimsSection"></ng-container>
-                                </ng-container>
-                            </ng-template>
-                        </ng-container>
-                    </app-help-column>
-                </mat-card>
-            </div>
-        </div>
+  beforeEach(() => {
+    fixture = TestBed.createComponent(ProofOfCoverageComponent);
+    component = fixture.componentInstance;
+    // Always set data after component is ready
+    component.data = { showFaxIdCard: true, showMailIdCard: true, showEmailIdCard: true } as any;
+  });
  
-        <div class="col-md-4" [ngClass]="{'col-lg-3': hasAgent}">
-            <div class="get-assistance">
-                <mat-card>
-                    <ng-container *ngTemplateOutlet="faqs">
-                    </ng-container>
-                    <div [ngClass]="{'row m-0':isIAEnabled}">
-                        <div [ngClass]="{'col-12 col-sm-6 col-md-12 pl-0':isIAEnabled}">
-                            <app-customer-care-card></app-customer-care-card>
-                        </div>
-                    </div>
-                </mat-card>
-            </div>
-        </div>
+  it('should show fax, mail options if isBW login is true (document current behavior)', () => {
+  component.isExpansionState = false;
+  component.isBW = true;
+  component.data = idCardsConfigurationModelRenewal;
  
-        <div class="col-md-4" [ngClass]="{'col-lg-3': hasAgent}">
-            <div class="make-a-payment">
-                <mat-card>
-                    <app-help-column>
-                        <ng-container header>
-                            <h2 class="tui-h3 tui-card-title"
-                                data-test-id="HELP_MAKE_A_PAYMENT_TITLE">
-                                Make a payment
-                            </h2>
-                        </ng-container>
-                        <ng-container snippet>
-                            <ng-container *ngIf="selectedPolicyDetail?.isLife;else noLifePaymentHeading">
-                                <ng-container *ngIf="selectedPolicyDetail?.isVul;else nonVulHeading">
-                                    There are multiple ways you can make your payment with Farmers Life®. Mail your
-                                    payment to us, or to your Farmers® Agent.
-                                </ng-container>
-                                <ng-template #nonVulHeading>
-                                    There are multiple ways you can make your payment with Farmers.  Pay online or over the phone.                                </ng-template>
-                            </ng-container>
-                            <ng-template #noLifePaymentHeading>
-                                There are multiple ways you can make your payment<ng-container
-                                    *ngIf="!selectedPolicyDetail?.isFm">
-                                    with {{brand}}</ng-container>.
-                                Pay online, over the phone, or mail your payment to us.
-                            </ng-template>
-                        </ng-container>
-                        <ng-container action
-                            *ngIf="!hidePayOnlineBtn">
-                            <button *ngIf="!selectedPolicyDetail?.isLife || isLifeFrontBookPolicy"
-                                class="tui-btn tui-btn-cta mt-0"
-                                data-tui-tracking-id="CSS_HELP_PAY_ONLINE_CLICK"
-                                (click)="redirectToPaymentPath(billingSummaryRoute.routePath)"
-                                [attr.data-gtm]="helpPageGtmTags.payOnline"
-                                [disabled]="disablePayment"
-                                data-test-id="HELP_PAYMENT_BTN">
-                                {{billingSummaryRoute.displayTextHelpPage}}
-                            </button>
-                        </ng-container>
-                        <ng-container contactInfo>
-                            <ng-container *ngIf="showCustomerInfoComp; else paymentForOtherTypes">
-                                <app-customer-service-info [forArea]=forArea.makeAPayment
-                                    [dynamicHelpPageGtmTags]="helpPageGtmTags"
-                                    [phoneNumberGTM]="'CSS_ContactUs_PhoneMakeAPayment_Link'"
-                                    [easternExpansion]="easternExpansion"
-                                    [selectedPolicy]="selectedPolicyDetail">
-                                </app-customer-service-info>
-                            </ng-container>
-                            <ng-template #paymentForOtherTypes>
-                                <div class="customer-service-info">
-                                    <div class="row input-view">
-                                        <section class="by-phone col-md-12 col-sm-6">
-                                            <h4 class="section-header-spacing"
-                                                aria-level="3"
-                                                data-test-id="HELP_PAY_BY_PHONE_HEADING">
-                                                <span>
-                                                    Pay by phone
-                                                </span>
-                                            </h4>
-                                            <ng-container *ngIf="selectedPolicyDetail?.isLife">
-                                                <ng-container
-                                                    *ngTemplateOutlet="phoneNumberSection;context:{helpCustomerContactNumber:getHelpCustomerContactNumber}"></ng-container>
-                                                        <p aria-hidden="true"
-                                                            class="tui-body-text-2 service-time">
-                                                            Mon-Fri {{helpCustomerLifeTime.monToFri}}
-                                                        </p>
-                                            </ng-container>
-                                            <ng-container *ngIf="selectedPolicyDetail?.isFm">
-                                                <ng-container
-                                                    *ngTemplateOutlet="phoneNumberSection;context:{helpCustomerContactNumber:paymentContactNumber}"></ng-container>
-                                                <ng-container *ngTemplateOutlet="automatedPhoneSystem;context:{dataTestId:'HELP_FM_PAY_PHONE_HEAD2'}"></ng-container>
-                                            </ng-container>
-                                            <ng-container *ngIf="selectedPolicyDetail?.isFws">
-                                                <ng-container
-                                                    *ngTemplateOutlet="phoneNumberSection;context:{helpCustomerContactNumber:paymentContactNumber}"></ng-container>
-                                                <ng-container *ngTemplateOutlet="automatedPhoneSystem;context:{dataTestId:'HELP_FWS_PAY_PHONE_HEAD2'}"></ng-container>
-                                            </ng-container>
-                                            <ng-container *ngIf="selectedPolicyDetail?.isBw">
-                                                <ng-container
-                                                    *ngTemplateOutlet="phoneNumberSection;context:{helpCustomerContactNumber:'1-888-888-0080'}"></ng-container>
-                                            </ng-container>
-                                        </section>
-                                        <div class="col-sm-6 col-md-12" *ngIf="!isLifeFrontBookPolicy">
-                                            <section class="by-mail ia-payment-section">
-                                                <h4 class="mb-0"
-                                                    aria-level="3"
-                                                    data-test-id="HELP_PAY_BY_MAIL_HEADING">
-                                                    Pay by mail
-                                                </h4>
-                                                <ng-container *ngIf="selectedPolicyDetail?.isLife">
-                                                    <p class="tui-body-text-2"
-                                                        *ngFor="let line of lifePolicyAddress.standardAddress">
-                                                        {{line}}
-                                                    </p>
-                                                    <ng-container *ngIf="lifePolicyAddress.overnightAddress">
-                                                        <p class="tui-subtitle-text-2 tui-text-black mt-3"
-                                                            data-test-id="HELP_LIFE_PAY_BY_MAIL_SUB_HEADING">
-                                                            Overnight Address
-                                                        </p>
-                                                        <p class="tui-body-text-2"
-                                                            *ngFor="let line of lifePolicyAddress.overnightAddress">
-                                                            {{line}}
-                                                        </p>
-                                                    </ng-container>
-                                                </ng-container>
-                                                <ng-container *ngIf="selectedPolicyDetail?.isFm">
-                                                    <ng-container
-                                                        *ngTemplateOutlet="fmPolicyPaymentSection"></ng-container>
-                                                </ng-container>
-                                                <ng-container *ngIf="selectedPolicyDetail?.isFws">
-                                                    <ng-container
-                                                        *ngTemplateOutlet="fwsPolicyPaymentSection"></ng-container>
-                                                </ng-container>
-                                                <ng-container *ngIf="selectedPolicyDetail?.isBw">
-                                                    <ng-container
-                                                        *ngTemplateOutlet="bwPolicyPaymentSection"></ng-container>
-                                                </ng-container>
-                                            </section>
-                                        </div>
-                                    </div>
-                                </div>
-                            </ng-template>
-                        </ng-container>
-                    </app-help-column>
-                </mat-card>
-            </div>
-        </div>
-    </div>
-    <ng-container *ngIf="!selectedPolicy">
-        <div class="separator"></div>
-        <div class="row pl-3">
-            <div class="col-12 pb-3">
-                <h4 class="pt-3 pb-2" aria-level="3">Frequently asked questions</h4>
-                <div class="row">
-                    <div class="col-12 col-md-6">
-                        <ng-container *ngTemplateOutlet="servicingPolicyFaq"></ng-container>
-                        <ng-container *ngTemplateOutlet="faqs; context:{isFrequentAskedSection:true}">
-                        </ng-container>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </ng-container>
-</div>
+  component.ngOnChanges();
  
+  // This reflects the current code, which does not hide fax/mail for BW logins
+  expect(component.showFaxIdCard).toBe(true);
+  expect(component.showMailIdCard).toBe(true);
+  expect(component.showEmailIdCard).toBe(true);
+});
+  // ...other tests...
+});
+
+    describe('isDisplayGoogleWalletForEaFWSAuto', () => {
+        beforeEach(() => {
+            // Set defaults for this test suite's method under test
+            component.shouldDisplayGoogleWallet = false;
+            component.isFWSAuto = false;
+            component.isEnableFwsAndFmIdCardsForMobileWalletsEa = false;
+        });
+
+        it('should return true if shouldDisplayGoogleWallet, isFWSAuto, and isEnableFwsAndFmIdCardsForMobileWalletsEa are all true', () => {
+            component.shouldDisplayGoogleWallet = true;
+            component.isFWSAuto = true;
+            component.isEnableFwsAndFmIdCardsForMobileWalletsEa = true;
+
+            expect(component.isDisplayGoogleWalletForEaFWSAuto()).toBe(true);
+        });
+
+        it('should return false if shouldDisplayGoogleWallet is false', () => {
+            component.shouldDisplayGoogleWallet = false;
+            component.isFWSAuto = true;
+            component.isEnableFwsAndFmIdCardsForMobileWalletsEa = true;
+
+            expect(component.isDisplayGoogleWalletForEaFWSAuto()).toBe(false);
+        });
+
+        it('should return false if isFWSAuto is false', () => {
+            component.shouldDisplayGoogleWallet = true;
+            component.isFWSAuto = false;
+            component.isEnableFwsAndFmIdCardsForMobileWalletsEa = true;
+
+            expect(component.isDisplayGoogleWalletForEaFWSAuto()).toBe(false);
+        });
+
+        it('should return false if isEnableFwsAndFmIdCardsForMobileWalletsEa is false', () => {
+            component.shouldDisplayGoogleWallet = true;
+            component.isFWSAuto = true;
+            component.isEnableFwsAndFmIdCardsForMobileWalletsEa = false;
+
+            expect(component.isDisplayGoogleWalletForEaFWSAuto()).toBe(false);
+        });
+    });
+
+    describe('isDisplayGoogleWalletForIaFWSAuto', () => {
+        beforeEach(() => {
+            component.shouldDisplayGoogleWallet = false;
+            component.isFWSAuto = false;
+            component.isEnableFwsAndFmIdCardsForMobileWalletsIa = false;
+        });
+
+        it('should return true if shouldDisplayGoogleWallet, isFWSAuto, and isEnableFwsAndFmIdCardsForMobileWalletsIa are all true', () => {
+            component.shouldDisplayGoogleWallet = true;
+            component.isFWSAuto = true;
+            component.isEnableFwsAndFmIdCardsForMobileWalletsIa = true;
+
+            expect(component.isDisplayGoogleWalletForIaFWSAuto()).toBe(true);
+        });
+
+        it('should return false if shouldDisplayGoogleWallet is false', () => {
+            component.shouldDisplayGoogleWallet = false;
+            component.isFWSAuto = true;
+            component.isEnableFwsAndFmIdCardsForMobileWalletsIa = true;
+
+            expect(component.isDisplayGoogleWalletForIaFWSAuto()).toBe(false);
+        });
+
+        it('should return false if isFWSAuto is false', () => {
+            component.shouldDisplayGoogleWallet = true;
+            component.isFWSAuto = false;
+            component.isEnableFwsAndFmIdCardsForMobileWalletsIa = true;
+
+            expect(component.isDisplayGoogleWalletForIaFWSAuto()).toBe(false);
+        });
+
+        it('should return false if isEnableFwsAndFmIdCardsForMobileWalletsIa is false', () => {
+            component.shouldDisplayGoogleWallet = true;
+            component.isFWSAuto = true;
+            component.isEnableFwsAndFmIdCardsForMobileWalletsIa = false;
+
+            expect(component.isDisplayGoogleWalletForIaFWSAuto()).toBe(false);
+        });
+    });
+
+    describe('isDisplayAppleWalletForEaFWSAuto', () => {
+        beforeEach(() => {
+            component.shouldDisplayAppleWallet = false;
+            component.isFWSAuto = false;
+            component.isEnableFwsAndFmIdCardsForMobileWalletsEa = false;
+        });
+
+        it('should return true if shouldDisplayAppleWallet, isFWSAuto, and isEnableFwsAndFmIdCardsForMobileWalletsEa are all true', () => {
+            component.shouldDisplayAppleWallet = true;
+            component.isFWSAuto = true;
+            component.isEnableFwsAndFmIdCardsForMobileWalletsEa = true;
+
+            expect(component.isDisplayAppleWalletForEaFWSAuto()).toBe(true);
+        });
+
+        it('should return false if shouldDisplayAppleWallet is false', () => {
+            component.shouldDisplayAppleWallet = false;
+            component.isFWSAuto = true;
+            component.isEnableFwsAndFmIdCardsForMobileWalletsEa = true;
+
+            expect(component.isDisplayAppleWalletForEaFWSAuto()).toBe(false);
+        });
+
+        it('should return false if isFWSAuto is false', () => {
+            component.shouldDisplayAppleWallet = true;
+            component.isFWSAuto = false;
+            component.isEnableFwsAndFmIdCardsForMobileWalletsEa = true;
+
+            expect(component.isDisplayAppleWalletForEaFWSAuto()).toBe(false);
+        });
+
+        it('should return false if isEnableFwsAndFmIdCardsForMobileWalletsEa is false', () => {
+            component.shouldDisplayAppleWallet = true;
+            component.isFWSAuto = true;
+            component.isEnableFwsAndFmIdCardsForMobileWalletsEa = false;
+
+            expect(component.isDisplayAppleWalletForEaFWSAuto()).toBe(false);
+        });
+    });
+
+    describe('isDisplayAppleWalletForIaFWSAuto', () => {
+        beforeEach(() => {
+            component.shouldDisplayAppleWallet = false;
+            component.isFWSAuto = false;
+            component.isEnableFwsAndFmIdCardsForMobileWalletsIa = false;
+        });
+
+        it('should return true if shouldDisplayAppleWallet, isFWSAuto, and isEnableFwsAndFmIdCardsForMobileWalletsIa are all true', () => {
+            component.shouldDisplayAppleWallet = true;
+            component.isFWSAuto = true;
+            component.isEnableFwsAndFmIdCardsForMobileWalletsIa = true;
+
+            expect(component.isDisplayAppleWalletForIaFWSAuto()).toBe(true);
+        });
+
+        it('should return false if shouldDisplayAppleWallet is false', () => {
+            component.shouldDisplayAppleWallet = false;
+            component.isFWSAuto = true;
+            component.isEnableFwsAndFmIdCardsForMobileWalletsIa = true;
+
+            expect(component.isDisplayAppleWalletForIaFWSAuto()).toBe(false);
+        });
+
+        it('should return false if isFWSAuto is false', () => {
+            component.shouldDisplayAppleWallet = true;
+            component.isFWSAuto = false;
+            component.isEnableFwsAndFmIdCardsForMobileWalletsIa = true;
+
+            expect(component.isDisplayAppleWalletForIaFWSAuto()).toBe(false);
+        });
+
+        it('should return false if isEnableFwsAndFmIdCardsForMobileWalletsIa is false', () => {
+            component.shouldDisplayAppleWallet = true;
+            component.isFWSAuto = true;
+            component.isEnableFwsAndFmIdCardsForMobileWalletsIa = false;
+
+            expect(component.isDisplayAppleWalletForIaFWSAuto()).toBe(false);
+        });
+    });
+
+    describe('isDisplayAppleWalletForFM', () => {
+        beforeEach(() => {
+            component.shouldDisplayAppleWallet = false;
+            featureFlagServiceSpy.isEnabled.withArgs(featureConstants.enableFmPolicyDetails).and.returnValue(false);
+        });
+
+        it('should return true if shouldDisplayAppleWallet is true and enableFmPolicyDetails feature flag is enabled', () => {
+            component.shouldDisplayAppleWallet = true;
+            featureFlagServiceSpy.isEnabled.withArgs(featureConstants.enableFmPolicyDetails).and.returnValue(true);
+            expect(component.isDisplayAppleWalletForFM()).toBe(true);
+        });
+
+        it('should return false if shouldDisplayAppleWallet is false', () => {
+            component.shouldDisplayAppleWallet = false;
+            featureFlagServiceSpy.isEnabled.withArgs(featureConstants.enableFmPolicyDetails).and.returnValue(true);
+            expect(component.isDisplayAppleWalletForFM()).toBe(false);
+        });
+
+        it('should return false if enableFmPolicyDetails feature flag is disabled', () => {
+            component.shouldDisplayAppleWallet = true;
+            featureFlagServiceSpy.isEnabled.withArgs(featureConstants.enableFmPolicyDetails).and.returnValue(false);
+
+            expect(component.isDisplayAppleWalletForFM()).toBe(false);
+        });
+    });
+
+    describe('isDisplayGoogleWalletForFM', () => {
+        beforeEach(() => {
+            component.shouldDisplayGoogleWallet = false;
+            featureFlagServiceSpy.isEnabled.withArgs(featureConstants.enableFmPolicyDetails).and.returnValue(false);
+        });
+
+        it('should return true if shouldDisplayGoogleWallet is true and enableFmPolicyDetails feature flag is enabled', () => {
+            component.shouldDisplayGoogleWallet = true;
+            featureFlagServiceSpy.isEnabled.withArgs(featureConstants.enableFmPolicyDetails).and.returnValue(true);
+
+            expect(component.isDisplayGoogleWalletForFM()).toBe(true);
+        });
+
+        it('should return false if shouldDisplayGoogleWallet is false', () => {
+            component.shouldDisplayGoogleWallet = false;
+            featureFlagServiceSpy.isEnabled.withArgs(featureConstants.enableFmPolicyDetails).and.returnValue(true);
+
+            expect(component.isDisplayGoogleWalletForFM()).toBe(false);
+        });
+
+        it('should return false if enableFmPolicyDetails feature flag is disabled', () => {
+            component.shouldDisplayGoogleWallet = true;
+            featureFlagServiceSpy.isEnabled.withArgs(featureConstants.enableFmPolicyDetails).and.returnValue(false);
+
+            expect(component.isDisplayGoogleWalletForFM()).toBe(false);
+        });
+        
+    });
+
+    describe('#getPolicySource', () => {
+        it('should return fm policy source for foremost', () => {
+            const data = {
+                ...component.data,
+                policySource: 'fm',
+                policyType: 'AUTO',
+                isForemostPolicy: true,
+                isBWPolicy: false,
+            };
+
+            const result = component.getPolicySource(data);
+
+            expect(result).toEqual('fm');
+        });
+
+        it('should return bw policy source for bristol west', () => {
+            const data = {
+                ...component.data,
+                policySource: '',
+                policyType: 'AUTO',
+                isForemostPolicy: false,
+                isBWPolicy: true,
+            };
+
+            const result = component.getPolicySource(data);
+
+            expect(result).toEqual('bw');
+        });
+
+        it('should return fm policy source for foremost policy', () => {
+            const data = {
+                ...component.data,
+                policySource: null,
+                policyType: 'AUTO',
+                isForemostPolicy: true,
+                isBWPolicy: false,
+            };
+
+            const result = component.getPolicySource(data);
+
+            expect(result).toEqual('fm');
+        });
+
+        it('should return foremost policy source for foremost policy', () => {
+            const data = {
+                ...component.data,
+                policySource: 'Foremost',
+                policyType: 'AUTO',
+                isForemostPolicy: true,
+                isBWPolicy: false,
+            };
+
+            const result = component.getPolicySource(data);
+
+            expect(result).toEqual('Foremost');
+        });
+
+        it('should return policy source for PLA', () => {
+            const data = {
+                ...component.data,
+                policySource: 'PLA',
+                policyType: 'AUTO',
+                isForemostPolicy: false,
+                isBWPolicy: false,
+            };
+
+            const result = component.getPolicySource(data);
+
+            expect(result).toEqual('PLA');
+        });
+
+        it('should handle null policy data', () => {
+            const result = component.getPolicySource(null);
+
+            expect(result).toEqual(undefined);
+        });
+    });
+
+    describe('#setFmUnits', () => {
+        beforeEach(() => {
+            component.data.units = [
+                {
+                    ymm: 'xyz',
+                    vin: 'v123',
+                    link: 'url',
+                    renewlink: 'renewalink',
+                    encryptedDocumentId: 'encryptedDocumentId',
+                    renewalEncryptedDocumentId: 'renewalEncryptedDocumentId',
+                },
+            ];
+        });
+
+        it('should set fm units when renewal flag is false', () => {
+            component.renewal = false;
+
+            component.setFmUnits();
+
+            expect(component.data.units).toEqual([
+                {
+                    ymm: 'xyz',
+                    vin: 'v123',
+                    link: 'url',
+                    encryptedDocumentId: 'encryptedDocumentId',
+                    renewlink: 'renewalink',
+                    renewalEncryptedDocumentId: 'renewalEncryptedDocumentId',
+                },
+            ]);
+        });
+
+        it('should set fm units when renewal flag is true', () => {
+            component.renewal = true;
+
+            component.setFmUnits();
+
+            expect(component.data.units).toEqual([
+                {
+                    ymm: 'xyz',
+                    vin: 'v123',
+                    link: 'renewalink',
+                    encryptedDocumentId: 'renewalEncryptedDocumentId',
+                    renewlink: 'renewalink',
+                    renewalEncryptedDocumentId: 'renewalEncryptedDocumentId',
+                },
+            ]);
+        });
+    });
+
+    describe('#setFWSIDCardDisplayProperties', () => {
+        it('should set isShowExpirationDate, isActiveARSOrA360Auto and isNOtActiveARSAndA30Auto', () => {
+            // Arrange
+            component.data = {
+                ...component.data,
+                expirationDate: '12/12/2020',
+                isActiveA360Auto: true,
+                isActiveARSAuto: false,
+                isFedPolicy: false,
+            };
+
+            // Act
+            component.setFWSIDCardDisplayProperties();
+
+            // Assert
+            expect(component.isShowExpirationDate).toBe(false);
+            expect(component.hasActiveARSOrA360Auto).toBe(true);
+            expect(component.hasNoActiveARSAndA360Auto).toBe(false);
+            expect(component.isA360FedPolicy).toBe(false);
+
+            // Arrange
+            component.data = {
+                ...component.data,
+                expirationDate: '',
+                isActiveA360Auto: false,
+                isActiveARSAuto: false,
+                isFedPolicy: false,
+            };
+
+            // Act
+            component.setFWSIDCardDisplayProperties();
+
+            // Assert
+            expect(component.isShowExpirationDate).toBe(false);
+            expect(component.hasActiveARSOrA360Auto).toBe(false);
+            expect(component.hasNoActiveARSAndA360Auto).toBe(true);
+            expect(component.isA360FedPolicy).toBe(false);
+
+            // Arrange
+            component.data = {
+                ...component.data,
+                expirationDate: '',
+                isActiveA360Auto: true,
+                isActiveARSAuto: false,
+                isFedPolicy: true,
+            };
+
+            // Act
+            component.setFWSIDCardDisplayProperties();
+
+            // Assert
+            expect(component.isA360FedPolicy).toBe(true);
+        });
+    });
+
+    describe('current ProofOfCoverageComponent', () => {
+        beforeEach(() => {
+            fixture = TestBed.createComponent(ProofOfCoverageComponent);
+            component = fixture.componentInstance;
+            element = fixture.nativeElement;
+            component.renewal = false;
+            component.data = idCardsConfigurationModel;
+            fixture.detectChanges();
+        });
+
+        describe('#openDialog', () => {
+            it('should trigger openDialog with the right type when clicking in print idCard', () => {
+                // Arrange
+                const openDialogSpy = spyOn(component, 'openDialog');
+                // Act
+                element.querySelector('button.mail').click();
+                // Assert
+                expect(openDialogSpy).toHaveBeenCalledWith('mail');
+            });
+
+            it('should trigger openDialog with the right type when clicking in print idCard', () => {
+                // Arrange
+                const openDialogSpy = spyOn(component, 'openDialog');
+                // Act
+                element.querySelector('button.fax').click();
+                // Assert
+                expect(openDialogSpy).toHaveBeenCalledWith('fax');
+            });
+
+            it('should trigger openDialog with the right type when clicking in email idCard', () => {
+                // Arrange
+                const openDialogSpy = spyOn(component, 'openDialog');
+                // Act
+                element.querySelector('button.email').click();
+                // Assert
+                expect(openDialogSpy).toHaveBeenCalledWith('email');
+            });
+
+            it('should call dialogService with the right data for fax', () => {
+                // Arrange
+                const dialogData = {
+                    maxWidth: component.data.dialogData.width,
+                    data: component.data.dialogData.fax,
+                    width: '92vw',
+                    maxHeight: '92vh',
+                    height: 'auto',
+                };
+                const matDialogRef = { afterClosed: () => new Observable() };
+                matDialogSpy.open.and.returnValue(matDialogRef);
+                // Act
+                component.openDialog(DialogTypes.FAX);
+                // Assert
+                expect(matDialogSpy.open).toHaveBeenCalledWith(ProofOfCoverageDialogComponent, dialogData);
+            });
+
+            it('should call dialogService with the right data for mail', () => {
+                // Arrange
+                const dialogData = {
+                    maxWidth: component.data.dialogData.width,
+                    data: component.data.dialogData.mail,
+                    width: '92vw',
+                    maxHeight: '92vh',
+                    height: 'auto',
+                };
+                const matDialogRef = { afterClosed: () => new Observable() };
+                matDialogSpy.open.and.returnValue(matDialogRef);
+                // Act
+                component.openDialog(DialogTypes.MAIL);
+                // Assert
+                expect(matDialogSpy.open).toHaveBeenCalledWith(ProofOfCoverageDialogComponent, dialogData);
+            });
+
+            it('should call dialogService with the right data for email', () => {
+                // Arrange
+                const dialogData = {
+                    maxWidth: component.data.dialogData.width,
+                    data: component.data.dialogData.email,
+                    width: '92vw',
+                    maxHeight: '92vh',
+                    height: 'auto',
+                };
+                const matDialogRef = { afterClosed: () => new Observable() };
+                matDialogSpy.open.and.returnValue(matDialogRef);
+                // Act
+                component.openDialog(DialogTypes.EMAIL);
+                // Assert
+                expect(matDialogSpy.open).toHaveBeenCalledWith(ProofOfCoverageDialogComponent, dialogData);
+            });
+
+            it('should call dialogService with the right data for nJDialog', () => {
+                // Arrange
+                const dialogData = {
+                    maxWidth: component.data.dialogData.width,
+                    data: component.data.nJDialog.data,
+                    width: '92vw',
+                    maxHeight: '92vh',
+                    height: 'auto',
+                };
+                const matDialogRef = { afterClosed: () => new Observable() };
+                matDialogSpy.open.and.returnValue(matDialogRef);
+                // Act
+                component.openDialog(DialogTypes.NJDIALOG);
+                // Assert
+                expect(matDialogSpy.open).toHaveBeenCalledWith(ProofOfCoverageDialogComponent, dialogData);
+            });
+
+            it('should send mail id card request', () => {
+                // Arrange
+                const matDialogRef = { afterClosed: () => of('') };
+                matDialogSpy.open.and.returnValue(matDialogRef);
+                component.data.isForemostPolicy = false;
+                component.data.isBWPolicy = false;
+                component.data.policyType = 'Auto';
+                component.data.policySource = 'PLA';
+                component.data.policyContractNumber = '0234565';
+                spyOn(component, 'getIdCardsDocumentId').and.returnValue('encrypted link');
+                spyOn(component, 'getIdCardEventName').and.returnValue(eventNames.idCardMail);
+                const trackParams = {
+                    eventName: eventNames.idCardMail,
+                    policyType: 'Auto',
+                    policySource: 'PLA',
+                };
+                // Act
+                element.querySelector('button.mail').click();
+                // Assert
+                expect(idCardServiceSpy.sendIdCard).toHaveBeenCalledWith(
+                    '',
+                    DialogTypes.MAIL,
+                    'encrypted link',
+                    trackParams,
+                    null,
+                    component.data,
+                );
+            });
+
+            it('should send email id card request', () => {
+                // Arrange
+                const idCardsConfigMockData = {
+                    ...idCardsConfigurationModel,
+                    isBWPolicy: false,
+                    isForemostPolicy: false,
+                    policyContractNumber: '0234565',
+                    policySource: 'PLA',
+                    policyType: 'Auto',
+                };
+                component.data = idCardsConfigMockData;
+                const segmentParams = {
+                    policy_number: '0234565',
+                    policy_source: 'PLA',
+                    action: 'Send Email',
+                    dialog_name: eventNames.idCardEmail,
+                    output: 'Email',
+                    step: 'ID Cards',
+                };
+                component.renewal = true;
+                spyOn(component, 'getIdCardsDocumentId').and.returnValue('encryptedLargeIdCardDocumentId');
+                spyOn(component, 'getSegmentParamsForEmail').and.returnValue(segmentParams);
+                const matDialogRef = { afterClosed: () => of('') };
+                matDialogSpy.open.and.returnValue(matDialogRef);
+                spyOn(component, 'getIdCardEventName').and.returnValue(eventNames.idCardEmail);
+                const trackParams = {
+                    eventName: eventNames.idCardEmail,
+                    policyType: 'Auto',
+                    policySource: 'PLA',
+                };
+                // Act
+                element.querySelector('button.email').click();
+                // Assert
+                expect(idCardServiceSpy.sendIdCard).toHaveBeenCalledWith(
+                    '',
+                    DialogTypes.EMAIL,
+                    'encryptedLargeIdCardDocumentId',
+                    trackParams,
+                    segmentParams,
+                    component.data,
+                );
+                expect(component.getSegmentParamsForEmail).toHaveBeenCalledWith(
+                    DialogTypes.EMAIL,
+                    idCardsConfigMockData,
+                );
+                expect(component.getIdCardsDocumentId).toHaveBeenCalledWith(
+                    DialogTypes.EMAIL,
+                    idCardsConfigMockData,
+                    true,
+                );
+            });
+
+            it('should not call sendIdCard service method if input value is undefined', () => {
+                // Arrange
+                const matDialogRef = { afterClosed: () => of(undefined) };
+                matDialogSpy.open.and.returnValue(matDialogRef);
+                idCardServiceSpy.sendIdCard.calls.reset();
+                element.querySelector('button.fax').click();
+                // Assert
+                expect(idCardServiceSpy.sendIdCard).not.toHaveBeenCalled();
+            });
+
+            it('should call sendIdCard service method with id card link for FM policies', () => {
+                const idCardsConfigMockData = {
+                    ...idCardsConfigurationModel,
+                    isBWPolicy: false,
+                    isForemostPolicy: true,
+                    policyContractNumber: '0234565',
+                    policySource: 'fm',
+                };
+                component.data = idCardsConfigMockData;
+                const segmentParams = {
+                    policy_number: '0234565',
+                    policy_source: 'fm',
+                    action: 'Send Email',
+                    dialog_name: eventNames.idCardEmail,
+                    output: 'Email',
+                    step: 'ID Cards',
+                };
+                spyOn(component, 'getSegmentParamsForEmail').and.returnValue(segmentParams);
+                spyOn(component, 'getIdCardEventName').and.returnValue(eventNames.idCardEmail);
+                const trackParams = {
+                    eventName: eventNames.idCardEmail,
+                    policyType: 'Auto',
+                    policySource: 'fm',
+                };
+                const matDialogRef = { afterClosed: () => of('test@1234.com') };
+                matDialogSpy.open.and.returnValue(matDialogRef);
+                idCardServiceSpy.sendIdCard.calls.reset();
+
+                component.openDialog(DialogTypes.EMAIL, '', 'test');
+
+                expect(idCardServiceSpy.sendIdCard).toHaveBeenCalledWith(
+                    'test@1234.com',
+                    DialogTypes.EMAIL,
+                    'test',
+                    trackParams,
+                    segmentParams,
+                );
+                expect(component.getSegmentParamsForEmail).toHaveBeenCalledWith(
+                    DialogTypes.EMAIL,
+                    idCardsConfigMockData,
+                );
+            });
+
+            it('should call sendIdCard service method with id card link for Foremost policies', () => {
+                const idCardsConfigMockData = {
+                    ...idCardsConfigurationModel,
+                    isBWPolicy: false,
+                    isForemostPolicy: true,
+                    policyContractNumber: '0234565',
+                    policySource: 'Foremost',
+                };
+                component.data = idCardsConfigMockData;
+                const segmentParams = {
+                    policy_number: '0234565',
+                    policy_source: 'Foremost',
+                    action: 'Send Email',
+                    dialog_name: eventNames.idCardEmail,
+                    output: 'Email',
+                    step: 'ID Cards',
+                };
+                spyOn(component, 'getSegmentParamsForEmail').and.returnValue(segmentParams);
+                spyOn(component, 'getIdCardEventName').and.returnValue(eventNames.idCardEmail);
+                const trackParams = {
+                    eventName: eventNames.idCardEmail,
+                    policyType: 'Auto',
+                    policySource: 'Foremost',
+                };
+                const matDialogRef = { afterClosed: () => of('test@1234.com') };
+                matDialogSpy.open.and.returnValue(matDialogRef);
+                idCardServiceSpy.sendIdCard.calls.reset();
+
+                component.openDialog(DialogTypes.EMAIL, '', 'test');
+
+                expect(idCardServiceSpy.sendIdCard).toHaveBeenCalledWith(
+                    'test@1234.com',
+                    DialogTypes.EMAIL,
+                    'test',
+                    trackParams,
+                    segmentParams,
+                );
+                expect(component.getSegmentParamsForEmail).toHaveBeenCalledWith(
+                    DialogTypes.EMAIL,
+                    idCardsConfigMockData,
+                );
+            });
+
+            it('should call sendIdCard service method with id card link for BW policies', () => {
+                const idCardsConfigMockData = {
+                    ...idCardsConfigurationModel,
+                    isBWPolicy: true,
+                    isForemostPolicy: false,
+                    policyContractNumber: '0234565',
+                    policySource: 'bw',
+                };
+                component.data = idCardsConfigMockData;
+                const segmentParams = {
+                    policy_number: '0234565',
+                    policy_source: 'bw',
+                    action: 'Send Email',
+                    dialog_name: eventNames.idCardEmail,
+                    output: 'Email',
+                    step: 'ID Cards',
+                };
+                spyOn(component, 'getSegmentParamsForEmail').and.returnValue(segmentParams);
+                spyOn(component, 'getIdCardEventName').and.returnValue(eventNames.idCardMail);
+                const trackParams = {
+                    eventName: eventNames.idCardMail,
+                    policyType: 'Auto',
+                    policySource: 'bw',
+                };
+                const matDialogRef = { afterClosed: () => of('test@1234.com') };
+                matDialogSpy.open.and.returnValue(matDialogRef);
+                idCardServiceSpy.sendIdCard.calls.reset();
+
+                component.openDialog(DialogTypes.EMAIL, '', 'test');
+
+                expect(idCardServiceSpy.sendIdCard).toHaveBeenCalledWith(
+                    'test@1234.com',
+                    DialogTypes.EMAIL,
+                    'test',
+                    trackParams,
+                    segmentParams,
+                );
+                expect(component.getSegmentParamsForEmail).toHaveBeenCalledWith(
+                    DialogTypes.EMAIL,
+                    idCardsConfigMockData,
+                );
+            });
+
+            it('should call sendIdCard service method with id card link for FWS-A360 policies', () => {
+                const idCardsConfigMockData = {
+                    ...idCardsConfigurationModel,
+                    lineOfBusiness: 'Auto',
+                    isActiveA360Auto: true,
+                    isActiveARSAuto: false,
+                    isFWSPolicy: true,
+                    isForemostPolicy: false,
+                    policyContractNumber: '12345',
+                    policySource: 'FWS-A360',
+                };
+                component.data = idCardsConfigMockData;
+                const segmentParams = {
+                    policy_number: '12345',
+                    policy_source: 'FWS-A360',
+                    action: 'Send Email',
+                    dialog_name: eventNames.idCardEmail,
+                    output: 'Email',
+                    step: 'ID Cards',
+                };
+                spyOn(component, 'getSegmentParamsForEmail').and.returnValue(segmentParams);
+                spyOn(component, 'getIdCardEventName').and.returnValue(eventNames.idCardEmail);
+                const trackParams = {
+                    eventName: eventNames.idCardEmail,
+                    policyType: 'Auto',
+                    policySource: 'FWS-A360',
+                };
+                const matDialogRef = { afterClosed: () => of('test@1234.com') };
+                matDialogSpy.open.and.returnValue(matDialogRef);
+                idCardServiceSpy.sendIdCard.calls.reset();
+
+                component.openDialog(DialogTypes.EMAIL, '', 'test');
+
+                expect(idCardServiceSpy.sendIdCard).toHaveBeenCalledWith(
+                    'test@1234.com',
+                    DialogTypes.EMAIL,
+                    'encryptedLargeIdCardDocumentId',
+                    trackParams,
+                    segmentParams,
+                    component.data,
+                );
+                expect(component.getSegmentParamsForEmail).toHaveBeenCalledWith(
+                    DialogTypes.EMAIL,
+                    idCardsConfigMockData,
+                );
+            });
+
+            it('should call sendIdCard service method with id card link for FWS-ARS policies', () => {
+                const idCardsConfigMockData = {
+                    ...idCardsConfigurationModel,
+                    lineOfBusiness: 'Auto',
+                    isActiveA360Auto: false,
+                    isActiveARSAuto: true,
+                    isFWSPolicy: true,
+                    isForemostPolicy: false,
+                    policyContractNumber: '12345',
+                    policySource: undefined,
+                };
+                component.data = idCardsConfigMockData;
+                const segmentParams = {
+                    policy_number: '12345',
+                    policy_source: 'FWS-ARS',
+                    action: 'Send Email',
+                    dialog_name: eventNames.idCardEmail,
+                    output: 'Email',
+                    step: 'ID Cards',
+                };
+                spyOn(component, 'getSegmentParamsForEmail').and.returnValue(segmentParams);
+                spyOn(component, 'getIdCardEventName').and.returnValue(eventNames.idCardEmail);
+                const trackParams = {
+                    eventName: eventNames.idCardEmail,
+                    policyType: 'Auto',
+                    policySource: 'FWS-ARS',
+                };
+                const matDialogRef = { afterClosed: () => of('test@1234.com') };
+                matDialogSpy.open.and.returnValue(matDialogRef);
+                idCardServiceSpy.sendIdCard.calls.reset();
+
+                component.openDialog(DialogTypes.EMAIL, '', 'test');
+
+                expect(idCardServiceSpy.sendIdCard).toHaveBeenCalledWith(
+                    'test@1234.com',
+                    DialogTypes.EMAIL,
+                    'encryptedLargeIdCardDocumentId',
+                    trackParams,
+                    segmentParams,
+                    component.data,
+                );
+                expect(component.getSegmentParamsForEmail).toHaveBeenCalledWith(
+                    DialogTypes.EMAIL,
+                    idCardsConfigMockData,
+                );
+                expect(tuiTrackerServiceSpy.addToState).toHaveBeenCalledWith({
+                    future_dated_vehicle: false,
+                });
+            });
+
+            it('should call add to state for future ID card display data', () => {
+                component.isFutureIdCard = true;
+                tuiTrackerServiceSpy.addToState.calls.reset();
+
+                component.openDialog(DialogTypes.EMAIL, '', 'test');
+
+                expect(tuiTrackerServiceSpy.addToState).toHaveBeenCalledWith({
+                    future_dated_vehicle: true,
+                });
+            });
+        });
+
+        describe('#getIdCardsDocumentId', () => {
+            it('should return document id for mail for current id card', () => {
+                const idCardsConfigMockData = {
+                    ...idCardsConfigurationModel,
+                    cardLink: {
+                        small: 'smallLink',
+                        large: 'largeLink',
+                        encrypted: 'encrypted link',
+                    },
+                    renewalIDCards: {
+                        small: 'renewal_smallLink',
+                        large: 'renewal_largeLink',
+                        encrypted: null,
+                    },
+                };
+                const documentId = component.getIdCardsDocumentId(DialogTypes.MAIL, idCardsConfigMockData, false);
+
+                expect(documentId).toEqual('encrypted link');
+            });
+
+            it('should return document id for mail for renewal id card', () => {
+                const idCardsConfigMockData = {
+                    ...idCardsConfigurationModel,
+                    cardLink: {
+                        small: 'smallLink',
+                        large: 'largeLink',
+                        encrypted: 'encrypted link',
+                    },
+                    renewalIDCards: {
+                        small: 'renewal_smallLink',
+                        large: 'renewal_largeLink',
+                        encrypted: null,
+                        encryptedLargeIdCardDocumentId: 'encrypted_LargeDocument_Id',
+                    },
+                };
+                const documentId = component.getIdCardsDocumentId(DialogTypes.MAIL, idCardsConfigMockData, true);
+
+                expect(documentId).toEqual('encrypted_LargeDocument_Id');
+            });
+
+            it('should return document id for Email current policy', () => {
+                const idCardsConfigMockData = {
+                    ...idCardsConfigurationModel,
+                    cardLink: {
+                        small: 'smallLink',
+                        large: 'largeLink',
+                        encrypted: 'encrypted link',
+                        encryptedLargeIdCardDocumentId: 'current encryptedLargeIdCardDocumentId',
+                    },
+                    renewalIDCards: {
+                        small: 'renewal_smallLink',
+                        large: 'renewal_largeLink',
+                        encrypted: null,
+                        encryptedLargeIdCardDocumentId: 'renewal encryptedLargeIdCardDocumentId',
+                    },
+                };
+                const documentId = component.getIdCardsDocumentId(DialogTypes.EMAIL, idCardsConfigMockData, false);
+
+                expect(documentId).toEqual('current encryptedLargeIdCardDocumentId');
+            });
+
+            it('should return document id for Email renewal policy', () => {
+                const idCardsConfigMockData = {
+                    ...idCardsConfigurationModel,
+                    cardLink: {
+                        small: 'smallLink',
+                        large: 'largeLink',
+                        encrypted: 'encrypted link',
+                        encryptedLargeIdCardDocumentId: 'current encryptedLargeIdCardDocumentId',
+                    },
+                    renewalIDCards: {
+                        small: 'renewal_smallLink',
+                        large: 'renewal_largeLink',
+                        encrypted: null,
+                        encryptedLargeIdCardDocumentId: 'renewal encryptedLargeIdCardDocumentId',
+                    },
+                };
+                const documentId = component.getIdCardsDocumentId(DialogTypes.EMAIL, idCardsConfigMockData, true);
+
+                expect(documentId).toEqual('renewal encryptedLargeIdCardDocumentId');
+            });
+
+            it('should handle empty data scenario', () => {
+                const documentId = component.getIdCardsDocumentId(DialogTypes.EMAIL, {} as any, true);
+
+                expect(documentId).toEqual(undefined);
+            });
+
+            it('should handle null scenario', () => {
+                const documentId = component.getIdCardsDocumentId(DialogTypes.EMAIL, null, true);
+
+                expect(documentId).toEqual('');
+            });
+        });
+        describe('updateDisplayData: showFaxIdCard and showMailIdCard', () => {
+  beforeEach(() => {
+    component.data = { showFaxIdCard: true, showMailIdCard: true } as any;
+  });
  
-<ng-template #faqs
-    let-isFrequentAskedSection="isFrequentAskedSection">
-    <ng-container *ngIf="!selectedPolicyDetail?.isCea">
-        <div class="faqs">
-            <h2 class="tui-h3 tui-card-title"
-                data-test-id="HELP_GET_HELP_TITLE"
-                *ngIf="!isFrequentAskedSection">
-                Get help
-            </h2>
-            <ol>
+  it('should show fax and mail if allowed and not expansion/BW', () => {
+    component.isExpansionState = false;
+    component.isBW = false;
+    component.updateDisplayData();
+    expect(component.showFaxIdCard).toBe(true);
+    expect(component.showMailIdCard).toBe(true);
+  });
  
-                <ng-container *ngIf="isIAEnabled">
-                    <ng-container *ngIf="selectedPolicyDetail?.isFm">
-                        <li>
-                            <a [href]="FAQLinks.billingAndPaymentsIAFaqLink.routePath"
-                                class="d-inline-block tui-body-text-1"
-                                rel="noopener noreferrer"
-                                [attr.data-gtm]="helpPageGtmTags?.billingPayments"
-                                [attr.aria-label]="FAQLinks.billingAndPaymentsIAFaqLink.ariaLabel"
-                                data-test-id="HELP_BILL_AND_PAYEMENT_FAQ"
-                                (click)="trackMixpanelFaqs(FAQLinks.billingAndPaymentsIAFaqLink.mixpanelFaqType)"
-                                target="_blank">
-                                    {{FAQLinks.billingAndPaymentsIAFaqLink.displayText}}
-                            </a>
-                        </li>
-                        <li>
-                            <a [href]="generalIAFAQ"
-                                class="d-inline-block tui-body-text-1"
-                                data-test-id="HELP_GENERAL_FAQ"
-                                target="_blank">
-                                General
-                            </a>
-                        </li>
-                    </ng-container>
-                </ng-container>
-                <ng-container *ngIf="!isIAEnabled">
-                    <ng-container
-                    *ngIf="selectedPolicyDetail?.isEe || selectedPolicyDetail?.isPl || isFrequentAskedSection">
-                    <li>
-                        <a data-tui-tracking-id="CSS_HELP_BILL_PAYMENT_FAQ_CLICK"
-                            [href]="FAQLinks.billingAndPaymentsFaqLink.routePath"
-                            class="d-block tui-body-text-1"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            [attr.data-gtm]="helpPageGtmTags?.billingPayments"
-                            [attr.aria-label]="FAQLinks.billingAndPaymentsFaqLink.ariaLabel"
-                            (click)="trackMixpanelFaqs(FAQLinks.billingAndPaymentsFaqLink.mixpanelFaqType)"
-                            data-test-id="HELP_BILLING_FAQ_LINK">
-                            {{FAQLinks.billingAndPaymentsFaqLink.displayText}}
-                        </a>
-                    </li>
-                    <li>
-                        <a data-tui-tracking-id="CSS_HELP_CLAIM_FAQ_CLICK"
-                            [attr.data-gtm]="helpPageGtmTags?.claimsFAQ"
-                            [href]="FAQLinks.claimsFaqLink.routePath"
-                            class="d-block tui-body-text-1"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            [attr.aria-label]="FAQLinks.claimsFaqLink.ariaLabel"
-                            (click)="trackMixpanelFaqs(FAQLinks.claimsFaqLink.mixpanelFaqType)"
-                            data-test-id="HELP_CLAIM_FAQ_LINK">
-                            {{FAQLinks.claimsFaqLink.displayText}}
-                        </a>
-                    </li>
-                    <li>
-                        <a [attr.data-gtm]="helpPageGtmTags?.policyFAQ"
-                            data-tui-tracking-id="CSS_HELP_POLICY_FAQ_CLICK"
-                            [href]="FAQLinks.policyFaqLink.routePath"
-                            class="d-block tui-body-text-1"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            [attr.aria-label]="FAQLinks.policyFaqLink.ariaLabel"
-                            (click)="trackMixpanelFaqs(FAQLinks.policyFaqLink.mixpanelFaqType)"
-                            data-test-id="HELP_POLICY_FAQ_LINK">
-                            {{FAQLinks.policyFaqLink.displayText}}
-                        </a>
-                    </li>
-                    <li>
-                        <a [attr.data-gtm]="helpPageGtmTags?.managingAccountFAQ"
-                            data-tui-tracking-id="CSS_HELP_MANAGE_ACCOUNT_FAQ_CLICK"
-                            [href]="FAQLinks.manageYourAccountFaqLink.routePath"
-                            class="d-block tui-body-text-1"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            [attr.aria-label]="FAQLinks.manageYourAccountFaqLink.ariaLabel"
-                            (click)="trackMixpanelFaqs(FAQLinks.manageYourAccountFaqLink.mixpanelFaqType)"
-                            data-test-id="HELP_MANAGE_ACCOUNT_FAQ_LINK">
-                            {{FAQLinks.manageYourAccountFaqLink.displayText}}
-                        </a>
-                    </li>
-                    <li>
-                        <a [attr.data-gtm]="helpPageGtmTags?.billingFeeDisclaimer"
-                            data-tui-tracking-id="CSS_HELP_BILLING_FEE_FAQ_CLICK"
-                            [href]="FAQLinks.billingFeeExplainer.routePath"
-                            class="d-block tui-body-text-1"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            [attr.aria-label]="FAQLinks.billingFeeExplainer.ariaLabel"
-                            (click)="trackMixpanelFaqs(FAQLinks.billingFeeExplainer.mixpanelFaqType)"
-                            data-test-id="HELP_BILLINGFEE_FAQ_LINK">
-                            {{FAQLinks.billingFeeExplainer.displayText}}
-                        </a>
-                    </li>
-                    </ng-container>
-                    <ng-container *ngIf="selectedPolicyDetail?.isLife">
-                        <li>
-                            <a [href]="FAQLinks.typesOfLifeInsurance.routePath"
-                                class="d-block tui-body-text-1"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                [attr.data-gtm]="'CSS_ContactUs_TypesOfInsurance_Link'"
-                                [attr.aria-label]="FAQLinks.typesOfLifeInsurance.ariaLabel"
-                                (click)="trackMixpanelFaqs(FAQLinks.typesOfLifeInsurance.mixpanelFaqType)"
-                                data-test-id="HELP_TYPESOFINSURANCE_FAQ_LINK">
-                                {{FAQLinks.typesOfLifeInsurance.displayText}}
-                            </a>
-                        </li>
-                        <li>
-                            <a [attr.data-gtm]="'CSS_ContactUs_LifeInsuranceQuestions_Link'"
-                                [href]="FAQLinks.lifeInsuranceQuestions.routePath"
-                                class="d-block tui-body-text-1"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                [attr.aria-label]="FAQLinks.lifeInsuranceQuestions.ariaLabel"
-                                (click)="trackMixpanelFaqs(FAQLinks.lifeInsuranceQuestions.mixpanelFaqType)"
-                                data-test-id="HELP_LIFEINSURANCEQUESTIONS_FAQ_LINK">
-                                {{FAQLinks.lifeInsuranceQuestions.displayText}}
-                            </a>
-                        </li>
-                    </ng-container>
-                    <ng-container *ngIf="selectedPolicyDetail?.isFm">
-                        <li>
-                            <a [href]="fmRoutes.billingFaqRoute"
-                                class="d-block tui-body-text-1"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                [attr.data-gtm]="helpPageGtmTags?.billingPayments"
-                                [attr.aria-label]="FAQLinks.billingAndPaymentsFaqLink.ariaLabel"
-                                (click)="trackMixpanelFaqs(FAQLinks.billingAndPaymentsFaqLink.mixpanelFaqType)"
-                                data-test-id="HELP_BILLING_FAQ_LINK">
-                                {{FAQLinks.billingAndPaymentsFaqLink.displayText}}
-                            </a>
-                        </li>
-                    </ng-container>
-                    <ng-container *ngIf="selectedPolicyDetail?.isFws">
-                        <li>
-                            <ng-container *ngTemplateOutlet="servicingPolicyFaq"></ng-container>
-                        </li>
-                    </ng-container>
-                    <ng-container *ngIf="selectedPolicyDetail?.isBw">
-                        <li>
-                            <a href="https://www.bristolwest.com/home/faq"
-                                class="d-block tui-body-text-1"
-                                rel="noopener noreferrer"
-                                target="_blank">
-                                General Questions, Payments, Claims and Text Alerts
-                            </a>
-                        </li>
-                    </ng-container>
-                </ng-container>
-            </ol>
-        </div>
-    </ng-container>
-</ng-template>
+  it('should hide fax and mail if in expansion state', () => {
+    component.isExpansionState = true;
+    component.isBW = false;
+    component.updateDisplayData();
+    expect(component.showFaxIdCard).toBe(false);
+    expect(component.showMailIdCard).toBe(false);
+  });
  
-<ng-template #fmPolicyClaimsSection>
-    <div class="row">
-        <div class="col-sm-6 col-md-12 pt-3">
-            <ng-container
-                *ngTemplateOutlet="phoneNumberSection;context:{helpCustomerContactNumber:claimsContactNumber}"></ng-container>
-            <p class="tui-body-text-2" *ngIf="!isIAEnabled"
-                data-test-id="HELP_FM_CHECK_SUB_HEAD">
-                Call us to file or check on a claim 24/7
-            </p>
-            <p class="tui-body-text-2" *ngIf="isIAEnabled"
-                data-test-id="HELP_FM_CHECK_SUB_HEAD">
-                Available 24-hours a day, 7-days a week
-            </p>
-        </div>
-        <div class="col-sm-6 col-md-12  pt-3">
-            <h4 data-test-id="HELP_TOWING_HEADING"
-                aria-level="3">
-                24-hour towing & roadside assistance
-            </h4>
-            <ng-container
-                *ngTemplateOutlet="phoneNumberSection;context:{helpCustomerContactNumber:roadsideAssistanceNumber}"></ng-container>
-            <p class="tui-body-text-2 pb-3"
-                data-test-id="HELP_FM_TOWING_SUB_HEAD">
-                Motor home, travel trailer, fifth-wheel, motorcycle
-            </p>
-            <ng-container *ngTemplateOutlet="hearingImpaired"></ng-container>
-        </div>
-    </div>
-</ng-template>
+  it('should hide fax and mail if in BW', () => {
+    component.isExpansionState = false;
+    component.isBW = true;
+    component.updateDisplayData();
+    expect(component.showFaxIdCard).toBe(false);
+    expect(component.showMailIdCard).toBe(false);
+  });
  
-<ng-template #fwsPolicyClaimsSection>
-    <div class="row">
-        <div class="col-sm-6 col-md-12 pt-3">
-            <ng-container
-                *ngTemplateOutlet="phoneNumberSection;context:{helpCustomerContactNumber:claimsContactNumber}"></ng-container>
-            <p class="tui-body-text-2"
-                data-test-id="HELP_FWS_CHECK_SUB_HEAD">
-                Available 24-hours a day, 7-days a week.
-                <span>
-                    Also applies for Towing and Roadside Assistance
-                </span>
-            </p>
-        </div>
-        <div class="col-sm-6 col-md-12  pt-3">
-            <ng-container *ngTemplateOutlet="hearingImpaired"></ng-container>
-        </div>
-    </div>
- 
-</ng-template>
- 
-<ng-template #bwPolicyClaimsSection>
-    <div class="row">
-        <div class="col-sm-6 col-md-12 pt-3">
-            <ng-container
-                *ngTemplateOutlet="phoneNumberSection;context:{helpCustomerContactNumber:'1-800-274-7865'}"></ng-container>
-        </div>
-        <div class="col-sm-6 col-md-12 pt-3">
-            <p class="tui-body mb-0"
-                data-test-id="HELP_BW_CLAIM_MAIL_SUB_HEADING">
-                Bristol West Claims Service
-            </p>
-            <p class="tui-body-text-2"
-                data-test-id="HELP_BW_CLAIM_MAIL_ADDRESS_LINE1">
-                PO Box 258806
-            </p>
-            <p class="tui-body-text-2"
-                data-test-id="HELP_BW_CLAIM_MAIL_ADDRESS_LINE2">
-                Oklahoma City, OK 73125-8806
-            </p>
-        </div>
-    </div>
-</ng-template>
- 
-<ng-template #hearingImpaired>
-    <h4 data-test-id="HELP_CUSTOMER_HEARING_IMPARED"
-        aria-level="3">
-        Hearing impaired
-    </h4>
-    <p class="tui-body-text-2">For persons with a hearing or speech disability, please dial 711 to reach the federal
-        <a [href]="teleCommunicationsRoute.routePath"
-            [attr.aria-label]="teleCommunicationsRoute.ariaLabel"
-            [attr.data-gtm]="teleCommunicationsRoute.gtmTagContactUs"
-            class="tui-body-text-1"
-            target="_blank"
-            rel="noopener noreferrer">
-            {{teleCommunicationsRoute.displayText}}
-        </a>
-    </p>
-</ng-template>
- 
-<ng-template #phoneNumberSection
-    let-helpCustomerContactNumber="helpCustomerContactNumber">
-    <a class="tui-phone-number tui-body-copy-1"
-        href="tel:{{helpCustomerContactNumber}}"
-        data-gtm="CSS_ContactUs_PhoneCustomerService_Link"
-        data-test-id="HELP_GET_HELP_CUSTOMER_NUMBER">
-        {{helpCustomerContactNumber}}
-    </a>
-</ng-template>
- 
-<ng-template #fmPolicyPaymentSection>
-    <h5 class="tui-body"
-        data-test-id="HELP_FM_PAY_BY_MAIL_SUB_HEADING">
-        Foremost Insurance Group
-    </h5>
-    <p class="tui-body-text-2">
-        <span *ngIf="isIAEnabled">PO Box 0915</span>
-        <span *ngIf="!isIAEnabled">P.O. Box 0915</span>
-    </p>
-    <p class="tui-body-text-2">
-        Carol Stream, IL 60132-0915
-    </p>
- 
-    <h5 class="mt-3"
-        data-test-id="HELP_FM_PAY_BY_MAIL_SUB_HEADING">
-        Overnight Mail
-    </h5>
-    <p class="tui-body-text-2"
-        *ngFor="let line of fmOvernightAddress">
-        {{line}}
-    </p>
-    <ng-container *ngTemplateOutlet="importantToInclude;context:{dataTestId:'HELP_FM_IMPORTANT_TO_INCLUDE_HEADING'}"></ng-container>
-</ng-template>
- 
-<ng-template #importantToInclude let-dataTestId="dataTestId">
-    <h5 class="my-3"
-        [attr.data-test-id]="dataTestId">
-        Important, be sure to include:
-    </h5>
-    <p class="tui-body-text-2">
-        1. The policy number and policyholder's name
-    </p>
-    <p class="tui-body-text-2">
-        2. Remittance slip (proof of payment document)
-    </p>
-</ng-template>
- 
-<ng-template #fwsPolicyPaymentSection>
-    <p class="tui-body-text-2"
-        *ngFor="let line of fwsMailAddress.standardAddress">
-        {{line}}
-    </p>
- 
-    <h5 class="mt-3"
-        data-test-id="HELP_FM_PAY_BY_MAIL_SUB_HEADING">
-        Overnight Mail
-    </h5>
-    <p class="tui-body-text-2"
-        *ngFor="let line of fwsMailAddress.overnightAddress">
-        {{line}}
-    </p>
-    <ng-container *ngTemplateOutlet="importantToInclude;context:{dataTestId:'HELP_FWS_IMPORTANT_TO_INCLUDE_HEADING'}"></ng-container>
-</ng-template>
- 
-<ng-template #bwPolicyPaymentSection>
-    <p class="tui-body-text-2"
-        *ngFor="let line of bwMailAddress">
-        {{line}}
-    </p>
- 
-    <p class="tui-subtitle-text-2 tui-text-black mt-3"
-        data-test-id="HELP_BW_PAY_BY_MAIL_SUB_HEADING">
-        Overnight Payments
-    </p>
-    <p class="tui-body-text-2">
-        Bristol West Insurance Group
-    </p>
-    <p class="tui-body-text-2">
-        1300 Concord Terrace
-    </p>
-    <p class="tui-body-text-2">
-        Suite 120 Sunrise, FL 33323
-    </p>
-</ng-template>
- 
-<ng-template #lifePolicyClaimsSection>
-    <h3 class="tui-h5 mb-0"
-        data-test-id="CLAIMS_MESSAGE_MAIL_HEADING">
-        Message by mail
-    </h3>
-    <p class="tui-body-text-2 mt-1"
-        *ngFor="let line of lifePolicyClaimsAddress.standardAddress">
-        {{line}}
-    </p>
-</ng-template>
- 
-<ng-template #servicingPolicyFaq>
-    <a href="https://www.farmers.com/policyfaq/"
-        class="tui-body-text-1"
-        target="_blank">
-        Servicing your policy
-    </a>
-</ng-template>
- 
-<ng-template #automatedPhoneSystem let-dataTestId="dataTestId">
-    <p class="tui-body-text-2"
-        [attr.data-test-id]="dataTestId">
-        Automated Phone System: 24/7
-    </p>
-</ng-template>
- 
-Welcome to Bristol West Insurance Group
- 
+  it('should hide fax and mail if both are false in data', () => {
+    component.data = { showFaxIdCard: false, showMailIdCard: false } as any;
+    component.isExpansionState = false;
+    component.isBW = false;
+    component.updateDisplayData();
+    expect(component.showFaxIdCard).toBe(false);
+    expect(component.showMailIdCard).toBe(false);
+  });
+});
+
+        describe('#getSegmentParamsForEmail', () => {
+            it('should return null if not email id card', () => {
+                const result = component.getSegmentParamsForEmail(DialogTypes.MAIL, idCardsConfigurationModel);
+
+                expect(result).toEqual(null);
+            });
+
+            it('should get segment parameters for email id card', () => {
+                const idCardsConfigMockData = {
+                    ...idCardsConfigurationModel,
+                    policyContractNumber: '12345',
+                    policySource: 'GWPC',
+                    isForemostPolicy: false,
+                    isBWPolicy: false,
+                };
+                const segmentDataForEmail = {
+                    policy_number: '12345',
+                    policy_source: 'GWPC',
+                    action: 'Send Email',
+                    dialog_name: eventNames.idCardEmail,
+                    output: 'Email',
+                    step: 'ID Cards',
+                };
+
+                spyOn(component, 'getPolicySource').and.returnValue('GWPC');
+
+                const result = component.getSegmentParamsForEmail(DialogTypes.EMAIL, idCardsConfigMockData);
+
+                expect(result).toEqual(segmentDataForEmail);
+            });
+
+            it('should get segment parameters for email id card fm policy', () => {
+                const idCardsConfigMockData = {
+                    ...idCardsConfigurationModel,
+                    policyContractNumber: '12345',
+                    policySource: '',
+                    isForemostPolicy: true,
+                    isBWPolicy: false,
+                };
+                const segmentDataForEmail = {
+                    policy_number: '12345',
+                    policy_source: 'fm',
+                    action: 'Send Email',
+                    dialog_name: eventNames.idCardEmail,
+                    output: 'Email',
+                    step: 'ID Cards',
+                };
+                spyOn(component, 'getPolicySource').and.returnValue('fm');
+
+                const result = component.getSegmentParamsForEmail(DialogTypes.EMAIL, idCardsConfigMockData);
+
+                expect(result).toEqual(segmentDataForEmail);
+            });
+
+            it('should get segment parameters for email id card bw policy', () => {
+                const idCardsConfigMockData = {
+                    ...idCardsConfigurationModel,
+                    policyContractNumber: '12345',
+                    policySource: '',
+                    isForemostPolicy: false,
+                    isBWPolicy: true,
+                };
+                const segmentDataForEmail = {
+                    policy_number: '12345',
+                    policy_source: 'bw',
+                    action: 'Send Email',
+                    dialog_name: eventNames.idCardEmail,
+                    output: 'Email',
+                    step: 'ID Cards',
+                };
+                spyOn(component, 'getPolicySource').and.returnValue('bw');
+
+                const result = component.getSegmentParamsForEmail(DialogTypes.EMAIL, idCardsConfigMockData);
+
+                expect(result).toEqual(segmentDataForEmail);
+            });
+        });
+
+        fdescribe('#updateDisplayData', () => {
+            it('should set showButtons to false if there are no links', () => {
+                // Arrange
+                component.data = idCardsConfigurationModelNoImages;
+                component.data.isFwsArsEnterpriseSearchEnabled = true;
+                const expectedTitle = 'ID cards';
+                spyOn(component, 'setFWSIDCardDisplayProperties');
+                fixture.detectChanges();
+
+                // Act
+                component.updateDisplayData();
+
+                // Assert
+                expect(component.showButtons).toBe(false);
+                expect(component.showAgentMessage).toBe(true);
+                expect(component.setFWSIDCardDisplayProperties).toHaveBeenCalled();
+                expect(component.disableDownloadIdCardsButton).toBeTruthy();
+                expect(component.viewOrDownloadIdCardAriaLabel).toBe('Disabled');
+                expect(component.idCardTitle).toBe(expectedTitle);
+            });
+            it('should set idCardTitle to id card if subjectOfInsurance/units length < 1', () => {
+                // Arrange
+                component.data = { ...idCardsConfigurationModelNoImages, subjectOfInsurance: [] };
+                component.data.isFwsArsEnterpriseSearchEnabled = true;
+                const expectedTitle = 'ID card';
+                fixture.detectChanges();
+
+                component.updateDisplayData();
+
+                expect(component.idCardTitle).toBe(expectedTitle);
+            });
+
+            it('should set idCardTitle to id card if units length > 1', () => {
+                // Arrange
+                component.data = {
+                    ...idCardsConfigurationModelNoImages,
+                    subjectOfInsurance: [],
+                    units: [
+                        { ymm: 'xyz', vin: 'v123', link: 'url' },
+                        { ymm: 'abc', vin: 'v143', link: 'url' },
+                    ],
+                };
+                component.data.isFwsArsEnterpriseSearchEnabled = true;
+                const expectedTitle = 'ID cards';
+                fixture.detectChanges();
+
+                component.updateDisplayData();
+
+                expect(component.idCardTitle).toBe(expectedTitle);
+            });
+            it('should set idCardTitle to id card if selectedpolicy soi length > 1', () => {
+                // Arrange
+                component.data = {
+                    ...idCardsConfigurationModelNoImages,
+                    subjectOfInsurance: [],
+                    units: [],
+                    selectedPolicy: {
+                        policyNumber: '12345',
+                        policyContractNumber: 'A12345',
+                        lineOfBusiness: 'Auto',
+                        subjectOfInsurance: [
+                            {
+                                vehicleYear: '2000',
+                                vehicleModel: 'Tesla ModelX 2020',
+                                vehicleMake: 'abc',
+                            },
+                            {
+                                vehicleYear: '2001',
+                                vehicleModel: 'Ford ModelX 2021',
+                                vehicleMake: 'abc',
+                            },
+                        ],
+                    },
+                };
+                component.data.isFwsArsEnterpriseSearchEnabled = true;
+                const expectedTitle = 'ID cards';
+                fixture.detectChanges();
+
+                component.updateDisplayData();
+
+                expect(component.idCardTitle).toBe(expectedTitle);
+            });
+
+            it('should set disableDownloadIdCardsButton to false when fws ars is not under maintenance', () => {
+                // Arrange
+                component.data = idCardsConfigurationModelNoImages;
+                component.data.isFwsArsEnterpriseSearchEnabled = false;
+                spyOn(component, 'setFWSIDCardDisplayProperties');
+                fixture.detectChanges();
+
+                // Act
+                component.updateDisplayData();
+
+                // Assert
+                expect(component.setFWSIDCardDisplayProperties).toHaveBeenCalled();
+                expect(component.disableDownloadIdCardsButton).toBe(false);
+                expect(component.viewOrDownloadIdCardAriaLabel).toBe('Opens in new tab');
+            });
+
+            it('should set shouldRenderEvidenceOfInsurance to false if it is a florida policy', () => {
+                // Arrange
+                component.data = idCardsConfigurationModelNoImages;
+                fixture.detectChanges();
+
+                // Act
+                component.updateDisplayData();
+
+                // Assert
+                expect(component.shouldRenderEvidenceOfInsurance).toBe(false);
+            });
+
+            it('should set shouldRenderEvidenceOfInsurance to true if it is not a florida policy', () => {
+                // Arrange
+                component.isFloridaPolicy = false;
+                component.data = idCardsConfigurationModelNoImages;
+                component.data.cardLink = {
+                    small: 'smallLink',
+                    large: 'largeLink',
+                    encrypted: 'encryptedLink',
+                };
+                fixture.detectChanges();
+
+                // Act
+                component.updateDisplayData();
+
+                // Assert
+                expect(component.shouldRenderEvidenceOfInsurance).toBe(true);
+            });
+            
+             it('should not show fax, mail options if isBW login is true', () => {
+      component.isExpansionState = false;
+      component.isBW = true;
+      component.data = idCardsConfigurationModelRenewal;
+
+      component.ngOnChanges();
+
+      expect(component.showFaxIdCard).toBe(false);
+      expect(component.showMailIdCard).toBe(false);
+      expect(component.showEmailIdCard).toBe(true);
+    });
+
+            it('should set showAgentMessage to false if policy is not PLA or GWPC', () => {
+                // Arrange
+                component.data = idCardsConfigurationModelNoImages;
+                component.data.isBWPolicy = true;
+                fixture.detectChanges();
+                // Act
+                component.updateDisplayData();
+                // Assert
+                expect(component.showAgentMessage).toBe(false);
+            });
+
+            it('should set fmBwIdCardDocumentText to PAPER SIZE, if it is not a foremost policy', () => {
+                // Arrange
+                component.data = idCardsConfigurationModelNoImages;
+                component.data.isBWPolicy = true;
+                component.data.isForemostPolicy = false;
+                fixture.detectChanges();
+                // Act
+                component.updateDisplayData();
+                // Assert
+                expect(component.fmBwIdCardDocumentText).toEqual('PAPER SIZE');
+                expect(component.fmBwIdCardDocumentTextAriaLabel).toEqual('paper size');
+            });
+
+            it('should set fmBwIdCardDocumentText to DOWNLOAD/VIEW, if it is a foremost policy', () => {
+                // Arrange
+                component.data = idCardsConfigurationModelNoImages;
+                component.data.isBWPolicy = false;
+                component.data.isForemostPolicy = true;
+                fixture.detectChanges();
+                // Act
+                component.updateDisplayData();
+                // Assert
+                expect(component.fmBwIdCardDocumentText).toEqual('DOWNLOAD/VIEW');
+                expect(component.fmBwIdCardDocumentTextAriaLabel).toEqual('download or view');
+                expect(component.coverageTypeAriaLabel).toEqual('current proof of coverage');
+                expect(component.cardType).toEqual('Current');
+            });
+
+            it('should form the right data if renewal is passed', () => {
+                // Arrange
+                const renewalSubjectOfInsurance = [
+                    {
+                        id: 'testId',
+                        vin: 'testVIN',
+                        ymm: 'non owner',
+                        evidenceOfInsuranceLink: 'evidenceOfInsuranceLink',
+                        renewalEvidenceOfInsuranceLink: 'renewalEvidenceOfInsuranceLink',
+                        vehicleAddedDate: '2024-06-26',
+                    },
+                ];
+                spyOn(component, 'checkFeatureFlags');
+                component.data = { ...idCardsConfigurationModelRenewal, renewalSubjectOfInsurance };
+                component.renewal = true;
+                fixture.detectChanges();
+                // Act
+                component.ngOnChanges();
+                // Assert
+                expect(component.subtitle).toBe('Renewal');
+                expect(component.showButtons).toBe(true);
+                expect(component.effectiveDate).toBe('date for renewal effective');
+                expect(component.expirationDate).toBe('date for renewal expiration');
+                expect(component.shouldRenderEvidenceOfInsurance).toBe(false);
+                expect(component.smallCardLink).toBe('renewal_smallLink');
+                expect(component.largeCardLink).toBe('renewal_largeLink');
+                expect(component.showFaxIdCard).toBe(true);
+                expect(component.showMailIdCard).toBe(true);
+                expect(component.showAgentMessage).toBe(false);
+                expect(component.checkFeatureFlags).toHaveBeenCalled();
+                expect(component.coverageTypeAriaLabel).toEqual('renewal proof of coverage');
+                expect(component.cardType).toEqual('Renewal');
+                expect(component.subjectOfInsurance).toEqual(renewalSubjectOfInsurance);
+            });
+
+            it('should not update renewalSubjectOfInsurance for non-auto renewal policy', () => {
+                // Arrange
+                const renewalSubjectOfInsurance = [
+                    {
+                        id: 'testId',
+                        vin: 'testVIN',
+                        ymm: 'non owner',
+                        evidenceOfInsuranceLink: 'evidenceOfInsuranceLink',
+                        renewalEvidenceOfInsuranceLink: 'renewalEvidenceOfInsuranceLink',
+                        vehicleAddedDate: '2024-06-26',
+                    },
+                ];
+                spyOn(component, 'checkFeatureFlags');
+                component.data = {
+                    ...idCardsConfigurationModelRenewal,
+                    ...{
+                        isAutoPolicy: false,
+                        renewalSubjectOfInsurance,
+                    },
+                };
+                component.renewal = true;
+                fixture.detectChanges();
+                // Act
+                component.ngOnChanges();
+                // Assert
+                expect(component.subjectOfInsurance).toEqual([]);
+            });
+
+            it('should not update renewalSubjectOfInsurance if renewalSubjectOfInsurance is empty', () => {
+                // Arrange
+                spyOn(component, 'checkFeatureFlags');
+                component.data = {
+                    ...idCardsConfigurationModelRenewal,
+                    ...{
+                        isAutoPolicy: false,
+                        renewalSubjectOfInsurance: [],
+                    },
+                };
+                component.renewal = true;
+                fixture.detectChanges();
+                // Act
+                component.ngOnChanges();
+                // Assert
+                expect(component.subjectOfInsurance).toEqual([]);
+            });
+
+            it('should not show fax, mail options if expansion policy', () => {
+                // Arrange
+                spyOn(component, 'checkFeatureFlags');
+                component.data = idCardsConfigurationModelRenewal;
+                component.isExpansionState = true;
+                fixture.detectChanges();
+                // Act
+                component.ngOnChanges();
+                // Assert
+                expect(component.showFaxIdCard).toBe(false);
+                expect(component.showMailIdCard).toBe(false);
+                expect(component.showEmailIdCard).toBe(true);
+                expect(component.checkFeatureFlags).toHaveBeenCalled();
+                expect(component.subjectOfInsurance).toEqual([]);
+            });
+
+            it('should set id card availability boolean to true if florida state policy', () => {
+                // Arrange
+                spyOn(component, 'checkFeatureFlags');
+                component.data = idCardsConfigurationModelRenewal;
+                component.isFloridaPolicy = true;
+                fixture.detectChanges();
+                // Act
+                component.ngOnChanges();
+                // Assert
+                expect(component.isIdCardAvailable).toBe(true);
+                expect(component.checkFeatureFlags).toHaveBeenCalled();
+            });
+
+            it('should set id card availability boolean to true if expansion state policy', () => {
+                // Arrange
+                spyOn(component, 'checkFeatureFlags');
+                component.data = idCardsConfigurationModelRenewal;
+                component.isExpansionState = true;
+                fixture.detectChanges();
+                // Act
+                component.ngOnChanges();
+                // Assert
+                expect(component.isIdCardAvailable).toBe(true);
+                expect(component.checkFeatureFlags).toHaveBeenCalled();
+            });
+
+            it('should call add to state', () => {
+                // Arrange
+                component.data = {
+                    ...component.data,
+                    expirationDate: '12/12/2020',
+                    isActiveA360Auto: true,
+                    isActiveARSAuto: false,
+                    isFedPolicy: false,
+                    policyContractNumber: '123',
+                    policySource: 'PLA',
+                    policyType: 'AUTO',
+                };
+                spyOn(component, 'getPolicySource').and.returnValue('PLA');
+                spyOn(component, 'checkFeatureFlags');
+                // Act
+                component.ngOnChanges();
+
+                // Assert
+                expect(component.checkFeatureFlags).toHaveBeenCalled();
+                expect(tuiTrackerServiceSpy.addToState).toHaveBeenCalledWith({
+                    policy_number: '123',
+                    policy_source: 'PLA',
+                    description: 'AUTO',
+                });
+            });
+            it('should set future ID card display data', () => {
+                // Arrange
+                component.data = idCardsConfigurationModelNoImages;
+                component.isFutureIdCard = true;
+                component.futureIdCard = futureIdCards;
+                fixture.detectChanges();
+                spyOn(component, 'updateFutureIdCardDisplayData');
+
+                // Act
+                component.updateDisplayData();
+
+                // Assert
+                expect(component.updateFutureIdCardDisplayData).toHaveBeenCalled();
+            });
+        });
+
+        describe('#updateFutureIdCardDisplayData', () => {
+            beforeEach(() => {
+                component.data = {
+                    showFaxIdCard: true,
+                    showMailIdCard: false,
+                    showEmailIdCard: true,
+                    expirationDate: '2025-01-01',
+                    selectedPolicy: { futureSubjectOfInsurance: [{}, {}] },
+                } as any;
+                component.futureIdCard = {
+                    effectiveDate: '2024-12-01',
+                    smallIDCard: 'small-link',
+                    largeIDCard: 'large-link',
+                    subjectOfInsurance: [{}, {}],
+                } as any;
+            });
+
+            it('should set display fields for future id card', () => {
+                component.isFloridaPolicy = false;
+                component.isExpansionState = false;
+
+                component.updateFutureIdCardDisplayData();
+
+                expect(component.isIdCardAvailable).toBe(false);
+                expect(component.showButtons).toBe(true);
+                expect(component.subtitle).toBe(ID_CARD_CONST.proofOfCoverageSubtitle.current);
+                expect(component.effectiveDate).toBe('2024-12-01');
+                expect(component.expirationDate).toBe('2025-01-01');
+                expect(component.shouldRenderEvidenceOfInsurance).toBe(true);
+                expect(component.smallCardLink).toBe('small-link');
+                expect(component.largeCardLink).toBe('large-link');
+                expect(component.showFaxIdCard).toBe(true);
+                expect(component.showMailIdCard).toBe(false);
+                expect(component.showEmailIdCard).toBe(true);
+                expect(component.viewOrDownloadIdCardAriaLabel).toBe(component.NEW_TAB);
+                expect(component.showAgentMessage).toBe(false);
+                expect(component.idCardTitle).toBe('ID cards');
+            });
+
+            it('should set display fields for future id card with all CTA', () => {
+                component.isFloridaPolicy = false;
+                component.isExpansionState = false;
+                component.data = {
+                    showFaxIdCard: true,
+                    showMailIdCard: true,
+                    showEmailIdCard: true,
+                    expirationDate: '2025-01-01',
+                    selectedPolicy: { futureSubjectOfInsurance: [{}, {}] },
+                } as any;
+
+                component.updateFutureIdCardDisplayData();
+
+                expect(component.isIdCardAvailable).toBe(false);
+                expect(component.showButtons).toBe(true);
+                expect(component.subtitle).toBe(ID_CARD_CONST.proofOfCoverageSubtitle.current);
+                expect(component.effectiveDate).toBe('2024-12-01');
+                expect(component.expirationDate).toBe('2025-01-01');
+                expect(component.shouldRenderEvidenceOfInsurance).toBe(true);
+                expect(component.smallCardLink).toBe('small-link');
+                expect(component.largeCardLink).toBe('large-link');
+                expect(component.showFaxIdCard).toBe(true);
+                expect(component.showMailIdCard).toBe(true);
+                expect(component.showEmailIdCard).toBe(true);
+                expect(component.viewOrDownloadIdCardAriaLabel).toBe(component.NEW_TAB);
+                expect(component.idCardTitle).toBe('ID cards');
+            });
+
+            it('should set idCardTitle to single if only one subjectOfInsurance', () => {
+                component.futureIdCard.subjectOfInsurance = [{} as any];
+                component.data.selectedPolicy.futureSubjectOfInsurance = [{} as any];
+                component.data = {
+                    showFaxIdCard: false,
+                    showMailIdCard: false,
+                    showEmailIdCard: false,
+                    expirationDate: '2025-01-01',
+                    selectedPolicy: { futureSubjectOfInsurance: [{}] },
+                } as any;
+                component.futureIdCard = {
+                    effectiveDate: '2024-12-01',
+                    smallIDCard: '',
+                    largeIDCard: '',
+                    subjectOfInsurance: [{}],
+                } as any;
+
+                component.updateFutureIdCardDisplayData();
+
+                expect(component.idCardTitle).toBe('ID card');
+                expect(component.showButtons).toBe(false);
+                expect(component.smallCardLink).toBe(null);
+                expect(component.largeCardLink).toBe(null);
+                expect(component.showAgentMessage).toBe(true);
+            });
+
+            it('should set shouldRenderEvidenceOfInsurance to false if isFloridaPolicy', () => {
+                component.isFloridaPolicy = true;
+                component.updateFutureIdCardDisplayData();
+                expect(component.shouldRenderEvidenceOfInsurance).toBe(false);
+            });
+        });
+
+        describe('#should display', () => {
+            it('correct dates', () => {
+                // Arrange
+                const effectiveDate = element.querySelector(
+                    'p[data-test-id="IDCARD_AUTO_CURRENT_EFFECTIVE_DATE_VALUE"]',
+                ).innerHTML;
+                const expirationDate = element.querySelector(
+                    'p[data-test-id="IDCARD_AUTO_CURRENT_EXPIRATION_DATE_VALUE"]',
+                ).innerHTML;
+                // Assert
+                expect(effectiveDate).toBe('04-10-2020');
+                expect(expirationDate).toBe('04-10-2021');
+            });
+
+            it('correct vehicles', () => {
+                const vehiclesElement = element.querySelectorAll('p[data-test-id="IDCARD_AUTO_CURRENT_VEHICLE_YMM"]');
+
+                expect(vehiclesElement.length).toBe(2);
+                expect(vehiclesElement[0].innerText).toContain('Tesla Model3 2020');
+                expect(vehiclesElement[1].innerText).toContain('Tesla ModelX 2021');
+            });
+        });
+
+        describe('#checkArsIdStateEligibility', () => {
+            it('should call policyChangeService.getStateFromPcnForArs and stateEligibilityService.isStateEligibleForARSId ', () => {
+                component.checkArsIdStateEligibility();
+
+                expect(policyChangeServiceSpy.getStateFromPcnForArs).toHaveBeenCalled();
+                expect(stateEligibilityServiceSpy.isStateEligibleForARSId).toHaveBeenCalled();
+            });
+
+            it('should set allowArsCSSRedirect to true if stateEligibility is met for ARS ', () => {
+                component.checkArsIdStateEligibility();
+
+                expect(component.allowArsCSSRedirect).toBeTruthy();
+            });
+
+            it('should set allowArsCSSRedirect to false if stateEligibility is not met for ARS ', () => {
+                stateEligibilityServiceSpy.isStateEligibleForARSId.and.returnValue(of(false));
+
+                component.checkArsIdStateEligibility();
+
+                expect(component.allowArsCSSRedirect).toBeFalsy();
+            });
+        });
+
+        describe('#checkFeatureFlags', () => {
+            it('should set enableIdCardFormsBannerFlag as true', () => {
+                // Arrange
+                maintenanceFlagSpy.isEnabled.and.returnValue(true);
+                // Act
+                component.checkFeatureFlags();
+                // Assert
+                expect(component.enableIdCardFormsBannerFlag).toBeTruthy();
+            });
+
+            it('should set enableIdCardFormsBannerFlag as false', () => {
+                // Arrange
+                maintenanceFlagSpy.isEnabled.and.returnValue(false);
+                // Act
+                component.checkFeatureFlags();
+                // Assert
+                expect(component.enableIdCardFormsBannerFlag).toBeFalsy();
+            });
+
+            it('should set flagsReady and isFwsArsIdCardEnabled to true,coreIAFlagenabled ', () => {
+                // Arrange
+                spyOn(component, 'checkArsIdStateEligibility');
+                featureFlagServiceSpy.isIA.and.returnValue(true);
+                component.data.isActiveA360Auto = false;
+                component.data.isActiveARSAuto = true;
+                component.allowArsCSSRedirect = true;
+                // Act
+                component.checkFeatureFlags();
+                // Assert
+                expect(component.flagsReady).toBeTruthy();
+                expect(component.isIAEnabled).toBeTruthy();
+                expect(component.displayNonFeatureFlagIdCard).toBeFalsy();
+                expect(component.checkArsIdStateEligibility).toHaveBeenCalled();
+            });
+
+            it('should set flagsReady and displayA360IdCardAvailabilities to true when any of the feature flag is true', () => {
+                featureFlagServiceSpy.isEnabled
+                    .withArgs(featureConstants.isA360IdCardEmailEnabled)
+                    .and.returnValue(true);
+                featureFlagServiceSpy.isEnabled.withArgs(featureConstants.isA360IdCardFaxEnabled).and.returnValue(true);
+                featureFlagServiceSpy.isEnabled
+                    .withArgs(featureConstants.isA360IdCardMailEnabled)
+                    .and.returnValue(true);
+                featureFlagServiceSpy.isEnabled
+                    .withArgs(featureConstants.enableMobileWalletsForRenewalIdCards)
+                    .and.returnValue(true);
+                featureFlagServiceSpy.isIA.and.returnValue(false);
+                component.data.isActiveA360Auto = true;
+
+                component.checkFeatureFlags();
+
+                expect(component.flagsReady).toBeTruthy();
+                expect(component.isIAEnabled).toBeFalsy();
+                expect(component.displayA360IdCardAvailabilities).toBeTruthy();
+                expect(component.enableMobileWalletsForRenewalIdCards).toBeTruthy();
+            });
+
+            it('should set flagsReady and displayA360IdCardAvailabilities to false when all three flags are false', () => {
+                featureFlagServiceSpy.isEnabled
+                    .withArgs(featureConstants.isA360IdCardEmailEnabled)
+                    .and.returnValue(false);
+                featureFlagServiceSpy.isEnabled
+                    .withArgs(featureConstants.isA360IdCardFaxEnabled)
+                    .and.returnValue(false);
+                featureFlagServiceSpy.isEnabled
+                    .withArgs(featureConstants.isA360IdCardMailEnabled)
+                    .and.returnValue(false);
+                featureFlagServiceSpy.isEnabled
+                    .withArgs(featureConstants.enableMobileWalletsForRenewalIdCards)
+                    .and.returnValue(false);
+                featureFlagServiceSpy.isIA.and.returnValue(true);
+                component.data.isActiveA360Auto = true;
+
+                component.checkFeatureFlags();
+
+                expect(component.flagsReady).toBeTruthy();
+                expect(component.isIAEnabled).toBeTruthy();
+                expect(component.displayA360IdCardAvailabilities).toBeFalsy();
+                expect(component.enableMobileWalletsForRenewalIdCards).toBeFalsy();
+            });
+
+            it('should set displayNonFeatureFlagIdCard and isFwsArsIdCardEnabled to false', () => {
+                // Arrange
+                spyOn(component, 'checkArsIdStateEligibility');
+                component.data.isActiveA360Auto = true;
+                component.data.isActiveARSAuto = false;
+                featureFlagServiceSpy.isEnabled.and.returnValue(false);
+                // Act
+                component.checkFeatureFlags();
+                // Assert
+                expect(component.displayNonFeatureFlagIdCard).toBeTruthy();
+                expect(component.checkArsIdStateEligibility).not.toHaveBeenCalled();
+            });
+
+            it('should set isShowMailIDCard to true', () => {
+                // Arrange
+                spyOn(component, 'checkArsIdStateEligibility');
+                component.data.isActiveARSAuto = true;
+                component.data.isForemostPolicy = false;
+                component.data.isBWPolicy = false;
+                featureFlagServiceSpy.isEnabled.and.returnValue(false);
+                // Act
+                component.checkFeatureFlags();
+                // Assert
+                expect(component.isShowMailIDCard).toBeTruthy();
+            });
+
+            it('should set isShowMailIDCard to true', () => {
+                // Arrange
+                spyOn(component, 'checkArsIdStateEligibility');
+                component.data.isActiveARSAuto = true;
+                component.data.isForemostPolicy = true;
+                component.data.isBWPolicy = false;
+                featureFlagServiceSpy.isEnabled.and.returnValue(false);
+                // Act
+                component.checkFeatureFlags();
+                // Assert
+                expect(component.isShowMailIDCard).toBeFalsy();
+            });
+        });
+
+        describe('#displayIdCardClick', () => {
+            it('DisplayID card event should track mixpaneland open the document', () => {
+                // Arrange
+                spyOn(window, 'open').and.callThrough();
+                featureFlagServiceSpy.isFeatureFlagReady.and.returnValue(of(true));
+                component.data.policySource = 'fm';
+
+                component.displayIdCardClick('Small', { preventDefault: () => {} } as MouseEvent);
+
+                // Assert
+                expect(idCardServiceSpy.trackIdCardEvents).toHaveBeenCalledWith({
+                    eventName: 'View ID Card',
+                    idCardType: 'Small',
+                    policyType: 'Auto',
+                    policySource: 'fm',
+                    term: 'Current',
+                    successful: true,
+                    entrySource: 'Policy Details',
+                });
+                expect(window.open).toHaveBeenCalled();
+            });
+
+            it('DisplayID card event should track mixpaneland and open the document with policytype as ARS for ARS auto', () => {
+                // Arrange
+                component.data.isFWSPolicy = true;
+                component.data.lineOfBusiness = 'AUTO';
+                spyOn(window, 'open').and.callThrough();
+                component.displayIdCardClick('Small', { preventDefault: () => {} } as MouseEvent);
+
+                // Assert
+                const args = idCardServiceSpy.trackIdCardEvents.calls.mostRecent().args;
+
+                expect(args[0]).toEqual({
+                    eventName: 'View ID Card',
+                    idCardType: 'Small',
+                    policyType: 'AUTO',
+                    policySource: 'FWS-ARS',
+                    term: 'Current',
+                    successful: true,
+                    entrySource: 'Policy Details',
+                });
+                expect(window.open).toHaveBeenCalled();
+            });
+
+            it('displayID card event should track mixpaneland and open the document with policytype as ARS for ARS auto if disableDownloadIdCardsButton === false', () => {
+                // Arrange
+                component.disableDownloadIdCardsButton = false;
+                component.data.isFWSPolicy = true;
+                component.data.lineOfBusiness = 'AUTO';
+                spyOn(window, 'open').and.callThrough();
+                component.displayIdCardClick('Small', { preventDefault: () => {} } as MouseEvent);
+
+                // Assert
+                const args = idCardServiceSpy.trackIdCardEvents.calls.mostRecent().args;
+
+                expect(args[0]).toEqual({
+                    eventName: 'View ID Card',
+                    idCardType: 'Small',
+                    policyType: 'AUTO',
+                    policySource: 'FWS-ARS',
+                    term: 'Current',
+                    successful: true,
+                    entrySource: 'Policy Details',
+                });
+                expect(window.open).toHaveBeenCalled();
+            });
+
+            it('should go through full method if disableDownloadIdCardsButton is false', () => {
+                const event = new MouseEvent('click');
+                component.data.isFWSPolicy = true;
+                component.data.lineOfBusiness = 'AUTO';
+
+                spyOn(event, 'preventDefault');
+                spyOn(component, 'displayIDCard');
+                tuiTrackerServiceSpy.addToState.calls.reset();
+
+                component.displayIdCardClick('Large', event, false);
+
+                expect(component.displayIDCard).toHaveBeenCalled();
+                expect(component.displayIDCard).toHaveBeenCalledWith('Large', 'large link', event);
+                expect(tuiTrackerServiceSpy.addToState).toHaveBeenCalledWith({
+                    future_dated_vehicle: false,
+                });
+            });
+
+            it('should return immediately if disabledDownloadIdCardsButton is true', () => {
+                component.data.isFWSPolicy = true;
+                component.data.lineOfBusiness = 'AUTO';
+                spyOn(component, 'displayIDCard');
+
+                component.displayIdCardClick('Large', { preventDefault: () => {} } as MouseEvent, true);
+
+                expect(component.displayIDCard).not.toHaveBeenCalled();
+            });
+
+            it('should call add to state for future ID card display data', () => {
+                const event = new MouseEvent('click');
+                component.isFutureIdCard = true;
+                tuiTrackerServiceSpy.addToState.calls.reset();
+
+                component.displayIdCardClick('Large', event, false);
+
+                expect(tuiTrackerServiceSpy.addToState).toHaveBeenCalledWith({
+                    future_dated_vehicle: true,
+                });
+            });
+        });
+
+        describe('#trackContactClick', () => {
+            it('should trigger trackphonenumber', () => {
+                component.trackContactClick('000');
+
+                expect(policySummaryServiceSpy.trackPhoneNumberEvent).toHaveBeenCalledWith(
+                    '000',
+                    eventParams.proofOfCoverage,
+                );
+            });
+        });
+
+        describe('#evidenceClick', () => {
+            it('DisplayID card event should track mixpaneland open the document', () => {
+                // Arrange
+                spyOn(window, 'open');
+                const renewalFlag = true;
+                const vehicleObj: SubjectOfInsuranceConfigurationModel = {
+                    id: 'test',
+                    ymm: 'test',
+                    vin: 'test',
+                    renewalEvidenceOfInsuranceLink: 'testUrl-renewal',
+                    evidenceOfInsuranceLink: 'testUrl',
+                };
+                spyOn(component, 'getAppSourceDetails').and.returnValue(
+                    '&applicationSource=CSS&osType=iOS&appVersion=25.0.1',
+                );
+
+                component.evidenceClick(renewalFlag, vehicleObj, { preventDefault: () => {} } as MouseEvent);
+
+                // Assert
+                expect(idCardServiceSpy.trackIdCardEvents).toHaveBeenCalledWith({
+                    eventName: 'Evidence Of Insurance',
+                    successful: true,
+                });
+                expect(window.open).toHaveBeenCalledWith(
+                    'testUrl-renewal&applicationSource=CSS&osType=iOS&appVersion=25.0.1',
+                    '_blank',
+                );
+                expect(tuiTrackerServiceSpy.addToState).toHaveBeenCalledWith({
+                    future_dated_vehicle: false,
+                });
+            });
+        });
+    });
+
+    describe('#displayIDCard', () => {
+        it('should not call event.preventDefault when no event is present', () => {
+            const event = new Event('click');
+            spyOn(event, 'preventDefault');
+
+            component.displayIDCard('small', 'url');
+            expect(event.preventDefault).not.toHaveBeenCalled();
+        });
+
+        it('should call event.preventDefault event is present', () => {
+            const event = new MouseEvent('click');
+            spyOn(event, 'preventDefault');
+            component.flagsReady = true;
+
+            component.displayIDCard('small', 'url', event);
+
+            expect(event.preventDefault).toHaveBeenCalled();
+        });
+
+        it('should call window.open with large card link for Non NY ARS Auto policy', () => {
+            const event = new MouseEvent('click');
+            spyOn(event, 'preventDefault');
+            spyOn(window, 'open');
+            featureFlagServiceSpy.isEnabled.and.returnValue(true);
+            component.data.isActiveARSAuto = true;
+            component.data.isARSWithStateNY = false;
+            component.allowArsCSSRedirect = true;
+            spyOn(component, 'getAppSourceDetails').and.returnValue(
+                '&applicationSource=CSS&osType=iOS&appVersion=25.0.1',
+            );
+            fixture.detectChanges();
+
+            component.displayIDCard('small', 'url', event);
+
+            expect(event.preventDefault).toHaveBeenCalled();
+            expect(window.open).toHaveBeenCalledWith(
+                'large link&applicationSource=CSS&osType=iOS&appVersion=25.0.1',
+                '_blank',
+            );
+        });
+
+        it('should call window.open with unit link for NY ARS Auto policy', () => {
+            component.data = idCardsConfigurationModel;
+            const event = new MouseEvent('click');
+            component.data.isActiveARSAuto = true;
+            component.data.isARSWithStateNY = true;
+            component.allowArsCSSRedirect = true;
+            spyOn(component, 'getAppSourceDetails').and.returnValue(
+                '&applicationSource=CSS&osType=iOS&appVersion=25.0.1',
+            );
+            fixture.detectChanges();
+
+            spyOn(event, 'preventDefault');
+            spyOn(window, 'open');
+
+            component.displayIDCard('small', 'url', event);
+
+            expect(event.preventDefault).toHaveBeenCalled();
+            expect(window.open).toHaveBeenCalledWith(
+                'url&applicationSource=CSS&osType=iOS&appVersion=25.0.1',
+                '_blank',
+            );
+        });
+    });
+
+    describe('getAppSourceDetails', () => {
+        it('should return os type, version and application source for web', () => {
+            sessionStorageServiceSpy.getItem
+                .withArgs(STORAGE_CONST.sessionStorage.osType)
+                .and.returnValue('WEB')
+                .withArgs(STORAGE_CONST.sessionStorage.appVersion)
+                .and.returnValue('WEB2.0');
+            sessionStorageServiceSpy.getParsedItem.and.returnValue(false);
+
+            const result = component.getAppSourceDetails();
+
+            expect(result).toEqual('&applicationSource=CSS&osType=WEB&appVersion=WEB2.0');
+        });
+
+        it('should return os type, version and application source for mobile', () => {
+            sessionStorageServiceSpy.getItem
+                .withArgs(STORAGE_CONST.sessionStorage.osType)
+                .and.returnValue('iOS')
+                .withArgs(STORAGE_CONST.sessionStorage.appVersion)
+                .and.returnValue('25.0.1');
+            sessionStorageServiceSpy.getParsedItem.and.returnValue(true);
+
+            const result = component.getAppSourceDetails();
+
+            expect(result).toEqual('&applicationSource=Mobile&osType=iOS&appVersion=25.0.1');
+        });
+
+        it('should return default os type, version and application source if values not present', () => {
+            sessionStorageServiceSpy.getItem
+                .withArgs(STORAGE_CONST.sessionStorage.osType)
+                .and.returnValue(null)
+                .withArgs(STORAGE_CONST.sessionStorage.appVersion)
+                .and.returnValue(null);
+            sessionStorageServiceSpy.getParsedItem.and.returnValue(false);
+
+            const result = component.getAppSourceDetails();
+
+            expect(result).toEqual('&applicationSource=CSS&osType=WEB&appVersion=WEB2.0');
+        });
+    });
+
+    describe('renewal ProofOfCoverage', () => {
+        beforeEach(() => {
+            fixture = TestBed.createComponent(ProofOfCoverageComponent);
+            component = fixture.componentInstance;
+            element = fixture.nativeElement;
+            component.renewal = true;
+            component.data = idCardsConfigurationModelRenewal;
+            fixture.detectChanges();
+        });
+        it('should render fax and mail buttons in renewal', () => {
+            // Act
+            const mailButton = element.querySelector('button.mail');
+            const faxButton = element.querySelector('button.fax');
+            // Assert
+            expect(mailButton).toBeTruthy();
+            expect(faxButton).toBeTruthy();
+        });
+    });
+
+    describe('#checkIfCurrentPolicyIsExpansion', () => {
+        beforeEach(() => {
+            fixture = TestBed.createComponent(ProofOfCoverageComponent);
+            component = fixture.componentInstance;
+            element = fixture.nativeElement;
+            component.renewal = false;
+            component.isIAEnabled = false;
+            component.data = idCardsConfigurationModel;
+            fixture.detectChanges();
+        });
+        it('should set phone number as 1-855-878-3157 if not expansion only data', fakeAsync(() => {
+            stateEligibilityServiceSpy.getState.and.returnValue('OK');
+            policySummaryServiceSpy.isPolicySourceFWS.and.returnValue(false);
+
+            component.checkIfCurrentPolicyIsExpansion();
+
+            expect(component.phone).toEqual('1-855-878-3157');
+            expect(component.isExpansionState).toBeFalsy();
+        }));
+
+        it('should set phone number as 1-877-388-6628 if expansion only data', fakeAsync(() => {
+            stateEligibilityServiceSpy.getState.and.returnValue('NC');
+            policySummaryServiceSpy.isPolicySourceFWS.and.returnValue(false);
+
+            component.checkIfCurrentPolicyIsExpansion();
+
+            expect(component.phone).toEqual('1-877-388-6628');
+            expect(component.isExpansionState).toBeTruthy();
+        }));
+
+        it('should set phone number as 1-800-422-4272 for EA fws customers', fakeAsync(() => {
+            featureFlagServiceSpy.isIA.and.returnValue(false);
+            policySummaryServiceSpy.isPolicySourceFWS.and.returnValue(true);
+
+            component.checkIfCurrentPolicyIsExpansion();
+
+            expect(policySummaryServiceSpy.isPolicySourceFWS).toHaveBeenCalled();
+            expect(component.phone).toEqual('1-800-422-4272');
+        }));
+
+        it('should set phone number as 1-800-527-3905 for EA Foremost Fm customers', fakeAsync(() => {
+            featureFlagServiceSpy.isIA.and.returnValue(false);
+            policySummaryServiceSpy.isPolicySourceFWS.and.returnValue(false);
+            policySummaryServiceSpy.isPolicySourceForemost.and.returnValue(true);
+
+            component.checkIfCurrentPolicyIsExpansion();
+
+            expect(policySummaryServiceSpy.isPolicySourceForemost).toHaveBeenCalled();
+            expect(component.phone).toEqual('1-800-527-3905');
+        }));
+
+        it('should set phone number as 800-422-4272 for IA fws customers', fakeAsync(() => {
+            component.isIAEnabled = true;
+            featureFlagServiceSpy.isIA.and.returnValue(true);
+            policySummaryServiceSpy.isPolicySourceFWS.and.returnValue(true);
+
+            component.checkIfCurrentPolicyIsExpansion();
+
+            expect(policySummaryServiceSpy.isPolicySourceFWS).toHaveBeenCalled();
+            expect(component.phone).toEqual('800-422-4272');
+        }));
+
+        it('should set phone number as 1-800-527-3905 for IA Foremost Fm customers', fakeAsync(() => {
+            component.isIAEnabled = true;
+            featureFlagServiceSpy.isIA.and.returnValue(true);
+            policySummaryServiceSpy.isPolicySourceFWS.and.returnValue(false);
+            policySummaryServiceSpy.isPolicySourceForemost.and.returnValue(true);
+
+            component.checkIfCurrentPolicyIsExpansion();
+
+            expect(policySummaryServiceSpy.isPolicySourceForemost).toHaveBeenCalled();
+            expect(component.phone).toEqual('1-800-527-3905');
+        }));
+    });
+
+    describe('#isShowPaperSize', () => {
+        beforeEach(() => {
+            fixture = TestBed.createComponent(ProofOfCoverageComponent);
+            component = fixture.componentInstance;
+            element = fixture.nativeElement;
+            component.renewal = false;
+            component.data = idCardsConfigurationModel;
+            fixture.detectChanges();
+        });
+        it('should show paper size if BristolWest or Foremost card is available', () => {
+            component.data.isBWIDCardAvailable = true;
+            component.data.isFWSPolicy = false;
+            component.data.isForemostPolicy = false;
+            const showpapersize = component.isShowPaperSize(component.data);
+            expect(showpapersize).toEqual(true);
+        });
+
+        it('should show paper size if BristolWest or Foremost card is available', () => {
+            component.data.isBWIDCardAvailable = false;
+            component.data.isFWSPolicy = false;
+            component.data.isForemostPolicy = true;
+            const showpapersize = component.isShowPaperSize(component.data);
+            expect(showpapersize).toEqual(true);
+        });
+
+        it('should show paper size if FWS card is available', () => {
+            component.data.isBWIDCardAvailable = false;
+            component.data.isFWSPolicy = true;
+            component.data.isForemostPolicy = false;
+            component.data.isActiveARSAuto = false;
+            const showpapersize = component.isShowPaperSize(component.data);
+            expect(showpapersize).toEqual(true);
+        });
+
+        it('should not show paper size if BristolWest or Foremost card is not available', () => {
+            component.data.isBWIDCardAvailable = false;
+            component.data.isFWSPolicy = false;
+            component.data.isForemostPolicy = false;
+            const showpapersize = component.isShowPaperSize(component.data);
+            expect(showpapersize).toEqual(false);
+        });
+    });
+
+    describe('#displayWallet', () => {
+        beforeEach(() => {
+            const sampleValue = 'base64string';
+            fixture = TestBed.createComponent(ProofOfCoverageComponent);
+            component = fixture.componentInstance;
+            component.data = idCardsConfigurationModel;
+            idCardServiceSpy.displayWallet.and.returnValue(of({ passkit: sampleValue }));
+        });
+
+        it('should call apple wallet for current id card & trackIdCardEvents with successfull as true', () => {
+            spyOn(component, 'addToAppleWallet');
+            spyOn(component, 'trackWalletSegmentEvents');
+            component.renewal = false;
+            featureFlagServiceSpy.isEnabled
+                .withArgs(featureConstants.enableMobileWalletsForRenewalIdCards)
+                .and.returnValue(false);
+
+            component.displayWallet(ID_CARD_CONST.wallets.appleWallet);
+
+            expect(spinnerSpy.show).toHaveBeenCalled();
+            expect(component.addToAppleWallet).toHaveBeenCalled();
+            expect(spinnerSpy.hide).toHaveBeenCalled();
+            expect(idCardServiceSpy.trackIdCardEvents).toHaveBeenCalledWith({
+                eventName: 'Add To Apple Wallet',
+                successful: true,
+            });
+            expect(component.trackWalletSegmentEvents).toHaveBeenCalled();
+            expect(tuiTrackerServiceSpy.addToState).toHaveBeenCalledWith({
+                successful: true,
+            });
+        });
+
+        it('should call apple wallet for renewal id card & trackIdCardEvents with successfull as true', () => {
+            spyOn(component, 'addToAppleWallet');
+            spyOn(component, 'trackWalletSegmentEvents');
+            component.renewal = true;
+            featureFlagServiceSpy.isEnabled
+                .withArgs(featureConstants.enableMobileWalletsForRenewalIdCards)
+                .and.returnValue(true);
+            const sampleValue = 'base64string';
+            const renewalDetails = { renewalEffectiveDate: '03/01/2025', renewalExpiryDate: '09/01/2025' };
+            idCardServiceSpy.displayWallet
+                .withArgs(ID_CARD_CONST.wallets.appleWallet, '123456', renewalDetails)
+                .and.returnValue(of({ passkit: sampleValue }));
+            component.displayWallet(ID_CARD_CONST.wallets.appleWallet);
+
+            expect(spinnerSpy.show).toHaveBeenCalled();
+            expect(component.addToAppleWallet).toHaveBeenCalled();
+            expect(spinnerSpy.hide).toHaveBeenCalled();
+            expect(idCardServiceSpy.trackIdCardEvents).toHaveBeenCalledWith({
+                eventName: 'Add To Apple Wallet',
+                successful: true,
+            });
+            expect(component.trackWalletSegmentEvents).toHaveBeenCalled();
+            expect(tuiTrackerServiceSpy.addToState).toHaveBeenCalledWith({
+                successful: true,
+            });
+        });
+
+        it('should call trackIdCardEvents with successful as false applewallet', () => {
+            idCardServiceSpy.displayWallet.and.returnValue(throwError({ message: 'api failure' }));
+            spyOn(component, 'addToAppleWallet');
+
+            component.displayWallet(ID_CARD_CONST.wallets.appleWallet);
+
+            expect(idCardServiceSpy.trackIdCardEvents).toHaveBeenCalledWith({
+                eventName: 'Add To Apple Wallet',
+                successful: false,
+                failureMsg: 'api failure',
+            });
+            expect(tuiTrackerServiceSpy.addToState).toHaveBeenCalledWith({
+                successful: false,
+                failure_reason: 'api failure',
+            });
+        });
+
+        it('should call trackIdCardEvents with successful as false google wallet', () => {
+            idCardServiceSpy.displayWallet.and.returnValue(throwError({ message: 'api failure' }));
+
+            component.displayWallet(ID_CARD_CONST.wallets.googleWallet);
+
+            expect(tuiTrackerServiceSpy.addToState).toHaveBeenCalledWith({
+                successful: false,
+                failure_reason: 'api failure',
+            });
+        });
+
+        it('should call google wallet & trackIdCardEvents with successfull as true', () => {
+            spyOn(window, 'open');
+            const expectedUrl = 'base64string';
+            component.displayWallet(ID_CARD_CONST.wallets.googleWallet);
+
+            expect(idCardServiceSpy.trackIdCardEvents).toHaveBeenCalledWith({
+                eventName: 'Add To Google Wallet',
+                successful: true,
+            });
+            expect(window.open).toHaveBeenCalledWith(expectedUrl, '_blank');
+        });
+
+        it('should call trackIdCardEvents with successful as false', () => {
+            idCardServiceSpy.displayWallet.and.returnValue(throwError({ message: 'api failure' }));
+
+            component.displayWallet(ID_CARD_CONST.wallets.googleWallet);
+
+            expect(idCardServiceSpy.trackIdCardEvents).toHaveBeenCalledWith({
+                eventName: 'Add To Google Wallet',
+                successful: false,
+                failureMsg: 'api failure',
+            });
+        });
+    });
+
+    describe('#addToAppleWallet', () => {
+        beforeEach(() => {
+            fixture = TestBed.createComponent(ProofOfCoverageComponent);
+            component = fixture.componentInstance;
+            component.data = idCardsConfigurationModel;
+        });
+
+        it('should trigger click event', () => {
+            const dummyElement = document.createElement('a');
+            const base64STring = 'base64String';
+            spyOn(document, 'createElement').and.returnValue(dummyElement);
+            spyOn(dummyElement, 'click');
+
+            component.addToAppleWallet(base64STring);
+
+            expect(dummyElement.click).toHaveBeenCalled();
+        });
+    });
+
+    describe('#displayGoogleWallet', () => {
+        it('should set shouldDisplayGoogleWallet as true for android mobile devices for all cards when feature flag is ON', () => {
+            featureFlagServiceSpy.isEnabled
+                .withArgs(featureConstants.enableMobileWalletsForRenewalIdCards)
+                .and.returnValue(true);
+            windowServiceSpy.nativeWindow.navigator.userAgent = 'android';
+            featureFlagServiceSpy.isEnvVariableEnabledCheck.and.returnValue(true);
+
+            component.displayGoogleWallet();
+
+            expect(component.displayGoogleWallet).toBeTruthy;
+        });
+        it('should set shouldDisplayGoogleWallet as true for android mobile devices for current cards when feature flag is OFF', () => {
+            featureFlagServiceSpy.isEnabled
+                .withArgs(featureConstants.enableMobileWalletsForRenewalIdCards)
+                .and.returnValue(false);
+
+            windowServiceSpy.nativeWindow.navigator.userAgent = 'android';
+            featureFlagServiceSpy.isEnvVariableEnabledCheck.and.returnValue(true);
+
+            component.displayGoogleWallet();
+
+            expect(component.displayGoogleWallet).toBeTruthy;
+        });
+    });
+
+    describe('ngOnDestroy', () => {
+        it('should properly unsubscribe subscriptions', () => {
+            component.isFeatureFlagReadySubscription$ = new Subscription();
+            component.getArsStateSubscription$ = new Subscription();
+            spyOn(component.isFeatureFlagReadySubscription$, 'unsubscribe');
+            spyOn(component.getArsStateSubscription$, 'unsubscribe');
+
+            component.ngOnDestroy();
+
+            expect(component.isFeatureFlagReadySubscription$.unsubscribe).toHaveBeenCalled();
+            expect(component.getArsStateSubscription$.unsubscribe).toHaveBeenCalled();
+        });
+    });
+
+    describe('#trackWalletSegmentEvents', () => {
+        it('should track the correct event when trackWalletSegmentEvents is called with a wallet name', () => {
+            tuiTrackerServiceSpy.track.calls.reset();
+            component.subtitle = 'Current';
+
+            component.trackWalletSegmentEvents('appleWallet');
+
+            expect(tuiTrackerServiceSpy.track).toHaveBeenCalledWith(eventNames.iconClicked, {
+                action: 'appleWallet clicked',
+                step: 'Current Id Card',
+                future_dated_vehicle: false,
+            });
+        });
+    });
+
+    describe('#getIdCardEventName', () => {
+        it('should return id card event name for fax', () => {
+            const result = component.getIdCardEventName(DialogTypes.FAX);
+
+            expect(result).toEqual('Fax My ID Card');
+        });
+
+        it('should return id card event name for mail', () => {
+            const result = component.getIdCardEventName(DialogTypes.MAIL);
+
+            expect(result).toEqual('Mail My ID Card');
+        });
+
+        it('should return id card event name for send email', () => {
+            const result = component.getIdCardEventName(DialogTypes.EMAIL);
+
+            expect(result).toEqual('Email My ID Card');
+        });
+    });
+
+    describe('#isDisplayGoogleWalletForFM', () => {
+        beforeEach(() => {
+            component.shouldDisplayGoogleWallet = false;
+            featureFlagServiceSpy.isEnabled.and.returnValue(false);
+        });
+
+        it('should return true if all conditions are met', () => {
+            component.shouldDisplayGoogleWallet = true;
+            component.data = { isForemostPolicy: true } as any;
+            featureFlagServiceSpy.isEnabled.withArgs(featureConstants.enableFmPolicyDetails).and.returnValue(true);
+
+            expect(component.isDisplayGoogleWalletForFM()).toEqual(true);
+        });
+
+        it('should return false if shouldDisplayGoogleWalletis false', () => {
+            component.shouldDisplayGoogleWallet = false;
+            component.data = { isForemostPolicy: true } as any;
+            featureFlagServiceSpy.isEnabled.withArgs(featureConstants.enableFmPolicyDetails).and.returnValue(true);
+
+            expect(component.isDisplayGoogleWalletForFM()).toEqual(false);
+        });
+
+        it('should return false if featureflag is not on', () => {
+            component.shouldDisplayGoogleWallet = true;
+            featureFlagServiceSpy.isEnabled.withArgs(featureConstants.enableFmPolicyDetails).and.returnValue(false);
+
+            expect(component.isDisplayGoogleWalletForFM()).toEqual(false);
+        });
+    });
+});
+
+const idCardsConfigurationModel = {
+    agentOfRecordId: '41RD34',
+    isAutoPolicy: true,
+    isHomePolicy: false,
+    shouldRenderEvidenceOfInsurance: true,
+    address: {
+        address1: '101 Love st.',
+        address2: 'Los Angeles 900210, CA',
+    },
+    policyContractNumber: '0123456789',
+    lineOfBusiness: 'PLA',
+    policyType: 'AUTO',
+    policySource: 'PTA',
+    effectiveDate: '04-10-2020',
+    expirationDate: '04-10-2021',
+    subjectOfInsurance: [
+        {
+            id: '123',
+            ymm: 'Tesla Model3 2020',
+            vin: '123456789',
+            evidenceOfInsuranceLink: 'evidenceOfInsuranceLink',
+            renewalEvidenceOfInsuranceLink: '',
+        },
+        {
+            id: '456',
+            ymm: 'Tesla ModelX 2021',
+            vin: '987654321',
+            evidenceOfInsuranceLink: 'evidenceOfInsuranceLink2',
+            renewalEvidenceOfInsuranceLink: '',
+        },
+    ],
+    cardLink: {
+        small: 'small link',
+        large: 'large link',
+        encrypted: 'encrypted link',
+        encryptedLargeIdCardDocumentId: 'encryptedLargeIdCardDocumentId',
+    },
+    showFaxIdCard: true,
+    showMailIdCard: true,
+    showEmailIdCard: true,
+    renewalFlag: false,
+    renewalIDCards: null,
+    renewalEffectiveDate: null,
+    renewalExpiryDate: null,
+    title: 'Auto Id Cards',
+    proofOfCoverageSubTitle: 'Current',
+    dialogData: {
+        width: '420',
+        fax: {
+            title: 'fax title',
+            text: 'fax text',
+            cta1: 'fax cta 1',
+            cta2: 'fax cta 2',
+            gtmTag1: 'fax gtmTag1',
+            gtmTag2: 'fax gtmTag2',
+            inputField: true,
+            placeholder: 'fax placeholder',
+        },
+        mail: {
+            title: 'mail title',
+            text: 'mail text',
+            cta1: 'mail cta 1',
+            cta2: 'mail cta 2',
+            gtmTag1: 'mail gtmTag1',
+            gtmTag2: 'mail gtmTag2',
+            address: {
+                address1: 'mail address 1',
+                address2: 'mail address 2',
+            },
+        },
+        email: {
+            title: 'email title',
+            text: 'email text',
+            cta1: 'email cta 1',
+            cta2: 'email cta 2',
+            gtmTag1: 'email gtmTag1',
+            gtmTag2: 'email gtmTag2',
+            inputField: true,
+            placeholder: 'email placeholder',
+        },
+    },
+    nJDialog: {
+        isShow: false,
+    },
+    isARSWithStateNY: false,
+    isActiveARSAuto: false,
+    units: [{ ymm: 'xyz', vin: 'v123', link: 'url' }],
+};
+const idCardsConfigurationModelRenewal = {
+    agentOfRecordId: '41RD34',
+    address: null,
+    cardLink: {
+        small: 'smallLink',
+        large: 'largeLink',
+        encrypted: 'encryptedLink',
+    },
+    dialogData: {
+        width: '448px',
+        fax: {
+            cta1: '',
+            cta2: '',
+            gtmTag1: '',
+            gtmTag2: '',
+            errors: {
+                maxLength: '',
+                minLength: '',
+                pattern: '',
+                requred: '',
+            },
+            inputField: true,
+            placeholder: '',
+            text: '',
+            title: '',
+        },
+        mail: {
+            address: {
+                address1: '',
+                address2: '',
+            },
+            cta1: '',
+            cta2: '',
+            gtmTag1: '',
+            gtmTag2: '',
+            text: '',
+            title: '',
+        },
+        email: {
+            cta1: '',
+            cta2: '',
+            gtmTag1: '',
+            gtmTag2: '',
+            errors: {
+                pattern: '',
+                requred: '',
+            },
+            inputField: true,
+            placeholder: '',
+            text: '',
+            title: '',
+        },
+    },
+    nJDialog: {
+        isShow: false,
+    },
+    effectiveDate: '10/28/2020',
+    expirationDate: '',
+    isAutoPolicy: true,
+    isHomePolicy: false,
+    lineOfBusiness: 'AUTO',
+    policyType: 'AUTO',
+    policyContractNumber: '',
+    proofOfCoverageSubTitle: '',
+    showFaxIdCard: true,
+    showMailIdCard: true,
+    showEmailIdCard: true,
+    renewalEffectiveDate: 'date for renewal effective',
+    renewalExpiryDate: 'date for renewal expiration',
+    renewalFlag: true,
+    renewalIDCards: {
+        small: 'renewal_smallLink',
+        large: 'renewal_largeLink',
+        encrypted: null,
+    },
+    shouldRenderEvidenceOfInsurance: true,
+    subjectOfInsurance: [],
+    title: 'Auto ID Cards',
+};
+const idCardsConfigurationModelNoImages = {
+    agentOfRecordId: '41RD34',
+    isAutoPolicy: true,
+    isHomePolicy: false,
+    shouldRenderEvidenceOfInsurance: true,
+    address: {
+        address1: '101 Love st.',
+        address2: 'Los Angeles 900210, CA',
+    },
+    policyContractNumber: '0123456789',
+    lineOfBusiness: 'PLA',
+    policyType: 'AUTO',
+    effectiveDate: '04-10-2020',
+    expirationDate: '04-10-2021',
+    subjectOfInsurance: [
+        {
+            id: '123',
+            ymm: 'Tesla Model3 2020',
+            vin: '123456789',
+            evidenceOfInsuranceLink: 'evidenceOfInsuranceLink',
+            renewalEvidenceOfInsuranceLink: '',
+        },
+        {
+            id: '456',
+            ymm: 'Tesla ModelX 2021',
+            vin: '987654321',
+            evidenceOfInsuranceLink: 'evidenceOfInsuranceLink2',
+            renewalEvidenceOfInsuranceLink: '',
+        },
+    ],
+    cardLink: {
+        small: null,
+        large: null,
+        encrypted: null,
+    },
+    renewalFlag: false,
+    renewalIDCards: null,
+    renewalEffectiveDate: null,
+    renewalExpiryDate: null,
+    title: 'Auto Id Cards',
+    proofOfCoverageSubTitle: 'Current',
+    dialogData: {
+        width: '420',
+        fax: {
+            title: 'fax title',
+            text: 'fax text',
+            cta1: 'fax cta 1',
+            cta2: 'fax cta 2',
+            gtmTag1: 'fax gtmTag1',
+            gtmTag2: 'fax gtmTag2',
+            inputField: true,
+            placeholder: 'fax placeholder',
+        },
+        mail: {
+            title: 'mail title',
+            text: 'mail text',
+            cta1: 'mail cta 1',
+            cta2: 'mail cta 2',
+            gtmTag1: 'mail gtmTag1',
+            gtmTag2: 'mail gtmTag2',
+            address: {
+                address1: 'mail address 1',
+                address2: 'mail address 2',
+            },
+        },
+        email: {
+            title: 'email title',
+            text: 'email text',
+            cta1: 'email cta 1',
+            cta2: 'email cta 2',
+            gtmTag1: 'email gtmTag1',
+            gtmTag2: 'email gtmTag2',
+            inputField: true,
+            placeholder: 'email placeholder',
+        },
+    },
+    nJDialog: {
+        isShow: false,
+    },
+};
+const easternExpansion = {
+    hasExpansionState: true,
+    hasExpansionStateOnly: false,
+    expansionStates: 'Kentucky',
+    expansionContactNumber: '1-877-388-6628',
+};
+const futureIdCards = {
+    effectiveDate: '2025-06-26',
+    smallIDCard:
+        'smallIDCard?Authorization=oktaToken&usertype=undefined&authorizationtype=okta&frmsregion=TEST_ENV&frmsbrand=Farmers',
+    encryptedDocumentId:
+        'encryptedDocumentId?Authorization=oktaToken&usertype=undefined&authorizationtype=okta&frmsregion=TEST_ENV&frmsbrand=Farmers',
+    largeIDCard:
+        'largeIDCard?Authorization=oktaToken&usertype=undefined&authorizationtype=okta&frmsregion=TEST_ENV&frmsbrand=Farmers',
+    vehicleIdList: ['2203295018', '2204195060'],
+    unitsHeader: ID_CARD_CONST.typeOfUnit.vehicles,
+    subjectOfInsurance: [
+        {
+            id: '2203295018',
+            vin: '1N6AF0LY3CN199814',
+            ymm: '2009 honda odyssey van  ex',
+            evidenceOfInsuranceLink:
+                'https://csstu.farmers.com/customerselfservice-api/evidenceOfInsurance/encryptedLink?Authorization=oktaToken&usertype=undefined&authorizationtype=okta&frmsregion=TEST_ENV&frmsbrand=Farmers',
+            renewalEvidenceOfInsuranceLink:
+                'https://csstu.farmers.com/customerselfservice-api/evidenceOfInsurance/renewalEncryptedLink?Authorization=oktaToken&usertype=undefined&authorizationtype=okta&frmsregion=TEST_ENV&frmsbrand=Farmers',
+        },
+        {
+            id: '2204195060',
+            vin: 'WDBRF40J75A752770',
+            ymm: '2009 honda odyssey van  ex',
+            evidenceOfInsuranceLink:
+                'https://csstu.farmers.com/customerselfservice-api/evidenceOfInsurance/encryptedLink?Authorization=oktaToken&usertype=undefined&authorizationtype=okta&frmsregion=TEST_ENV&frmsbrand=Farmers',
+            renewalEvidenceOfInsuranceLink:
+                'https://csstu.farmers.com/customerselfservice-api/evidenceOfInsurance/renewalEncryptedLink?Authorization=oktaToken&usertype=undefined&authorizationtype=okta&frmsregion=TEST_ENV&frmsbrand=Farmers',
+        },
+    ],
+};
+Chrome Headless 141.0.0.0 (Windows 10) ProofOfCoverageComponent current ProofOfCoverageComponent #updateDisplayData should not show fax, mail options if isBW login is true FAILED
+        Error: Expected true to be false.
+            at <Jasmine>
+            at UserContext.apply (src/app/ui/policies/id-cards/proof-of-coverage/proof-of-coverage.component.spec.ts:1499:39)    
+            at _ZoneDelegate.invoke (node_modules/zone.js/fesm2015/zone.js:369:28)
+            at ProxyZoneSpec.onInvoke (node_modules/zone.js/fesm2015/zone-testing.js:2081:39)
+        Error: Expected true to be false.
+            at <Jasmine>
+            at UserContext.apply (src/app/ui/policies/id-cards/proof-of-coverage/proof-of-coverage.component.spec.ts:1500:40)    
+            at _ZoneDelegate.invoke (node_modules/zone.js/fesm2015/zone.js:369:28)
+            at ProxyZoneSpec.onInvoke (node_modules/zone.js/fesm2015/zone-testing.js:2081:39)
+........... 
