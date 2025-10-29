@@ -1,0 +1,729 @@
+logout.service.ts and spec .ts code
+import { Injectable } from '@angular/core';
+import { Observable, of } from 'rxjs';
+import { finalize } from 'rxjs/operators';
+ 
+import { OktaRepositoryBase } from '~/data/repository/okta/okta.repository.base';
+import { logoutConstants } from '~/services/logout/logout.constants';
+import { CookieService } from '~/services/cookie/cookie.service';
+import { SessionStorageService } from '~/services/session-storage/session-storage.service';
+import { STORAGE_CONST } from '~/core/constants/storage.constants';
+import { GetCookieModel } from '~/data/repository/get-cookie/get-cookie.model';
+import { WindowService } from '../window/window.service';
+import { FarmersAnalyticsService } from '../farmers-analytics/farmers-analytics.service';
+import { eventNames } from '~/core/constants/mixpanel-events.constant';
+import { MixpanelService } from '../mixpanel/mixpanel.service';
+import { CacheManagerService } from '../cache-manager/cache-manager.service';
+import { SpinnerService } from '../spinner/spinner.service';
+import { FeatureFlagService } from '~/services/feature-flag/feature-flag.service';
+import { TuiTrackerService } from 'ng-tractor-ui';
+import { environment } from '~environments/environment';
+import { CSS_CONST } from '~/core/constants/css.constant';
+import { featureConstants } from '~/services/feature-flag/feature-flag.constants';
+import { FMAgentChannel } from '~/core/constants/core-css.constants';
+import { generateGUID } from '~/ui/shared/utilities/string-utility';
+ 
+@Injectable({
+    providedIn: 'root',
+})
+export class LogoutService {
+    private readonly STORAGE_NAMESPACE = 'CSS';
+    private readonly KEY = 'accessToken';
+    private readonly NO = 'n';
+    signOutURL = logoutConstants.signOutURL;
+    oktaSessionId: string;
+    isAccountIA = environment.isAccountIA;
+    isBW=environment.isBWLogin
+ 
+    constructor(
+        private oktaRepository: OktaRepositoryBase,
+        private cookieService: CookieService,
+        private analyticsService: FarmersAnalyticsService,
+        private sessionService: SessionStorageService,
+        private window: WindowService,
+        private mixpanelService: MixpanelService,
+        private cacheManagerService: CacheManagerService,
+        private spinner: SpinnerService,
+        private tuiTrackerService: TuiTrackerService,
+        private featureFlagService: FeatureFlagService,
+    ) {}
+ 
+    removeOktaSession(): Observable<any> {
+        return this.oktaRepository.removeSession();
+    }
+ 
+    getSurveyCookie(): Observable<GetCookieModel> {
+        const showSurveyStatus = this.sessionService.getParsedItem(
+            STORAGE_CONST.sessionStorage.showQualtricsSurveyStatus,
+        );
+ 
+        if (showSurveyStatus && showSurveyStatus.toLowerCase() === this.NO) {
+            return of(null);
+        } else {
+            this.tuiTrackerService.addToState({ app_name: CSS_CONST.appNameFCom });
+            const params = {
+                eventName: eventNames.surveyPopups,
+            };
+            this.analyticsService.trackEventWithParams(params);
+            this.tuiTrackerService.track(eventNames.surveyPopups);
+            return this.cookieService.getCookie('');
+        }
+    }
+ 
+    refreshSession() {
+        setInterval(() => this.getOktaSession(), 1000 * 60 * 30);
+    }
+ 
+    getOktaSession() {
+        this.oktaRepository.getSession().subscribe((data) => {
+            this.oktaSessionId = data.sessionId;
+        });
+    }
+ 
+    redirectUser() {
+        const salesforceSession = this.sessionService.getParsedItem(STORAGE_CONST.sessionStorage.salesforceSession);
+        const userIds = {
+            cssId: STORAGE_CONST.sessionStorage.cssId,
+            ldapId: STORAGE_CONST.sessionStorage.ldapId,
+            userId: STORAGE_CONST.sessionStorage.userId,
+            loginId: STORAGE_CONST.sessionStorage.loginId,
+            encodedCssId: STORAGE_CONST.sessionStorage.encodedCssId,
+        };
+ 
+        if (!this.isAccountIA) {
+            this.mixpanelService.resetSuperProperty();
+        }
+        this.sessionService.removeItem(STORAGE_CONST.sessionStorage.urlHistoryForSendMessage);
+        this.sessionService.removeItem(STORAGE_CONST.sessionStorage.isSurveyCompleted, true);
+        this.sessionService.removeItem(STORAGE_CONST.sessionStorage.mileageSurveyUrl);
+        this.sessionService.removeItem(STORAGE_CONST.sessionStorage.isPreBindEsignContingencyModalAlreadyDisplayed);
+        this.sessionService.removeItem(STORAGE_CONST.sessionStorage.isPolicyRenewalModalAlreadyDisplayed, true);
+        this.sessionService.removeItem(STORAGE_CONST.sessionStorage.isHybridEsignModalAlreadyDisplayed, false);
+        this.sessionService.removeItem(`${this.STORAGE_NAMESPACE.toLowerCase()}.${this.KEY}`, true);
+        this.sessionService.removeItem(STORAGE_CONST.sessionStorage.salesforceSession, false);
+        this.sessionService.removeItem(`${this.STORAGE_NAMESPACE}.${STORAGE_CONST.sessionStorage.featureFlags}`, true);
+        this.sessionService.removeItem(
+            `${this.STORAGE_NAMESPACE}.${STORAGE_CONST.sessionStorage.stateEligibility}`,
+            true,
+        );
+        this.sessionService.removeItem(STORAGE_CONST.sessionStorage.agentId);
+        this.sessionService.removeItem(STORAGE_CONST.sessionStorage.policySummaryPlaEs);
+        this.sessionService.removeItem(STORAGE_CONST.sessionStorage.ecn);
+        this.sessionService.removeItem(STORAGE_CONST.sessionStorage.claimsToken);
+        this.sessionService.removeMultipleValuesFromSessionStorage(userIds);
+        this.sessionService.removeItem(STORAGE_CONST.sessionStorage.showPaperlessProactiveForThisSession);
+        this.sessionService.removeItem(STORAGE_CONST.sessionStorage.hasShownPewcForThisSession);
+        this.sessionService.removeItem(STORAGE_CONST.sessionStorage.hasShownPaperlessPartialForThisSession);
+        this.sessionService.removeItem(STORAGE_CONST.sessionStorage.embeddedEsignTransactionId, true);
+        this.sessionService.removeItem(STORAGE_CONST.sessionStorage.embeddedEsignStatus);
+        this.sessionService.removeItem(STORAGE_CONST.sessionStorage.esignStatusSummary);
+        this.sessionService.removeItem(STORAGE_CONST.sessionStorage.esignPendingCheckList);
+        this.sessionService.removeItem(STORAGE_CONST.sessionStorage.userVisitedEsign, true);
+        this.sessionService.removeItem(STORAGE_CONST.sessionStorage.accountNumber, true);
+        this.sessionService.removeItem(STORAGE_CONST.sessionStorage.hasPaymentSubmitted);
+        this.sessionService.removeItem(STORAGE_CONST.sessionStorage.hasAutoPaySubmitted);
+        this.sessionService.removeItem(STORAGE_CONST.sessionStorage.isProxyVoteDeeplinkPending);
+        this.sessionService.removeItem(STORAGE_CONST.sessionStorage.firstLogin);
+        this.sessionService.removeItem(STORAGE_CONST.sessionStorage.isPEWCOpted);
+        this.sessionService.removeItem(STORAGE_CONST.sessionStorage.selectedPolicy);
+        this.sessionService.removeItem(STORAGE_CONST.sessionStorage.updatedA360PaperlessPreferences);
+        this.sessionService.removeItem(STORAGE_CONST.sessionStorage.a360PendingTransactionPolicies);
+        this.sessionService.removeItem(STORAGE_CONST.sessionStorage.isRequiredDocumentsModalAlreadyDisplayed, false);
+        this.sessionService.removeItem(STORAGE_CONST.sessionStorage.surveyDoNotDisturb);
+        this.sessionService.removeItem(STORAGE_CONST.sessionStorage.choiceCarrierInfo);
+        this.sessionService.removeItem(STORAGE_CONST.sessionStorage.isNBXChoicePolicyOnlyUser, true);
+        this.sessionService.removeItem(STORAGE_CONST.sessionStorage.oneTrustJwtToken);
+        this.sessionService.removeItem(STORAGE_CONST.sessionStorage.quoteState);
+        this.sessionService.removeItem(STORAGE_CONST.sessionStorage.isBackToHomepage);
+        this.sessionService.removeItem(STORAGE_CONST.sessionStorage.isMVRStatusNoHit);
+        this.sessionService.removeItem(STORAGE_CONST.sessionStorage.futureEffectiveVehicleDetails);
+        this.sessionService.removeItemFromLocalStorage(STORAGE_CONST.localStorage.usernameForPasswordRecovery);
+        this.sessionService.removeItemFromLocalStorage(
+            `${this.STORAGE_NAMESPACE.toUpperCase()}.${STORAGE_CONST.localStorage.userProfile}`,
+            true,
+        );
+        this.resetOneTrustIdentifier();
+         if (this.isBW) {
+            this.window.nativeWindow.location.href = 'https://cssdev.bristolwest.com/dev/login';
+            return;
+        }
+ 
+ 
+        if (salesforceSession) {
+            this.signOutURL = logoutConstants.signOutURLSF;
+        }
+        if (this.getSSOUser()) {
+            this.sessionService.removeItem(STORAGE_CONST.sessionStorage.ssoReferredParams, true);
+            return;
+        }
+        if (this.isAccountIA) {
+            const isAgentChannelEA = this.sessionService.getItem(STORAGE_CONST.sessionStorage.agentChannel);
+ 
+            if (isAgentChannelEA !== FMAgentChannel.EA) {
+                this.sessionService.setItem(
+                    STORAGE_CONST.sessionStorage.logoutIASurveyStatus,
+                    STORAGE_CONST.booleanStrings.TRUE,
+                );
+            }
+            this.sessionService.removeItem(STORAGE_CONST.sessionStorage.iaCustomerWithoutEcnAndCssId);
+            this.sessionService.removeItem(STORAGE_CONST.sessionStorage.agentChannel);
+            this.window.nativeWindow.location.href = environment.loginUrl;
+            return;
+        }
+        this.window.nativeWindow.location.href = this.signOutURL;
+    }
+ 
+    logout(setSurveyCookie = true): void {
+        const removeOktaCall = this.removeOktaSession();
+        this.spinner.show();
+ 
+        if (removeOktaCall) {
+            removeOktaCall
+                .pipe(
+                    finalize(() => {
+                        this.cacheManagerService.removeAllAPICache();
+ 
+                        if (this.featureFlagService.isEnvVariableEnabledCheck(featureConstants.enableChat2CssPoc)) {
+                            this.updateChatScript();
+                        }
+ 
+                        if (setSurveyCookie && this.isNBXChoicePolicyOnlyUser()) {
+                            this.spinner.hide();
+                            this.redirectUser();
+                            return;
+                        }
+ 
+                        if (setSurveyCookie && !this.getSSOUser()) {
+                            this.setSurveyCookie();
+                        }
+                        this.spinner.hide();
+                    }),
+                )
+                .subscribe();
+        }
+    }
+ 
+    setSurveyCookie(): void {
+        this.getSurveyCookie()
+            .pipe(
+                finalize(() => {
+                    this.spinner.hide();
+                    this.redirectUser();
+                }),
+            )
+            .subscribe((data) => {
+                if (data) {
+                    this.cookieService.createLoginIdCookie(data.cookie);
+                }
+            });
+    }
+ 
+    getSSOUser(): boolean {
+        return this.sessionService.getParsedItem(STORAGE_CONST.sessionStorage.isSSOUser, true) || false;
+    }
+ 
+    isNBXChoicePolicyOnlyUser(): boolean {
+        return this.sessionService.getParsedItem(STORAGE_CONST.sessionStorage.isNBXChoicePolicyOnlyUser, true) || false;
+    }
+ 
+    resetOneTrustIdentifier(): void {
+        const cpraOneTrustUcpmIntegrationEnabled = this.featureFlagService.isEnvVariableEnabledCheck(
+            featureConstants.envCpraOneTrustUcpmIntegrationEnabled,
+        );
+        if (!cpraOneTrustUcpmIntegrationEnabled) {
+            return;
+        }
+        const guid = generateGUID();
+        this.window.nativeWindow?.OneTrust?.setDataSubjectId(guid, true);
+    }
+ 
+    updateChatScript() {
+        const Chat2Script = `
+        if (typeof initEndChat != 'undefined' && initEndChat != null)
+        {
+            var cssObj = {
+                "logoutIndicator" : "true",
+            }
+            initEndChat(cssObj);
+        }
+        `;
+ 
+        const scriptElement = document.createElement('script');
+        scriptElement.innerHTML = Chat2Script;
+ 
+        document.head.appendChild(scriptElement);
+    }
+}
+ 
+ 
+import { discardPeriodicTasks, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { of } from 'rxjs';
+ 
+import { LogoutService } from './logout.service';
+import { OktaRepositoryBase } from '~/data/repository/okta/okta.repository.base';
+import { CookieService } from '~/services/cookie/cookie.service';
+import { CustomFormatPipe } from '~/ui/shared/filters/format.pipe';
+import { HttpHandler } from '@angular/common/http';
+import { SessionStorageService } from '~/services/session-storage/session-storage.service';
+import { WindowService } from '../window/window.service';
+import { FarmersAnalyticsService } from '../farmers-analytics/farmers-analytics.service';
+import { MixpanelService } from '../mixpanel/mixpanel.service';
+import { SpinnerService } from '~/services/spinner/spinner.service';
+import { CacheManagerService } from '~/services/cache-manager/cache-manager.service';
+import { TuiTrackerService } from 'ng-tractor-ui';
+import { eventNames } from '~/core/constants/mixpanel-events.constant';
+import { environment } from '~environments/environment';
+import { STORAGE_CONST } from '~/core/constants/storage.constants';
+import { FeatureFlagService } from '../feature-flag/feature-flag.service';
+import { featureConstants } from '../feature-flag/feature-flag.constants';
+ 
+const windowSpy = {
+    nativeWindow: {
+        location: {
+            href: '',
+        },
+        OneTrust: {
+            setDataSubjectId: jasmine.createSpy('setDataSubjectId'),
+        },
+    },
+};
+ 
+fdescribe('LogoutService', () => {
+    let service: LogoutService;
+    const cookieServiceSpy = jasmine.createSpyObj('CookieService', ['getCookie', 'createLoginIdCookie']);
+    const analyticsServiceSpy = jasmine.createSpyObj('FarmersAnalyticsService', ['trackEventWithParams']);
+    const oktaRepository = jasmine.createSpyObj('OktaRepositoryBase', ['removeSession', 'getSession']);
+    const sessionStorageServiceSpy = jasmine.createSpyObj('SessionStorageService', [
+        'getParsedItem',
+        'removeItem',
+        'removeMultipleValuesFromSessionStorage',
+        'setItem',
+        'getItem',
+        'removeItemFromLocalStorage',
+    ]);
+    const mixpanelServiceSpy = jasmine.createSpyObj('MixpanelService', ['resetSuperProperty']);
+    const tuiTrackerSpy = jasmine.createSpyObj('tuiTrackerService', ['track', 'addToState']);
+    const spinnerServiceSpy = jasmine.createSpyObj('SpinnerService', ['show', 'hide']);
+    const cacheManagerServiceSpy = jasmine.createSpyObj('CacheManagerService', ['removeAllAPICache']);
+    const featureFlagServiceSpy = jasmine.createSpyObj('FeatureFlagService', [
+        'isEnabled',
+        'isEnvVariableEnabledCheck',
+    ]);
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            providers: [
+                HttpHandler,
+                LogoutService,
+                CustomFormatPipe,
+                { provide: OktaRepositoryBase, useValue: oktaRepository },
+                { provide: FarmersAnalyticsService, useValue: analyticsServiceSpy },
+                { provide: CookieService, useValue: cookieServiceSpy },
+                { provide: WindowService, useValue: windowSpy },
+                {
+                    provide: SessionStorageService,
+                    useValue: sessionStorageServiceSpy,
+                },
+                { provide: MixpanelService, useValue: mixpanelServiceSpy },
+                { provide: TuiTrackerService, useValue: tuiTrackerSpy },
+                { provide: SpinnerService, useValue: spinnerServiceSpy },
+                { provide: CacheManagerService, useValue: cacheManagerServiceSpy },
+                { provide: FeatureFlagService, useValue: featureFlagServiceSpy },
+            ],
+        });
+ 
+        service = TestBed.inject(LogoutService);
+    });
+ 
+    it('should be created', () => {
+        expect(service).toBeTruthy();
+    });
+ 
+    it('should remove okta session on logout', () => {
+        oktaRepository.removeSession.and.returnValue(of({}));
+ 
+        service.removeOktaSession().subscribe(() => {
+            expect(oktaRepository.removeSession).toHaveBeenCalled();
+        });
+    });
+ 
+    it('should get okta session to keep session alive at okta', () => {
+        oktaRepository.getSession.and.returnValue(of({ sessionId: 'sessionId' }));
+ 
+        service.getOktaSession();
+ 
+        expect(service.oktaSessionId).toEqual('sessionId');
+    });
+ 
+    describe('#getSurveyCookie', () => {
+        it('should call getCookie service and track event to mixpanel if showSurveyStatus session is y', () => {
+            cookieServiceSpy.getCookie.and.returnValue(of({ cookie: 'cookie' }));
+            sessionStorageServiceSpy.getParsedItem.and.returnValue('Y');
+ 
+            service.getSurveyCookie().subscribe((data) => {
+                expect(tuiTrackerSpy.addToState).toHaveBeenCalledWith({ app_name: 'F.Com' });
+                expect(analyticsServiceSpy.trackEventWithParams).toHaveBeenCalled();
+                expect(tuiTrackerSpy.track).toHaveBeenCalledWith(eventNames.surveyPopups);
+                expect(cookieServiceSpy.getCookie).toHaveBeenCalled();
+                expect(data).toEqual({ cookie: 'cookie' });
+            });
+        });
+ 
+        it('should not call set cookie on logout if showSurveyStatus session is n', () => {
+            sessionStorageServiceSpy.getParsedItem.and.returnValue('N');
+ 
+            service.getSurveyCookie().subscribe((data) => {
+                expect(data).toEqual(null);
+            });
+        });
+    });
+ 
+    describe('#redirectUser', () => {
+        it('should remove values from session', () => {
+            const userIds = {
+                cssId: 'cssId',
+                ldapId: 'ldapId',
+                userId: 'userId',
+                loginId: 'loginId',
+                encodedCssId: 'encodedCssId',
+            };
+ 
+            service.redirectUser();
+ 
+            expect(sessionStorageServiceSpy.removeItem).toHaveBeenCalledWith(
+                STORAGE_CONST.sessionStorage.urlHistoryForSendMessage,
+            );
+            expect(sessionStorageServiceSpy.removeItem).toHaveBeenCalledWith(
+                STORAGE_CONST.sessionStorage.isSurveyCompleted,
+                true,
+            );
+            expect(sessionStorageServiceSpy.removeItem).toHaveBeenCalledWith(
+                STORAGE_CONST.sessionStorage.mileageSurveyUrl,
+            );
+            expect(sessionStorageServiceSpy.removeItem).toHaveBeenCalledWith(
+                STORAGE_CONST.sessionStorage.isPreBindEsignContingencyModalAlreadyDisplayed,
+            );
+            expect(sessionStorageServiceSpy.removeItem).toHaveBeenCalledWith(
+                'isPolicyRenewalModalAlreadyDisplayed',
+                true,
+            );
+            expect(sessionStorageServiceSpy.removeItem).toHaveBeenCalledWith(
+                'isHybridEsignModalAlreadyDisplayed',
+                false,
+            );
+            expect(sessionStorageServiceSpy.removeItem).toHaveBeenCalledWith('css.accessToken', true);
+            expect(sessionStorageServiceSpy.removeItem).toHaveBeenCalledWith('salesforceSession', false);
+            expect(sessionStorageServiceSpy.removeItem).toHaveBeenCalledWith('CSS.FEATURE_FLAGS', true);
+            expect(sessionStorageServiceSpy.removeItem).toHaveBeenCalledWith('CSS.STATE_ELIGIBILITY', true);
+            expect(sessionStorageServiceSpy.removeItem).toHaveBeenCalledWith('agentId');
+            expect(sessionStorageServiceSpy.removeItem).toHaveBeenCalledWith('policysummary_pla_es');
+            expect(sessionStorageServiceSpy.removeItem).toHaveBeenCalledWith('ecn');
+            expect(sessionStorageServiceSpy.removeItem).toHaveBeenCalledWith('claimsToken');
+            expect(sessionStorageServiceSpy.removeMultipleValuesFromSessionStorage).toHaveBeenCalledWith(userIds);
+            expect(sessionStorageServiceSpy.removeItem).toHaveBeenCalledWith('showPaperlessProactiveForThisSession');
+            expect(sessionStorageServiceSpy.removeItem).toHaveBeenCalledWith('hasShownPewcForThisSession');
+            expect(sessionStorageServiceSpy.removeItem).toHaveBeenCalledWith('hasShownPaperlessPartialForThisSession');
+            expect(sessionStorageServiceSpy.removeItem).toHaveBeenCalledWith('com.farmers.esign.txnId', true);
+            expect(sessionStorageServiceSpy.removeItem).toHaveBeenCalledWith(
+                'com.farmers.esign.userVisitedEsign',
+                true,
+            );
+            expect(sessionStorageServiceSpy.removeItem).toHaveBeenCalledWith('embeddedEsignStatus');
+            expect(sessionStorageServiceSpy.removeItem).toHaveBeenCalledWith('esignStatusSummary');
+            expect(sessionStorageServiceSpy.removeItem).toHaveBeenCalledWith('com.farmers.esign.accountNumber', true);
+            expect(sessionStorageServiceSpy.removeItem).toHaveBeenCalledWith('esignPendingCheckList');
+            expect(sessionStorageServiceSpy.removeItem).toHaveBeenCalledWith('hasPaymentSubmitted');
+            expect(sessionStorageServiceSpy.removeItem).toHaveBeenCalledWith('hasAutoPaySubmitted');
+            expect(sessionStorageServiceSpy.removeItem).toHaveBeenCalledWith('isProxyVoteDeeplinkPending');
+            expect(sessionStorageServiceSpy.removeItem).toHaveBeenCalledWith('firstLogin');
+            expect(sessionStorageServiceSpy.removeItem).toHaveBeenCalledWith('isPEWCOpted');
+            expect(sessionStorageServiceSpy.removeItem).toHaveBeenCalledWith('selectedPolicy');
+            expect(sessionStorageServiceSpy.removeItem).toHaveBeenCalledWith('surveyDoNotDisturb');
+            expect(sessionStorageServiceSpy.removeItem).toHaveBeenCalledWith('updatedA360PaperlessPreferences');
+            expect(sessionStorageServiceSpy.removeItem).toHaveBeenCalledWith('a360PendingTransactionPolicies');
+            expect(sessionStorageServiceSpy.removeItem).toHaveBeenCalledWith(
+                STORAGE_CONST.sessionStorage.choiceCarrierInfo,
+            );
+            expect(sessionStorageServiceSpy.removeItem).toHaveBeenCalledWith(
+                STORAGE_CONST.sessionStorage.isNBXChoicePolicyOnlyUser,
+                true,
+            );
+            expect(sessionStorageServiceSpy.removeItem).toHaveBeenCalledWith(
+                STORAGE_CONST.sessionStorage.oneTrustJwtToken,
+            );
+            expect(sessionStorageServiceSpy.removeItem).toHaveBeenCalledWith(STORAGE_CONST.sessionStorage.quoteState);
+            expect(sessionStorageServiceSpy.removeItem).toHaveBeenCalledWith(
+                STORAGE_CONST.sessionStorage.isBackToHomepage,
+            );
+            expect(sessionStorageServiceSpy.removeItem).toHaveBeenCalledWith(
+                STORAGE_CONST.sessionStorage.isMVRStatusNoHit,
+            );
+            expect(sessionStorageServiceSpy.removeItem).toHaveBeenCalledWith(
+                'isRequiredDocumentsModalAlreadyDisplayed',
+                false,
+            );
+            expect(sessionStorageServiceSpy.removeItem).toHaveBeenCalledWith(
+                STORAGE_CONST.sessionStorage.futureEffectiveVehicleDetails,
+            );
+            expect(sessionStorageServiceSpy.removeItemFromLocalStorage).toHaveBeenCalledWith(
+                'usernameForPasswordRecovery',
+            );
+            expect(sessionStorageServiceSpy.removeItemFromLocalStorage).toHaveBeenCalledWith('CSS.userProfile', true);
+        });
+ 
+        it('should reset the superProperty in mixpanel', () => {
+            service.isAccountIA = false;
+ 
+            service.redirectUser();
+ 
+            expect(mixpanelServiceSpy.resetSuperProperty).toHaveBeenCalled();
+        });
+ 
+        it('should call resetOneTrustIdentifier', () => {
+            spyOn(service, 'resetOneTrustIdentifier');
+ 
+            service.redirectUser();
+ 
+            expect(service.resetOneTrustIdentifier).toHaveBeenCalled();
+        });
+ 
+        it('should redirect to CSS_UserSignout URL if salesforce session was active', () => {
+            sessionStorageServiceSpy.getParsedItem.and.returnValue(true);
+ 
+            service.redirectUser();
+ 
+            expect(service.signOutURL).toBe('/customerselfservice/CSS_UserSignout');
+        });
+ 
+        it('should redirect to /?action=logout URL if salesforce session not active', () => {
+            sessionStorageServiceSpy.getParsedItem.and.returnValue(false);
+            spyOn(service, 'getSSOUser').and.returnValue(false);
+            service.isAccountIA = false;
+ 
+            service.redirectUser();
+ 
+            expect(service.signOutURL).toBe('/?action=logout');
+        });
+ 
+        it('should remove ssoParams from session storage when getSSOUser is true', () => {
+            spyOn(service, 'getSSOUser').and.returnValue(true);
+ 
+            service.redirectUser();
+ 
+            expect(sessionStorageServiceSpy.removeItem).toHaveBeenCalledWith('ssoReferredParams', true);
+        });
+ 
+        it('should redirect to IA login url for IA accounts', () => {
+            spyOn(service, 'getSSOUser').and.returnValue(false);
+            sessionStorageServiceSpy.getItem.withArgs(STORAGE_CONST.sessionStorage.agentChannel).and.returnValue('IA');
+            service.isAccountIA = true;
+ 
+            service.redirectUser();
+ 
+            expect(sessionStorageServiceSpy.removeItem).toHaveBeenCalledWith('iaCustomerWithoutEcnAndCssId');
+            expect(sessionStorageServiceSpy.setItem).toHaveBeenCalledWith('logoutIASurveyStatus', 'true');
+            expect(windowSpy.nativeWindow.location.href).toBe(environment.loginUrl);
+            expect(sessionStorageServiceSpy.removeItem).toHaveBeenCalledWith('agentChannel');
+        });
+ 
+        it('should not set logoutIASurveyStatus in session on if agentChannel is EA', () => {
+            spyOn(service, 'getSSOUser').and.returnValue(false);
+            sessionStorageServiceSpy.getItem.withArgs(STORAGE_CONST.sessionStorage.agentChannel).and.returnValue('EA');
+            service.isAccountIA = true;
+            sessionStorageServiceSpy.setItem.calls.reset();
+ 
+            service.redirectUser();
+ 
+            expect(sessionStorageServiceSpy.setItem).not.toHaveBeenCalledWith('logoutIASurveyStatus', 'true');
+        });
+    });
+ 
+    describe('#logout', () => {
+        beforeEach(() => {
+            cacheManagerServiceSpy.removeAllAPICache.calls.reset();
+        });
+ 
+        it('should call removeAllAPICache and #setSurveyCookie if removeOktaSession returns value', () => {
+            spyOn(service, 'removeOktaSession').and.returnValue(of({ success: true }));
+            spyOn(service, 'setSurveyCookie');
+ 
+            service.logout();
+ 
+            expect(cacheManagerServiceSpy.removeAllAPICache).toHaveBeenCalled();
+            expect(service.setSurveyCookie).toHaveBeenCalled();
+            expect(spinnerServiceSpy.show).toHaveBeenCalled();
+            expect(spinnerServiceSpy.hide).toHaveBeenCalled();
+        });
+ 
+        it('should not call #setSurveyCookie if removeOktaSession returns falsy value', () => {
+            spyOn(service, 'removeOktaSession').and.returnValue(null);
+            spyOn(service, 'setSurveyCookie');
+            spyOn(service, 'getSSOUser').and.returnValue(true);
+ 
+            service.logout();
+ 
+            expect(cacheManagerServiceSpy.removeAllAPICache).not.toHaveBeenCalled();
+            expect(service.setSurveyCookie).not.toHaveBeenCalled();
+            expect(spinnerServiceSpy.hide).toHaveBeenCalled();
+        });
+ 
+        it('should call redirectUser instead of setSurveyCookie when nbx choice policy only user', () => {
+            spyOn(service, 'removeOktaSession').and.returnValue(of({ success: true }));
+            spyOn(service, 'redirectUser');
+            spyOn(service, 'setSurveyCookie');
+            spyOn(service, 'isNBXChoicePolicyOnlyUser').and.returnValue(true);
+ 
+            service.logout();
+ 
+            expect(service.redirectUser).toHaveBeenCalled();
+            expect(service.setSurveyCookie).not.toHaveBeenCalled();
+            expect(spinnerServiceSpy.hide).toHaveBeenCalled();
+        });
+ 
+        it('should not call #setSurveyCookie if setSurveyCookie is false', () => {
+            spyOn(service, 'removeOktaSession').and.returnValue(of({ success: true }));
+            spyOn(service, 'setSurveyCookie');
+            spyOn(service, 'getSSOUser').and.returnValue(true);
+ 
+            service.logout(false);
+ 
+            expect(service.setSurveyCookie).not.toHaveBeenCalled();
+            expect(spinnerServiceSpy.hide).toHaveBeenCalled();
+        });
+ 
+        it('should not call #setSurveyCookie if setSurveyCookie is false', () => {
+            spyOn(service, 'removeOktaSession').and.returnValue(of({ success: true }));
+            spyOn(service, 'setSurveyCookie');
+            spyOn(service, 'getSSOUser').and.returnValue(true);
+            spyOn(service, 'updateChatScript');
+            featureFlagServiceSpy.isEnvVariableEnabledCheck.and.returnValue(false);
+ 
+            service.logout(false);
+ 
+            expect(service.setSurveyCookie).not.toHaveBeenCalled();
+            expect(service.updateChatScript).not.toHaveBeenCalled();
+        });
+ 
+        it('should call #updateChatScript', () => {
+            spyOn(service, 'removeOktaSession').and.returnValue(of({ success: true }));
+            spyOn(service, 'updateChatScript');
+            featureFlagServiceSpy.isEnvVariableEnabledCheck.and.returnValue(true);
+ 
+            service.logout(false);
+ 
+            expect(service.updateChatScript).toHaveBeenCalled();
+        });
+    });
+ 
+    describe('#setSurveyCookie', () => {
+        it('should not create cookie if getSurveyCookie returns null', () => {
+            spyOn(service, 'getSurveyCookie').and.returnValue(of(null));
+            spyOn(service, 'redirectUser');
+ 
+            service.setSurveyCookie();
+ 
+            expect(spinnerServiceSpy.hide).toHaveBeenCalled();
+            expect(service.redirectUser).toHaveBeenCalled();
+            expect(cookieServiceSpy.createLoginIdCookie).not.toHaveBeenCalled();
+        });
+ 
+        it('should create a cookie if getSurveyCookie returns value', () => {
+            spyOn(service, 'getSurveyCookie').and.returnValue(of({ cookie: 'abcdef' }));
+            spyOn(service, 'redirectUser');
+ 
+            service.setSurveyCookie();
+ 
+            expect(spinnerServiceSpy.hide).toHaveBeenCalled();
+            expect(service.redirectUser).toHaveBeenCalled();
+            expect(cookieServiceSpy.createLoginIdCookie).toHaveBeenCalledWith('abcdef');
+        });
+    });
+ 
+    describe('#refreshSession', () => {
+        it('should call getOktaSession ', fakeAsync(() => {
+            spyOn(service, 'getOktaSession');
+ 
+            service.refreshSession();
+            tick(1000 * 60 * 30);
+            discardPeriodicTasks();
+ 
+            expect(service.getOktaSession).toHaveBeenCalled();
+        }));
+    });
+ 
+    describe('#getSSOUser', () => {
+        it('should return sso user value as true if session storage has value as true', () => {
+            sessionStorageServiceSpy.getParsedItem.withArgs('isSSOUser', true).and.returnValue(true);
+ 
+            const result = service.getSSOUser();
+ 
+            expect(result).toBeTruthy();
+        });
+ 
+        it('should return sso user value as false if there is no property in session storage', () => {
+            sessionStorageServiceSpy.getParsedItem.withArgs('isSSOUser', true).and.returnValue(undefined);
+ 
+            const result = service.getSSOUser();
+ 
+            expect(result).toBeFalsy();
+        });
+    });
+ 
+    describe('#isNBXChoicePolicyOnlyUser', () => {
+        it('should return NBX choice policy only user as true if session storage has value as true', () => {
+            sessionStorageServiceSpy.getParsedItem
+                .withArgs(STORAGE_CONST.sessionStorage.isNBXChoicePolicyOnlyUser, true)
+                .and.returnValue(true);
+ 
+            const result = service.isNBXChoicePolicyOnlyUser();
+ 
+            expect(result).toBeTruthy();
+        });
+        it('should return NBX choice policy only user as false if session storage has value as false', () => {
+            sessionStorageServiceSpy.getParsedItem
+                .withArgs(STORAGE_CONST.sessionStorage.isNBXChoicePolicyOnlyUser, true)
+                .and.returnValue(false);
+ 
+            const result = service.isNBXChoicePolicyOnlyUser();
+ 
+            expect(result).toBeFalsy();
+        });
+        it('should return NBX choice policy only user as false if there is no property in session storage', () => {
+            sessionStorageServiceSpy.getParsedItem
+                .withArgs(STORAGE_CONST.sessionStorage.isNBXChoicePolicyOnlyUser, true)
+                .and.returnValue(undefined);
+ 
+            const result = service.isNBXChoicePolicyOnlyUser();
+ 
+            expect(result).toBeFalsy();
+        });
+    });
+ 
+    describe('#resetOneTrustIdentifier', () => {
+        it('should not call OneTrust.setDataSubjectId when FF is OFF', () => {
+            // Arrange
+            featureFlagServiceSpy.isEnvVariableEnabledCheck
+                .withArgs(featureConstants.envCpraOneTrustUcpmIntegrationEnabled)
+                .and.returnValue(false);
+ 
+            // Act
+            service.resetOneTrustIdentifier();
+ 
+            // Assert
+            expect(windowSpy.nativeWindow.OneTrust.setDataSubjectId).not.toHaveBeenCalled();
+        });
+        it('should call OneTrust.setDataSubjectId with a GUID when FF is ON', () => {
+            // Arrange
+            featureFlagServiceSpy.isEnvVariableEnabledCheck
+                .withArgs(featureConstants.envCpraOneTrustUcpmIntegrationEnabled)
+                .and.returnValue(true);
+ 
+            // Act
+            service.resetOneTrustIdentifier();
+ 
+            // Assert
+            expect(windowSpy.nativeWindow.OneTrust.setDataSubjectId).toHaveBeenCalled();
+        });
+    });
+});
+ 
+ 
