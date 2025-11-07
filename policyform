@@ -1,0 +1,933 @@
+POLICY-LOOKUP-COMPONENT.TS
+import {
+  Component,
+  ElementRef,
+  EventEmitter,
+  Input,
+  OnDestroy,
+  OnInit,
+  Output,
+  ViewChild,
+  ViewEncapsulation,
+} from '@angular/core';
+import { DatePipe } from '@angular/common';
+import { finalize } from 'rxjs/operators';
+import { get } from 'lodash';
+import { AbstractControl, FormControl, FormGroup, ValidationErrors, Validators } from '@angular/forms';
+import { EBannerActions, TuiBannerService, TuiSpinnerService, TuiTrackerService } from 'ng-tractor-ui';
+
+//services
+import { LocalStorageService } from '@src/app/core/services/local-storage';
+import { SessionStorageService } from '@src/app/core/services/session-storage/session-storage.service';
+import { LoginService } from '@src/app/core/services/login.service';
+import { RegistrationService } from '@src/app/core/services/registration/registration.service';
+import { ageValidator } from '@src/app/forgot-credential/validators/dob.validator';
+import { FeatureFlagsService } from '@src/app/core/services/featureFlags/feature-flags.service';
+import { PolicySummaryService } from '@src/app/core/services/policy-summary/policy-summary.service';
+import { BillingSummaryFWSService } from '@src/app/core/services/billing-summary-fws/billing-summary-fws.service';
+import { BillingSummaryService } from '@src/app/core/services/billing-summary/billing-summary.service';
+
+//constants
+import {
+  ErrorCode,
+  ErrorMessages,
+  ID_CARDS_ERROR_CODES,
+  UOTP_ERROR_CODES,
+} from '@src/app/core/constants/error.constants';
+import { STORAGE_CONST } from '@src/app/core/constants/storage.constants';
+import {
+  IRegisterCustomerResponseError,
+  ICustomerSearch,
+  ICustomerSearchResponseV2,
+} from '@src/app/core/interfaces/registration.interface';
+import { environment } from '@src/environments/environment';
+import { ENotifications } from '@src/app/core/constants/notification.constants';
+import { Subscription } from 'rxjs';
+import { MakePaymentService } from '@src/app/core/services/make-payment.service';
+import { StepperService } from '@src/app/core/services/stepper.service';
+import { EnvironmentDetectionService } from '@src/app/core/services/environment-detection/environment-detection.service';
+import { segEventNames, segmentEntrySource, segmentParams } from '@src/app/core/constants/segment-constants';
+import { HttpErrorResponse } from '@angular/common/http';
+import { REGEX_VALIDATIONS } from '@src/app/core/constants/core-css.constants';
+import { validatePolicyNumber } from '../validator/core-policynumber.validator';
+import { ICustomerSearchByPCNRequest } from '@src/app/core/interfaces/customer-search.interface';
+
+@Component({
+  selector: 'css-policy-look-up-form',
+  templateUrl: './policy-look-up-form.component.html',
+  styleUrls: ['./policy-look-up-form.component.scss'],
+  encapsulation: ViewEncapsulation.None,
+})
+export class PolicyLookUpFormComponent implements OnInit, OnDestroy {
+  submitted: boolean;
+  errorHeading: string;
+  errorMsg: string;
+  policyLookUpForm: FormGroup;
+  showCalendarIcon = true;
+  dateInput = new Date();
+  today = new Date();
+  notificationId: any;
+  showFormErrors = true;
+  private readonly TYPE_TEXT = 'text';
+  private readonly ERRORS_FOUND = 'ERRORS FOUND';
+  isFM = environment.isFMLogin;
+  isBW = environment.isBWLogin;
+  isFarmersOnly = !this.isBW && !this.isFM;
+  private readonly CSS_CONTINUE_POLICY_LOOK_UP = 'CSS_continue_policy_look_up';
+  private readonly CSS_CANCEL_POLICY_LOOK_UP = 'CSS_cancel_policy_look_up';
+  private readonly CSS_CONTINUE_REGISRATION = 'CSS_continue_registration_step_one';
+  private readonly CSS_CANCEL_REGISRATION = 'CSS_cancel_registartion_step_one';
+  private readonly CSS_CONTINUE_FORGOT_USERNAME = 'CSS_continue_forgot_username';
+  private readonly CSS_CANCEL_FORGOT_USERNAME = 'CSS_cancel_forgot_username';
+  private readonly CSS_CANCEL_ID_CARDS = 'CSS_cancel_id_cards';
+  private readonly FIND_YOUR_POLICY_INFO = 'find your policy your info';
+  private readonly CONTINUE_CLICKED = 'Continue Clicked';
+  private readonly UOTP = 'UOTP';
+  private readonly CREATE_ACCOUNT = 'Create Account';
+  private readonly FORGOT_USERNAME = 'Forgot Username';
+  private readonly PRE_LOGIN_ID_CARDS = 'PreLoginIdCards';
+  private readonly POLICY_NUMBER_HELP_INFO =
+    'Policy Number is located on your declaration page or billing notice. It starts with a letter followed by 11 numeric digits i.e. G00123456700';
+  continueCtaTrackingId = this.CSS_CONTINUE_POLICY_LOOK_UP;
+  cancelCtaTrackingId = this.CSS_CANCEL_POLICY_LOOK_UP;
+  policyNumberHelp = this.POLICY_NUMBER_HELP_INFO;
+  @ViewChild('sectionContainer', { static: true }) sectionElement: ElementRef;
+  @Input() isSecurityMaintenanceEnabled: boolean;
+  @Input() isOnlyFarmersSecurityMaintenanceEnabled: boolean;
+  @Input() farmersSecurityMaintenanceTitle: string;
+  @Input() farmersSecurityMaintenanceMessage: string;
+  @Input() isForgotUsernameFlow: boolean;
+  @Input() isRegistrationFlow: boolean;
+  @Input() isFindPolicyFlow: boolean;
+  @Input() idCardFlow: boolean = false;
+  @Output() onFormSubmitEvent = new EventEmitter<ICustomerSearchResponseV2>();
+  @Output() yourInfoFlow = new EventEmitter<boolean>();
+  featureFlagSubscription: Subscription;
+  @ViewChild('firstNameInput', { static: false }) firstNameInputElement: ElementRef;
+
+  /** Form Error Helpers */
+  get dob(): AbstractControl {
+    return this.policyLookUpForm.get('dob');
+  }
+  get dobAgeError(): ValidationErrors {
+    return this.dob.errors && this.dob.errors.ageValidation;
+  }
+  get dobRequiredError(): boolean {
+    return this.dob.errors && this.dob.errors.required && this.dob.dirty && this.dob.touched && this.showFormErrors;
+  }
+  get dobFormatError(): ValidationErrors {
+    return this.dob.errors && this.dob.errors.dateFormat;
+  }
+  get firstName(): AbstractControl {
+    return this.policyLookUpForm.get('firstName');
+  }
+  get firstNameRequiredError(): boolean {
+    return (
+      this.firstName.errors &&
+      this.firstName.errors.required &&
+      this.firstName.dirty &&
+      this.firstName.touched &&
+      this.showFormErrors
+    );
+  }
+  get firstNamePatternError(): ValidationErrors {
+    return this.firstName.errors && this.firstName.errors.pattern;
+  }
+  get lastName(): AbstractControl {
+    return this.policyLookUpForm.get('lastName');
+  }
+  get lastNameRequiredError(): boolean {
+    return (
+      this.lastName.errors &&
+      this.lastName.errors.required &&
+      this.lastName.dirty &&
+      this.lastName.touched &&
+      this.showFormErrors
+    );
+  }
+  get lastNamePatternError(): ValidationErrors {
+    return this.lastName.errors && this.lastName.errors.pattern;
+  }
+  get zipCode(): AbstractControl {
+    return this.policyLookUpForm.get('zipCode');
+  }
+  get policyNumber(): AbstractControl {
+    return this.policyLookUpForm.get('policyNumber');
+  }
+
+  get zipCodeRequiredError(): boolean {
+    return (
+      this.zipCode.errors &&
+      this.zipCode.errors.required &&
+      this.zipCode.dirty &&
+      this.zipCode.touched &&
+      this.showFormErrors
+    );
+  }
+  get zipCodePatternError(): ValidationErrors {
+    return this.zipCode.errors && this.zipCode.errors.pattern;
+  }
+  get policyNumberFormatError(): ValidationErrors {
+    return (
+      this.policyNumber.errors && !this.policyNumber.errors.required && this.policyNumber.errors.policyNumberInvalid
+    );
+  }
+  get policyNumberRequiredError(): boolean {
+    return (
+      this.policyNumber.errors &&
+      this.policyNumber.errors.required &&
+      this.policyNumber.dirty &&
+      this.policyNumber.touched &&
+      this.showFormErrors
+    );
+  }
+
+  get isFirstNameInvalid(): boolean {
+    return (
+      this.policyLookUpForm.get('firstName').invalid &&
+      this.policyLookUpForm.get('firstName').touched &&
+      this.policyLookUpForm.get('firstName').dirty
+    );
+  }
+  get isLastNameInvalid(): boolean {
+    return (
+      this.policyLookUpForm.get('lastName').invalid &&
+      this.policyLookUpForm.get('lastName').touched &&
+      this.policyLookUpForm.get('lastName').dirty
+    );
+  }
+  get isDobInvalid(): boolean {
+    return (
+      this.policyLookUpForm.get('dob').invalid &&
+      this.policyLookUpForm.get('dob').touched &&
+      this.policyLookUpForm.get('dob').dirty
+    );
+  }
+  get isZipcodeInvalid(): boolean {
+    return (
+      this.policyLookUpForm.get('zipCode').invalid &&
+      this.policyLookUpForm.get('zipCode').touched &&
+      this.policyLookUpForm.get('zipCode').dirty
+    );
+  }
+  get isPolicyNumberInvalid(): boolean {
+    return (
+      this.policyLookUpForm.get('policyNumber').invalid &&
+      this.policyLookUpForm.get('policyNumber').touched &&
+      this.policyLookUpForm.get('policyNumber').dirty
+    );
+  }
+  /** End Form Error Helpers */
+
+  constructor(
+    private loginService: LoginService,
+    private registrationService: RegistrationService,
+    private localStorageService: LocalStorageService,
+    private sessionStorageService: SessionStorageService,
+    private datePipe: DatePipe,
+    private bannerService: TuiBannerService,
+    private tuiSpinnerService: TuiSpinnerService,
+    private featureFlagsService: FeatureFlagsService,
+    private makePaymentService: MakePaymentService,
+    private stepperService: StepperService,
+    private policySummaryService: PolicySummaryService,
+    private billingSummaryFWSService: BillingSummaryFWSService,
+    private billingSummaryService: BillingSummaryService,
+    private screenSizeDetectionService: EnvironmentDetectionService,
+    private tuiTrackerService: TuiTrackerService
+  ) {}
+
+  ngOnInit(): void {
+    this.setSegmentTrackingIdToCta();
+    this.policyLookUpForm = this.initForm();
+    this.policyLookUpForm.valueChanges.subscribe(() => {
+      this.handleErrors();
+    });
+    setTimeout(() => {
+      if (!this.screenSizeDetectionService.isMobileView()) {
+        this.makePaymentService.setFoucsToInputElement(this.firstNameInputElement);
+      }
+    }, 0);
+    this.clearPcnSearchParamFromSessionStorage();
+    this.clearCacheResponse();
+  }
+
+  clearPcnSearchParamFromSessionStorage(): void {
+    const pcnSearchParams = this.sessionStorageService.getParsedItem(
+      STORAGE_CONST.sessionStorage.pcnSearchRequestPayload
+    );
+    if (pcnSearchParams) {
+      this.sessionStorageService.removeItem(STORAGE_CONST.sessionStorage.pcnSearchRequestPayload);
+    }
+  }
+
+  clearCacheResponse(): void {
+    this.policySummaryService.removeUotpPolicySummaryCache$();
+    this.billingSummaryService.removeBillingSummaryUotpCache$();
+    this.billingSummaryFWSService.removeBillingSummaryFWSCache$();
+    this.billingSummaryService.removeBWBillingSummaryUotpCache$();
+  }
+
+  setSegmentTrackingIdToCta(): void {
+    if (this.isRegistrationFlow) {
+      this.continueCtaTrackingId = this.CSS_CONTINUE_REGISRATION;
+      this.cancelCtaTrackingId = this.CSS_CANCEL_REGISRATION;
+    }
+
+    if (this.isForgotUsernameFlow) {
+      this.continueCtaTrackingId = this.CSS_CONTINUE_FORGOT_USERNAME;
+      this.cancelCtaTrackingId = this.CSS_CANCEL_FORGOT_USERNAME;
+    }
+
+    if (this.idCardFlow) {
+      this.cancelCtaTrackingId = this.CSS_CANCEL_ID_CARDS;
+    }
+  }
+
+  changeToDate(): void {
+    this.dateInput = new Date(this.dob.value);
+  }
+
+  selectDate(event): void {
+    this.dob.setValue(this.datePipe.transform(event.value, 'MM/dd/yyyy'));
+    this.dob.markAsTouched();
+  }
+
+  submitForm(): void {
+    this.submitted = true;
+    if (this.handleErrors() === this.ERRORS_FOUND) {
+      return;
+    }
+    const reqPayload = this.getRequestPayload();
+    this.tuiSpinnerService.show();
+
+    if (this.isBW) {
+      this.customerSearchByPCN(reqPayload);
+    } else {
+      this.registrationService
+        .customerSearch(reqPayload)
+        .pipe(finalize(() => this.tuiSpinnerService.hide()))
+        .subscribe({
+          next: (res: ICustomerSearchResponseV2) => {
+            this.customerSearchSuccessHandler(reqPayload, res);
+          },
+          error: err => {
+            this.customerSearchErrorHandler(err);
+          },
+        });
+    }
+  }
+
+  customerSearchSuccessHandler(reqPayload: ICustomerSearch, res: ICustomerSearchResponseV2) {
+    this.bannerService.clearAllNotifications();
+    // adds response values to local storage
+    this.setLocalStorageItems(reqPayload, res);
+    this.trackSegmentEvents(true);
+    this.onFormSubmitEvent.emit(res);
+    this.featureFlagSubscription = this.featureFlagsService.getFeatureFlags().subscribe(
+      data =>
+        this.sessionStorageService.setItem(
+          STORAGE_CONST.sessionStorage.featureFlags,
+          JSON.stringify({ flags: data }),
+          true
+        ) // storing feature flags response to the session storage
+    );
+  }
+
+  customerSearchErrorHandler(err: any) {
+    this.setInputFocus();
+    const errorRes: IRegisterCustomerResponseError = err.error;
+    this.trackSegmentEvents(false, errorRes?.description);
+    if (this.isRegistrationFlow) {
+      this.setCoreErrorMessage(err);
+      return;
+    }
+    if (this.isForgotUsernameFlow || this.isFindPolicyFlow) {
+      this.setErrorMessage(err);
+    }
+  }
+
+  setCoreErrorMessage(err: HttpErrorResponse): void {
+    if (this.loginService.isSuspendedAccount(err)) {
+      this.bannerService.updateNotification({
+        action: EBannerActions.ADD,
+        id: ENotifications.SUSPENDED_ACCOUNT,
+      });
+      this.setSuspendParams();
+      return;
+    }
+    const errorRes = err.error;
+    if (!errorRes?.code || errorRes.code === ErrorCode.E_500) {
+      this.updateBannerMessage(
+        ENotifications.GENERIC_API_ERROR_HANDLER,
+        ErrorMessages.GENERIC_API_ERROR_HANDLER_HEADING,
+        this.isFM
+          ? ErrorMessages.GENERIC_API_ERROR_HANDLER_DESCRIPTION_IA
+          : ErrorMessages.GENERIC_API_ERROR_HANDLER_DESCRIPTION_EA
+      );
+      return;
+    }
+    if (errorRes.code !== ErrorCode.E3001 && errorRes.code !== ErrorCode.E3000) {
+      const isUOTPErrorCode = UOTP_ERROR_CODES.includes(errorRes.code);
+      const isIDCardsErrorCode = ID_CARDS_ERROR_CODES.includes(errorRes.code);
+      const isCustomErrorCode = isUOTPErrorCode || isIDCardsErrorCode;
+      const notificationId = isCustomErrorCode
+        ? ENotifications.CORE_UOTP_API_ERROR_HANDLER
+        : ENotifications.CORE_API_ERROR_HANDLER;
+      this.updateBannerMessage(notificationId, errorRes.description, errorRes.error, isCustomErrorCode);
+    }
+    if (errorRes.code === ErrorCode.E3001) {
+      this.updateBannerMessage(
+        ENotifications.REGISTRATION_CANNOT_BE_IDENTIFY,
+        ErrorMessages.REGISTRATION_CANT_COMPLETED_HEADING,
+        ErrorMessages.REGISTRATION_CANNOT_IDENTIFY_DESCRIPTION
+      );
+    }
+    if (errorRes.code === ErrorCode.E3000) {
+      this.updateBannerMessage(
+        ENotifications.REGISTRATION_CANNOT_BE_PROCEEDED,
+        ErrorMessages.REGISTRATION_CANT_COMPLETED_HEADING,
+        ErrorMessages.REGISTRATION_CANNOT_COMPLETED_DESCRIPTION
+      );
+    }
+  }
+
+  setSuspendParams(): void {
+    let activityName: string;
+
+    switch (true) {
+      case this.isRegistrationFlow:
+        activityName = this.CREATE_ACCOUNT;
+        break;
+      case this.isForgotUsernameFlow:
+        activityName = this.FORGOT_USERNAME;
+        break;
+      case this.isFindPolicyFlow:
+        activityName = this.UOTP;
+        break;
+      case this.idCardFlow:
+        activityName = this.PRE_LOGIN_ID_CARDS;
+        break;
+      default:
+        break;
+    }
+
+    this.tuiTrackerService.track(segEventNames.suspendedActivityDetected, {
+      action: this.CONTINUE_CLICKED,
+      activity_name: activityName,
+    });
+  }
+
+  updateBannerMessage(id: string, title: string, info: string, isCustomErrorCode = false) {
+    this.bannerService.clearAllNotifications();
+    this.bannerService.updateNotification({
+      action: EBannerActions.ADD,
+      id: id,
+      data: {
+        title: title,
+        info: info,
+      },
+    });
+    setTimeout(() => {
+      if (
+        id === ENotifications.REGISTRATION_CANNOT_BE_IDENTIFY ||
+        id === ENotifications.REGISTRATION_CANNOT_BE_PROCEEDED ||
+        id === ENotifications.CORE_UOTP_API_ERROR_HANDLER
+      ) {
+        if (isCustomErrorCode) {
+          this.makePaymentService.setFocusOnChatLink();
+        } else {
+          const chatBtn = document.getElementById('registerLaunchChatBtn');
+          chatBtn?.focus();
+        }
+      }
+    });
+  }
+
+  setErrorMessage(err: HttpErrorResponse): void {
+    const errorRes: IRegisterCustomerResponseError = err.error;
+    if (errorRes.code === ErrorCode.E3001) {
+      this.updateBannerMessage(
+        ENotifications.INVALID_POLICY_NUMBER,
+        ErrorMessages.INVALID_POLICY_NUMBER_HEADING,
+        this.isFM
+          ? ErrorMessages.GENERIC_API_ERROR_HANDLER_DESCRIPTION_IA
+          : ErrorMessages.GENERIC_API_ERROR_HANDLER_DESCRIPTION_EA
+      );
+    } else {
+      this.setCoreErrorMessage(err);
+    }
+  }
+
+  setLocalStorageItems(reqPayload: ICustomerSearch, res: ICustomerSearchResponseV2): void {
+    this.localStorageService.addMultipleValuesToLocalStorage(res);
+    const policyNumber = get(res, 'customer.policies[0].policyNumber');
+    this.localStorageService.setItem('policyNumber', policyNumber, true);
+    this.localStorageService.setItem('userFirstName', reqPayload.firstName);
+    this.sessionStorageService.setItem(STORAGE_CONST.sessionStorage.oktaUID, res?.oktaId);
+    if (res?.encryptedCssId) {
+      this.sessionStorageService.setItem(STORAGE_CONST.sessionStorage.cssId, JSON.stringify(res.encryptedCssId));
+    }
+    if (res?.loginId) {
+      this.localStorageService.setItem(STORAGE_CONST.localStorage.usernameForPasswordRecovery, res.loginId);
+      if (!this.localStorageService.getItem(STORAGE_CONST.localStorage.rememberMe)) {
+        this.localStorageService.setItem(STORAGE_CONST.localStorage.user_name, res.loginId);
+      }
+    }
+    if (this.isRegistrationFlow) {
+      this.sessionStorageService.setItem(STORAGE_CONST.RegistrationCustomerDetails, JSON.stringify(reqPayload));
+    }
+    if (this.isForgotUsernameFlow) {
+      this.sessionStorageService.setItem(
+        STORAGE_CONST.sessionStorage.forgotUserNameCustomerDetails,
+        JSON.stringify(reqPayload)
+      );
+    }
+    if (this.isFindPolicyFlow) {
+      this.sessionStorageService.removeItem(STORAGE_CONST.sessionStorage.pcnSearchRequestPayload);
+      this.sessionStorageService.setItem(
+        STORAGE_CONST.sessionStorage.findYourPolicyCustomerDetails,
+        JSON.stringify(reqPayload)
+      );
+    }
+  }
+
+  getRequestPayload(): ICustomerSearch {
+    const dobFormatted = this.dob.value.replace(/(..).(..).(....)/, '$3-$1-$2');
+    const zipCodeParts = this.zipCode.value.split('-');
+    let navigationToSearchAPI;
+    if (this.isRegistrationFlow) {
+      navigationToSearchAPI = 'Registration';
+    }
+    if (this.isForgotUsernameFlow) {
+      navigationToSearchAPI = 'ForgotUserName';
+    }
+    if (this.isFindPolicyFlow) {
+      navigationToSearchAPI = this.idCardFlow ? this.PRE_LOGIN_ID_CARDS : this.UOTP;
+    }
+    return {
+      firstName: this.firstName.value.trim(),
+      lastName: this.lastName.value.trim(),
+      dateOfBirth: dobFormatted,
+      zipCode: zipCodeParts[0],
+      zipCodeExt: zipCodeParts[1] || undefined,
+      policyNumber: this.policyNumber?.value?.trim() || undefined,
+      navigation: navigationToSearchAPI,
+    };
+  }
+
+  /**
+   * Checks the form for errors. Focuses on first error if found
+   */
+  handleErrors(): string {
+    if (!this.policyLookUpForm.valid) {
+      const invalidControls = this.sectionElement.nativeElement.querySelectorAll('.ng-invalid');
+      invalidControls[0]?.focus();
+      return this.ERRORS_FOUND;
+    }
+  }
+
+  setInputFocus(): void {
+    const inputControls = this.sectionElement.nativeElement.querySelectorAll('input');
+    inputControls[0].focus();
+  }
+
+  initForm(): FormGroup<{ [key: string]: AbstractControl }> {
+    const nameValidatorPattern = "^[-.A-Za-z'’ ]*$";
+    const form = new FormGroup<{ [key: string]: AbstractControl }>({
+      firstName: new FormControl('', [
+        Validators.required,
+        Validators.maxLength(15),
+        Validators.pattern(nameValidatorPattern),
+      ]),
+      lastName: new FormControl('', [
+        Validators.required,
+        Validators.maxLength(20),
+        Validators.pattern(nameValidatorPattern),
+      ]),
+      dob: new FormControl('', [Validators.required, ageValidator(15, 105)]),
+      zipCode: new FormControl('', [
+        Validators.required,
+        Validators.maxLength(15),
+        Validators.minLength(5),
+        Validators.pattern('^[0-9]{5}(?:-[0-9]{4})?$'),
+      ]),
+    });
+
+    if (this.isBW) {
+      form.setControl('policyNumber', new FormControl('', [Validators.required, validatePolicyNumber]));
+    }
+    return form;
+  }
+
+  goBack(): void {
+    this.showFormErrors = false;
+    this.localStorageService.setItem(STORAGE_CONST.localStorage.user_name, '');
+    this.stepperService.initiateStepsArray([]);
+    this.isFindPolicyFlow && !this.idCardFlow
+      ? this.makePaymentService.goToPaymentGatewayPage()
+      : this.loginService.goToLoginPage();
+  }
+
+  toggleYourInfoFlow() {
+    const segmentTrackingParams = this.policySummaryService.getSegmentTrackingParamsInfo();
+    this.tuiTrackerService.addToState({
+      entry_source: segmentTrackingParams?.entrySource,
+    });
+    this.yourInfoFlow.emit(false);
+  }
+
+  trackSegmentEvents(successful: boolean, error?: string): void {
+    if (this.isFindPolicyFlow) {
+      const params = {
+        action: segmentParams.continueClick,
+        step: this.FIND_YOUR_POLICY_INFO,
+        entry_source: this.idCardFlow ? segmentEntrySource.idCards : segmentEntrySource.uotp,
+        successful,
+        failure_reason: error,
+      };
+      this.tuiTrackerService.track(segEventNames.ctaClicked, params);
+    }
+  }
+
+  omitSpecialCharacters(event: KeyboardEvent): boolean {
+    return REGEX_VALIDATIONS.WHITE_SPACES.test(event.key)
+      ? !REGEX_VALIDATIONS.SPECIAL_CHARACTERS.test(event.key)
+      : false;
+  }
+
+  getPCNRequestPayload(): ICustomerSearchByPCNRequest {
+    const zipCodeParts = this.zipCode.value.split('-');
+    return {
+      postalCode: zipCodeParts[0],
+      policyContractNumber: this.policyNumber?.value?.trim().replace(/-/g, '').substring(0, 12) || undefined,
+      firstName: this.firstName?.value,
+      lastName: this.lastName?.value,
+      dateOfBirth: this.dob?.value,
+    };
+  }
+
+  customerSearchByPCN(formRequest: any) {
+    const reqPayload = this.getPCNRequestPayload();
+    this.makePaymentService
+      .customerSearchByPCNAndConvertToCustomerSearchRes(reqPayload)
+      .pipe(finalize(() => this.tuiSpinnerService.hide()))
+      .subscribe({
+        next: (res: ICustomerSearchResponseV2) => {
+          this.customerSearchSuccessHandler(formRequest, res);
+        },
+        error: err => {
+          this.customerSearchErrorHandler(err);
+        },
+      });
+  }
+
+  ngOnDestroy(): void {
+    if (this.featureFlagSubscription) {
+      this.featureFlagSubscription.unsubscribe();
+    }
+  }
+}
+
+POLICY-LOOKUP-FORM.COMPONENT.HTML
+
+<div class="policy-lookup-container" #sectionContainer>
+    <h2
+        class="tui-h4 subheading"
+        data-test-id="PERSONAL_INSURANCE_POLICIES_TITLE"
+        *ngIf="isFarmersOnly && !isFindPolicyFlow">
+            Personal insurance policies
+    </h2>
+    <ng-container *ngIf="isOnlyFarmersSecurityMaintenanceEnabled">
+        <div class="row maintenance-box">
+            <div class="col-12">
+                <css-card>
+                    <h4 class="maintenance-header" data-test-id="SECURITY_MAINTENANCE_TITLE" [innerHTML]="farmersSecurityMaintenanceTitle"></h4>
+                    <span class="fa fa-exclamation-circle error-icon"></span>
+                    <p class="mb-0" data-test-id="SECURITY_MAINTENANCE_MESSAGE" [innerHTML]="farmersSecurityMaintenanceMessage"></p>
+                </css-card>
+            </div>
+        </div>
+    </ng-container>
+    <ng-container *ngIf="!isSecurityMaintenanceEnabled && !isOnlyFarmersSecurityMaintenanceEnabled">
+        <div
+            role = "alert"
+            aria-atomic="true"
+            aria-live="assertive">
+            <p *ngIf="submitted && !policyLookUpForm.valid"
+                data-test-id="POLICY_LOOKUP_FORM_ERRORS"
+                class="error-text my-3">
+                Please fix the below errors
+            </p>
+        </div>
+        <p 
+            class="mt-3 bw-subtitle-width" 
+            data-test-id="POLICY_LOOKUP_FORM_SUBTITLE" 
+            i18n="@@policy-look-up.form.subtitle" 
+            *ngIf="!isFindPolicyFlow">
+            Please provide the following information so we can look up your policy.
+        </p>
+        <form action=""
+            class="policy-lookup-form mt-3"
+            [formGroup]="policyLookUpForm"
+            name="frmPolicyLookup"
+            novalidate="" >
+            <div class="row">
+                <div class="form-group col-12">
+                    <mat-form-field name="firstName" [tuiError]="isFirstNameInvalid">
+                        <mat-label 
+                            class="text-input-label" 
+                            i18n="@@policy-look-up.form.first-name">
+                            First name
+                        </mat-label>
+                        <input
+                            aria-describedby="fnRequired fnAlpha"
+                            cssFocus
+                            #firstNameInput
+                            data-gtm="CSS_AuthenticationPolicyLookUp_FirstName_Input"
+                            formControlName="firstName"
+                            id="FirstName"
+                            matInput
+                            maxlength="15"
+                            type="text" />
+                        <mat-error
+                            class="text-input-label pl-0"
+                            name="mat-error" *ngIf="isFirstNameInvalid">
+                            <ng-container 
+                                id="fnRequired" *ngIf="firstNameRequiredError">
+                                <span i18n="@@policy-look-up.form.first-name.err.required">
+                                    First Name is a required field
+                                </span>
+                            </ng-container>
+                            <ng-container id="fnAlpha" *ngIf="firstNamePatternError">
+                                <span i18n="@@policy-look-up.form.first-name.err.alpha">
+                                    First name should be alphabetic
+                                </span>
+                            </ng-container>
+                        </mat-error>
+                    </mat-form-field>
+                </div>
+            </div>
+            <div class="row">
+                <div class="form-group col-12">
+                    <mat-form-field [tuiError]="isLastNameInvalid">
+                        <mat-label class="text-input-label" i18n="@@policy-look-up.form.last-name">
+                            Last name
+                        </mat-label>
+                        <input
+                            aria-describedby="lnRequired lnAlpha"
+                            aria-required="true"
+                            cssFocus
+                            data-gtm="CSS_AuthenticationPolicyLookUp_LastName_Input"
+                            formControlName="lastName"
+                            id="LastName"
+                            matInput
+                            maxlength="20"
+                            type="text" />
+                        <mat-error
+                            class="text-input-label pl-0"
+                            name="mat-error" *ngIf="isLastNameInvalid">
+                            <ng-container *ngIf="lastNameRequiredError">
+                                <span i18n="@@policy-look-up.form.last-name.err.required">
+                                    Last name is a required field
+                                </span>
+                            </ng-container>
+                            <ng-container *ngIf="lastNamePatternError" >
+                                <span i18n="@@policy-look-up.form.last-name.err.alpha">
+                                    Last name should be alphabetic
+                                </span>
+                            </ng-container>
+                        </mat-error>
+                    </mat-form-field>
+                </div>
+            </div>
+            <div class="row">
+                <div class="form-group col-12">
+                    <mat-form-field name="dob" [tuiError]="isDobInvalid">
+                        <mat-label class="text-input-label" i18n="@@policy-look-up.form.date-of-birth">
+                            Date of birth (MM/DD/YYYY)
+                        </mat-label>
+                        <input aria-label="Date of birth (MM/DD/YYYY)"
+                            aria-required="true"
+                            formControlName="dob"
+                            id="core-dob"
+                            maxlength="10"
+                            cssDOBMask
+                            (change)="changeToDate()"
+                            matInput>
+                        <input
+                            (dateChange)="selectDate($event)"
+                            [matDatepicker]="picker"
+                            [value]="dateInput"
+                            [max]="today"
+                            hidden>
+                        <mat-datepicker-toggle matSuffix
+                            [for]="picker">
+                        </mat-datepicker-toggle>
+                        <mat-datepicker #picker></mat-datepicker>
+                        <mat-error class="pl-0" *ngIf="isDobInvalid">
+                            <ng-container *ngIf="dobRequiredError">
+                                <span i18n="@@policy-look-up.form.date-of-birth-format">
+                                    Please enter in MM/DD/YYYY format
+                                </span>
+                            </ng-container>
+                            <ng-container *ngIf="dobFormatError">
+                                <span i18n="@@policy-look-up.form.date-of-birth-format-2">
+                                    Date should be MM/DD/YYYY
+                                </span>
+                            </ng-container>
+                            <ng-container *ngIf="dobAgeError">
+                                <span i18n="@@policy-look-up.form.date-of-birth.err.age">
+                                    Age should be between 15 to 105 years
+                                </span>
+                            </ng-container>
+                        </mat-error>
+                    </mat-form-field>
+                </div>
+            </div>
+            <div class="row" *ngIf="isFindPolicyFlow">
+                <div class="col-12 mb-3">
+                    <p>Prefer another way to find your policy?</p>
+                    <a href="javascript: void 0;"
+                        data-tui-tracking-id="CSS_USE_MY_POLICY_NUMBER"
+                        class="tui-link-1"
+                        (click)="toggleYourInfoFlow()">
+                        <span aria-hidden="true">Use my policy number</span>
+                        <span class="sr-only">Use my policy number to find policy</span>
+                    </a>
+                </div>
+            </div>
+            <div class="row">
+                <div class="form-group col-12">
+                    <mat-form-field name="zipCode" [tuiError]="isZipcodeInvalid">
+                        <mat-label name="label-error" i18n="@@policy-look-up.form.zip-code">ZIP Code</mat-label>
+                        <input
+                            (keydown.space)="$event.preventDefault()"
+                            aria-describedby="zipRequired zipFormat"
+                            aria-required="true"
+                            cssFocus
+                            cssZipCodeMask
+                            data-gtm="CSS_AuthenticationPolicyLookUp_ZipCode_Input"
+                            formControlName="zipCode"
+                            id="zipCode"
+                            matInput
+                            maxlength="10"
+                            type="text" />
+                        <mat-error class="pl-0" *ngIf="isZipcodeInvalid">
+                            <ng-container
+                                aria-atomic="true"
+                                aria-live="assertive"
+                                *ngIf="zipCodeRequiredError" >
+                                <span i18n="@@policy-look-up.form.zip-code.err.required">
+                                    ZIP code is a required field
+                                </span>
+                            </ng-container>
+                            <ng-container
+                                aria-atomic="true"
+                                aria-live="assertive"
+                                *ngIf="zipCodePatternError" >
+                                <span i18n="@@policy-look-up.form.zip-code.err.invalid-format">
+                                    ZIP Code is in invalid format
+                                </span>
+                            </ng-container>
+                        </mat-error>
+                    </mat-form-field>
+                </div>
+            </div>
+            <div class="row" *ngIf="isBW">
+                <div class="form-group col-12">
+                    <mat-form-field name="policyNumber" [tuiError]="isPolicyNumberInvalid">
+                        <mat-label name="label-error" i18n="@@policy-look-up.form.policy-number">Policy number (xxx-xxxxxxx-xx)</mat-label>
+                        <input
+                            (keydown.space)="$event.preventDefault()"
+                            aria-describedby="policyNumberRequired "
+                            aria-label="Policy Number"
+                            aria-required="true"
+                            cssFocus
+                            cssOnlyAlphabetsNumbers
+                            data-gtm="CSS_AuthenticationPolicyLookUp_PolicyNumber_Input"
+                            formControlName="policyNumber"
+                            id="policyNumber"
+                            pattern="[A-Za-z0-9\-]*"
+                            matInput
+                            maxlength="14"
+                            [appPolicyNumberFormatter]="isBW"
+                            (keypress)="omitSpecialCharacters($event)"
+                            type="text" />
+                        <mat-error class="pl-0" *ngIf="isPolicyNumberInvalid">
+                            <ng-container
+                                aria-atomic="true"
+                                aria-live="assertive"
+                                *ngIf="policyNumberRequiredError" >
+                                <span i18n="@@policy-look-up.form.policy-number.err.required">
+                                    Policy Number is a required field
+                                </span>
+                            </ng-container>
+                            <ng-container
+                                aria-atomic="true"
+                                aria-live="assertive"
+                                *ngIf="policyNumberFormatError" >
+                                <span *ngIf="!isBW" i18n="@@policy-look-up.form.policy-number.err.invalid">
+                                    Invalid Policy Number
+                                </span>
+                                <span *ngIf="isBW" i18n="@@policy-look-up.form.policy-number.err.invalid">
+                                    Please enter the policy number in the format xxx-xxxxxxx-xx
+                                </span>
+                            </ng-container>
+                        </mat-error>
+                    </mat-form-field>
+                    <span class="d-inline-block align-top mt-2">
+                        <button mat-icon-button 
+                            [matTooltip]="policyNumberHelp"
+                            matTooltipPosition="right"
+                            matTooltipClass="custom-policynumber-tooltip"
+                            role="tooltip"
+                            aria-label="Displays a tooltip for policy name">
+                            <mat-icon class="tui-text-primary fs-4" aria-hidden="true">info</mat-icon>
+                        </button>
+                    </span>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-12 col-md-5 col-lg-4">
+                    <button (click)="submitForm()"
+                        [disabled]="policyLookUpForm.invalid"
+                        [attr.data-tui-tracking-id]="continueCtaTrackingId"
+                        tabindex="0"
+                        i18n="@@policy-look-up.form.btn.continue"
+                        class="tui-btn tui-btn-primary px-0 mb-3"
+                        aria-label="continue policy lookup">
+                        Continue
+                    </button>
+                </div>
+                <div class="col-12 col-md-4">
+                    <button (click)="goBack()"
+                        class="tui-btn tui-btn-link"
+                        [attr.data-tui-tracking-id]="cancelCtaTrackingId"
+                        aria-label="Cancel, Go back"
+                        i18n="@@policy-look-up.form.btn.back"
+                        tabindex="0">
+                        Back
+                    </button>
+                </div>
+            </div>
+        </form>
+    </ng-container>
+</div>
+
+-----------------------------------------------------------------------------
+CORE-POLICYNUMBER.VALIDATOR.TS
+
+import { AbstractControl } from '@angular/forms';
+import { environment } from '@src/environments/environment';
+
+ export function validatePolicyNumber(control: AbstractControl): { [key: string]: any } | null {
+  let controlNameValue = control.value;
+  const regex = /\-/gi;
+  controlNameValue = controlNameValue.indexOf('-') !== -1 ? controlNameValue.replace(regex, '') : controlNameValue;
+const minLength = environment.isBWLogin ? 12 : 8;
+ if (controlNameValue.length < minLength) {
+  return { policyNumberInvalid: true };
+ }
+return null;
+ }
